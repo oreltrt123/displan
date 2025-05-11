@@ -5,6 +5,19 @@ import { createServerClient } from "@supabase/ssr"
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
 
+  // Subdomain handling
+  const url = req.nextUrl
+  const hostname = req.headers.get("host") || ""
+
+  // Check if the request is for a subdomain of displan.design
+  const subdomain = hostname.split(".displan.design")[0]
+
+  // If this is a subdomain request and not the main domain
+  if (hostname.includes(".displan.design") && !hostname.startsWith("www")) {
+    return NextResponse.rewrite(new URL(`/sites/${subdomain}`, req.url))
+  }
+
+  // Supabase session/auth handling
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -20,7 +33,6 @@ export async function middleware(req: NextRequest) {
           return req.cookies.get(name)?.value
         },
         set(name, value, options) {
-          // If the cookie is updated, update the cookies for the request and response
           req.cookies.set({
             name,
             value,
@@ -72,7 +84,6 @@ export async function middleware(req: NextRequest) {
       }
     }
   } catch (e) {
-    // If there's an error, just continue without blocking the request
     console.error("Middleware error:", e)
   }
 
@@ -81,13 +92,12 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public files)
-     */
-    "/((?!_next/static|_next/image|favicon.ico|public|api/payments/webhook).*)",
+    // Match all request paths except for the ones starting with:
+    // - _next/static (static files)
+    // - _next/image (image optimization files)
+    // - favicon.ico (favicon file)
+    // - public (public files)
+    // - api/payments/webhook (your webhook route)
+    "/((?!api/payments/webhook|api|_next/static|_next/image|favicon.ico|public).*)",
   ],
 }

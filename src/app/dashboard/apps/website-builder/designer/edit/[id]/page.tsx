@@ -21,6 +21,7 @@ import { ElementRenderer } from "../../components/element-renderer"
 import { DragDropProvider } from "../../components/drag-drop-context"
 import { DroppableSection } from "../../components/droppable-section"
 import { StripeCheckoutModal } from "../../components/stripe-checkout-modal"
+import { PublishModal } from "../../components/publish-modal"
 
 // Import utilities
 import { createNewElement } from "../../utils/element-factory"
@@ -47,6 +48,9 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [subscriptionChecked, setSubscriptionChecked] = useState(false)
+  const [showPublishModal, setShowPublishModal] = useState(false)
+  const [publishingStatus, setPublishingStatus] = useState<"idle" | "publishing" | "success" | "error">("idle")
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
 
   // Fetch project data and user subscription status
   useEffect(() => {
@@ -968,6 +972,51 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     setActivePanel("ai")
   }
 
+  // Publish website to a subdomain
+  const publishWebsite = async () => {
+    if (!project) return
+
+    try {
+      setPublishingStatus("publishing")
+
+      // Save any unsaved changes first
+      if (unsavedChanges) {
+        await saveProject()
+      }
+
+      // Generate the HTML code for the website
+      const htmlContent = generateHtmlCode()
+
+      // Call the publish API
+      const response = await fetch("/api/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          projectId: project.id,
+          htmlContent,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        console.error("Publish API error:", data)
+        throw new Error(data.error || data.details || "Failed to publish website")
+      }
+
+      // Set the published URL
+      setPublishedUrl(data.url)
+      setPublishingStatus("success")
+    } catch (err) {
+      console.error("Error publishing website:", err)
+      setPublishingStatus("error")
+      // Re-throw the error so the modal can display details
+      throw err
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -1014,6 +1063,26 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
             >
               <Save className="h-4 w-4 mr-1" />
               {saving ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={() => setShowPublishModal(true)}
+              className="flex items-center px-3 py-2 rounded text-sm bg-secondary text-secondary-foreground"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mr-1"
+              >
+                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+              </svg>
+              Publish
             </button>
             <button
               onClick={togglePreview}
@@ -1192,6 +1261,21 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
           projectId={params.id}
         />
       )}
+
+      {/* Publish Modal */}
+      <PublishModal
+        isOpen={showPublishModal}
+        onClose={() => {
+          setShowPublishModal(false)
+          if (publishingStatus === "success") {
+            setPublishingStatus("idle")
+          }
+        }}
+        projectName={project?.name || ""}
+        onPublish={publishWebsite}
+        publishingStatus={publishingStatus}
+        publishedUrl={publishedUrl}
+      />
     </div>
   )
 }
