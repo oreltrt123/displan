@@ -1,5 +1,5 @@
 {
-    "outputDirectory": "dist",
-    "rewrites": [{ "source": "/", "destination": "/index.html" }]
-  }
-  
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "framework": "nextjs"
+}

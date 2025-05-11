@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Removed invalid 'api' configuration
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -11,6 +10,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Make sure you don't have a custom distDir setting
+  // If you do, it should match what's in vercel.json
+  // distDir: '.next'
 }
 
 module.exports = nextConfig
