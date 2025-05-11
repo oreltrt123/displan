@@ -1,0 +1,206 @@
+"use client"
+
+import Link from "next/link"
+import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
+import { createClient } from "../../supabase/client"
+import { useRouter } from "next/navigation"
+import { UserCircle } from "lucide-react"
+import { LanguageSwitcher } from "./language-switcher"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import type { User } from "@supabase/supabase-js"
+import "../styles/actions.css"
+
+const navVariants = {
+  hidden: { opacity: 0, y: -20 },
+  visible: { opacity: 1, y: 0 },
+}
+
+export default function Navbar() {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    // Check if user is logged in
+    const checkUser = async () => {
+      try {
+        setLoading(true)
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error("Error getting session:", error)
+          setUser(null)
+          return
+        }
+
+        if (data?.session?.user) {
+          console.log("User is logged in:", data.session.user.email)
+          setUser(data.session.user)
+        } else {
+          console.log("No active session found")
+          setUser(null)
+        }
+      } catch (error) {
+        console.error("Failed to check authentication status:", error)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkUser()
+
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange((event: string, session: { user: User | null }) => {
+      console.log("Auth state changed:", event, session ? "Logged in" : "Not logged in")
+
+      if (session?.user) {
+        setUser(session.user)
+      } else {
+        setUser(null)
+      }
+    })
+
+    // Return cleanup function
+    return () => {
+      authListener?.subscription.unsubscribe()
+    }
+  }, [])
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      setUser(null)
+      router.push("/")
+      router.refresh()
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
+  }
+
+  return (
+    <motion.nav
+      initial="hidden"
+      animate="visible"
+      // variants={navVariants}
+      className="fixed top-0 left-0 right-0 z-50 px-6 py-4 backdrop-blur-lg bg-background"
+    >
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-12">
+          <Link href="/" className="text-2xl font-bold tracking-tight text-white link_button dsafafwf">
+              <img 
+    src="/logo_light_mode.png" 
+    alt="Logo" 
+    className="dark:hidden" 
+  />
+  <img 
+    src="/logo_dark_mode.png" 
+    alt="Logo" 
+    className="hidden dark:block" 
+  />
+          </Link>
+          <div className="hidden md:flex items-center gap-8">
+            <div>
+              <Link
+                href="/features"
+                className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                data-i18n="features"
+              >
+                Features
+              </Link>
+            </div>
+            <div>
+              <Link
+                href="/blog"
+                className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                data-i18n="blog"
+              >
+                Blog
+              </Link>
+            </div>
+            <div>
+              <Link
+                href="/about"
+                className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                data-i18n="about"
+              >
+                About
+              </Link>
+            </div>
+            <div>
+              <Link
+                href="/projects"
+                className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                data-i18n="projects"
+              >
+                Projects
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          {/* Only show LanguageSwitcher here if user is NOT logged in */}
+          {!user && <LanguageSwitcher />}
+
+          {loading ? (
+            // Show loading state
+            <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse"></div>
+          ) : user ? (
+            // User is logged in - show avatar dropdown with LanguageSwitcher inside
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="post-actions-menu-button">
+                  <UserCircle className="h-5 w-5" />
+                  <span className="sr-only">User menu</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="post-dropdown-menu22" align="end">
+                {/* LanguageSwitcher inside dropdown when user is logged in */}
+                {/* <div className="px-2 py-1.5">
+                  <LanguageSwitcher />
+                </div> */}
+                <Link href="/dashboard">
+                  <DropdownMenuItem className="post-dropdown-item link_button" data-i18n="dashboard">
+                    Dashboard
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="post-dropdown-item link_button"
+                  data-i18n="signOut"
+                >
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            // User is not logged in - show sign in and get started buttons
+            <>
+              <div>
+                <Link
+                  href="/sign-in"
+                  className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                  data-i18n="signIn"
+                >
+                  Sign in
+                </Link>
+              </div>
+              <div>
+                <Link
+                  href="/sign-up"
+                  className="px-4 py-2 text-sm font-medium bg-white text-black rounded-full hover:bg-white/90 transition-colors link_button"
+                  data-i18n="getStarted"
+                >
+                  Get started
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </motion.nav>
+  )
+}

@@ -1,0 +1,62 @@
+/* Designer-specific styles */
+.drop-target {
+    position: relative;
+  }
+  
+  .drop-target::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px dashed #6c63ff;
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  [data-drop-position="before"]::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background-color: #6c63ff;
+    z-index: 10;
+  }
+  
+  [data-drop-position="after"]::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background-color: #6c63ff;
+    z-index: 10;
+  }
+  
+  [data-drop-position="inside"] {
+    background-color: rgba(108, 99, 255, 0.1);
+  }
+  
+  .element-wrapper:hover {
+    position: relative;
+  }
+  
+  .element-wrapper:hover::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 1px dashed #6c63ff;
+    pointer-events: none;
+  }
+  
+  .element-wrapper.dragging {
+    opacity: 0.5;
+  }
+  

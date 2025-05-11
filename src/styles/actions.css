@@ -1,0 +1,163 @@
+/* Post Actions Menu Button */
+.post-actions-menu-button {
+    align-items: center;
+    background-color: transparent;
+    border: none;
+    border-radius: 50%;
+    color: rgb(255, 255, 255);
+    cursor: pointer;
+    display: flex;
+    height: 36px;
+    width: 36px;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 0.2s;
+    cursor: default !important;
+  }
+  
+  .post-actions-menu-button:hover {
+    background-color: rgba(15, 20, 25, 0.1);
+  }
+  
+  /* Post Dropdown Menu */
+  .post-dropdown-menu {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0px 0px 15px rgba(101, 119, 134, 0.2), 0px 0px 3px 1px rgba(101, 119, 134, 0.15);
+    min-width: 260px;
+    overflow: hidden;
+    padding: 0;
+    z-index: 100;
+    position: relative;
+    top: -10px;
+  }
+  
+  .post-dropdown-menu2 {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0px 0px 15px rgba(101, 119, 134, 0.2), 0px 0px 3px 1px rgba(101, 119, 134, 0.15);
+    min-width: 180px;
+    overflow: hidden;
+    padding: 0;
+    z-index: 100;
+  }
+  
+  .post-dropdown-menu22 {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0px 0px 15px rgba(101, 119, 134, 0.2), 0px 0px 3px 1px rgba(101, 119, 134, 0.15);
+    min-width: 180px;
+    overflow: hidden;
+    padding: 0;
+    z-index: 100;
+    position: relative;
+    top: -15px;
+  }
+
+  .post-dropdown-item {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    font-size: 15px;
+    font-weight: 400;
+    padding: 12px 16px;
+    transition: background-color 0.2s;
+    color: rgb(15, 20, 25);
+  }
+  
+  .post-dropdown-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+  
+  .post-dropdown-item-icon {
+    margin-right: 12px;
+    color: rgb(83, 100, 113);
+  }
+  
+  .post-dropdown-item-delete {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    font-size: 15px;
+    font-weight: 400;
+    padding: 12px 16px;
+    transition: background-color 0.2s;
+    color: rgb(244, 33, 46);
+  }
+  
+  .post-dropdown-item-delete:hover {
+    background-color: rgba(244, 33, 46, 0.1);
+  }
+  
+  .post-dropdown-item-delete-icon {
+    margin-right: 12px;
+    color: rgb(244, 33, 46);
+  }
+  
+  /* Dialog Styles */
+  .post-dialog {
+    background-color: white;
+    border-radius: 16px;
+    box-shadow: 0px 8px 28px rgba(0, 0, 0, 0.15);
+    max-width: 320px;
+    padding: 32px 20px;
+    width: 100%;
+  }
+  
+  .post-dialog-header {
+    margin-bottom: 16px;
+  }
+  
+  .post-dialog-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: rgb(15, 20, 25);
+  }
+  
+  .post-dialog-description {
+    color: rgb(83, 100, 113);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  
+  .post-dialog-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+  }
+  
+  .post-dialog-button {
+    border-radius: 9999px;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 0 16px;
+    height: 44px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: 1px solid rgb(207, 217, 222);
+    background-color: white;
+    color: rgb(15, 20, 25);
+  }
+  
+  .post-dialog-button:hover {
+    background-color: rgba(15, 20, 25, 0.1);
+  }
+  
+  .post-dialog-button-destructive {
+    background-color: rgb(244, 33, 46);
+    color: white;
+    border: none;
+  }
+  
+  .post-dialog-button-destructive:hover {
+    background-color: rgb(220, 30, 41);
+  }
+  
+  .post-actions-menu-button2 {
+    color: rgb(111, 124, 134);
+  }
+  .post-actions-menu-button2:hover {
+    color: rgb(53, 69, 82);
+  }
+  
