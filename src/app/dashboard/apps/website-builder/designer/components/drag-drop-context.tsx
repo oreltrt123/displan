@@ -1,104 +1,155 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useRef } from "react"
+import { createContext, useContext, useState, useRef, useCallback, type ReactNode } from "react"
 import type { ElementType } from "../types"
+
+interface Position {
+  x: number
+  y: number
+}
 
 interface DragDropContextType {
   isDragging: boolean
   draggedElement: ElementType | null
   draggedElementId: string | null
-  startDrag: (element: ElementType) => void
-  endDrag: () => void
-  handleDrop: (targetId: string, position: "before" | "after" | "inside") => void
+  dragPosition: Position | null
+  dropTargets: Map<string, React.RefObject<HTMLElement>>
   registerDropTarget: (id: string, ref: React.RefObject<HTMLElement>) => void
   unregisterDropTarget: (id: string) => void
-  getDropTargetPosition: (e: React.DragEvent, targetId: string) => "before" | "after" | "inside" | null
+  startDrag: (element: ElementType, initialPosition?: Position) => void
+  updateDragPosition: (position: Position) => void
+  endDrag: (targetId: string | null, position: Position | null) => void
+  getRelativePosition: (element: HTMLElement, clientX: number, clientY: number) => Position
+  snapToGrid: (position: Position) => Position
+  gridSize: number
+  showGrid: boolean
+  setShowGrid: (show: boolean) => void
+  setGridSize: (size: number) => void
 }
 
-const DragDropContext = createContext<DragDropContextType | null>(null)
+const DragDropContext = createContext<DragDropContextType | undefined>(undefined)
 
-export const useDragDrop = () => {
-  const context = useContext(DragDropContext)
-  if (!context) {
-    throw new Error("useDragDrop must be used within a DragDropProvider")
-  }
-  return context
-}
-
-interface DragDropProviderProps {
-  children: React.ReactNode
+export function DragDropProvider({
+  children,
+  onElementMove,
+  showGrid = true,
+  setShowGrid,
+  gridSize = 8,
+  setGridSize,
+}: {
+  children: ReactNode
   onElementMove: (elementId: string, targetId: string, position: "before" | "after" | "inside") => void
-}
-
-export function DragDropProvider({ children, onElementMove }: DragDropProviderProps) {
+  showGrid?: boolean
+  setShowGrid: (show: boolean) => void
+  gridSize?: number
+  setGridSize: (size: number) => void
+}) {
   const [isDragging, setIsDragging] = useState(false)
   const [draggedElement, setDraggedElement] = useState<ElementType | null>(null)
   const [draggedElementId, setDraggedElementId] = useState<string | null>(null)
-  const dropTargets = useRef<Map<string, React.RefObject<HTMLElement>>>(new Map())
+  const [dragPosition, setDragPosition] = useState<Position | null>(null)
 
-  const startDrag = (element: ElementType) => {
+  const dropTargets = useRef(new Map<string, React.RefObject<HTMLElement>>()).current
+
+  const registerDropTarget = useCallback(
+    (id: string, ref: React.RefObject<HTMLElement>) => {
+      dropTargets.set(id, ref)
+    },
+    [dropTargets],
+  )
+
+  const unregisterDropTarget = useCallback(
+    (id: string) => {
+      dropTargets.delete(id)
+    },
+    [dropTargets],
+  )
+
+  const startDrag = useCallback((element: ElementType, initialPosition?: Position) => {
     setIsDragging(true)
     setDraggedElement(element)
     setDraggedElementId(element.id)
-  }
-
-  const endDrag = () => {
-    setIsDragging(false)
-    setDraggedElement(null)
-    setDraggedElementId(null)
-  }
-
-  const handleDrop = (targetId: string, position: "before" | "after" | "inside") => {
-    if (draggedElementId && targetId !== draggedElementId) {
-      onElementMove(draggedElementId, targetId, position)
+    if (initialPosition) {
+      setDragPosition(initialPosition)
     }
-    endDrag()
-  }
+  }, [])
 
-  const registerDropTarget = (id: string, ref: React.RefObject<HTMLElement>) => {
-    dropTargets.current.set(id, ref)
-  }
+  const updateDragPosition = useCallback((position: Position) => {
+    setDragPosition(position)
+  }, [])
 
-  const unregisterDropTarget = (id: string) => {
-    dropTargets.current.delete(id)
-  }
+  const endDrag = useCallback(
+    (targetId: string | null, position: Position | null) => {
+      if (draggedElementId && targetId) {
+        // Determine position based on drop location
+        let dropPosition: "before" | "after" | "inside" = "inside"
 
-  const getDropTargetPosition = (e: React.DragEvent, targetId: string): "before" | "after" | "inside" | null => {
-    const targetRef = dropTargets.current.get(targetId)
-    if (!targetRef || !targetRef.current) return null
+        // If we have more specific position info, we could determine before/after
+        // For now, default to "inside" for sections and "after" for elements
+        if (targetId.startsWith("section-")) {
+          dropPosition = "inside"
+        } else {
+          dropPosition = "after"
+        }
 
-    const rect = targetRef.current.getBoundingClientRect()
-    const y = e.clientY
+        onElementMove(draggedElementId, targetId, dropPosition)
+      }
 
-    // Determine if we're in the top third, middle third, or bottom third of the element
-    const topThird = rect.top + rect.height / 3
-    const bottomThird = rect.bottom - rect.height / 3
-
-    if (y < topThird) {
-      return "before"
-    } else if (y > bottomThird) {
-      return "after"
-    } else {
-      return "inside"
-    }
-  }
-
-  return (
-    <DragDropContext.Provider
-      value={{
-        isDragging,
-        draggedElement,
-        draggedElementId,
-        startDrag,
-        endDrag,
-        handleDrop,
-        registerDropTarget,
-        unregisterDropTarget,
-        getDropTargetPosition,
-      }}
-    >
-      {children}
-    </DragDropContext.Provider>
+      setIsDragging(false)
+      setDraggedElement(null)
+      setDraggedElementId(null)
+      setDragPosition(null)
+    },
+    [draggedElementId, onElementMove],
   )
+
+  const getRelativePosition = useCallback((element: HTMLElement, clientX: number, clientY: number): Position => {
+    const rect = element.getBoundingClientRect()
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    }
+  }, [])
+
+  const snapToGrid = useCallback(
+    (position: Position): Position => {
+      if (!showGrid) return position
+
+      return {
+        x: Math.round(position.x / gridSize) * gridSize,
+        y: Math.round(position.y / gridSize) * gridSize,
+      }
+    },
+    [gridSize, showGrid],
+  )
+
+  const value = {
+    isDragging,
+    draggedElement,
+    draggedElementId,
+    dragPosition,
+    dropTargets,
+    registerDropTarget,
+    unregisterDropTarget,
+    startDrag,
+    updateDragPosition,
+    endDrag,
+    getRelativePosition,
+    snapToGrid,
+    gridSize,
+    showGrid,
+    setShowGrid,
+    setGridSize,
+  }
+
+  return <DragDropContext.Provider value={value}>{children}</DragDropContext.Provider>
+}
+
+export function useDragDrop() {
+  const context = useContext(DragDropContext)
+  if (context === undefined) {
+    throw new Error("useDragDrop must be used within a DragDropProvider")
+  }
+  return context
 }

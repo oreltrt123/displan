@@ -60,3 +60,73 @@
     opacity: 0.5;
   }
   
+
+
+
+
+  /* Designer styles */
+
+/* Grid background */
+.with-grid {
+  background-size: 8px 8px;
+  background-image: linear-gradient(to right, rgba(81, 92, 230, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(81, 92, 230, 0.05) 1px, transparent 1px);
+}
+
+/* Dragging styles */
+.element-wrapper {
+  user-select: none;
+  min-width: 20px;
+  min-height: 20px;
+}
+
+.element-wrapper:hover {
+  outline: 1px dashed rgba(59, 130, 246, 0.3);
+}
+
+.element-wrapper.is-dragging {
+  opacity: 0.7;
+  cursor: grabbing;
+  z-index: 100;
+}
+
+/* Drop target indicator */
+.drop-target-indicator {
+  position: absolute;
+  background-color: rgba(59, 130, 246, 0.2);
+  border: 2px dashed rgba(59, 130, 246, 0.5);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 50;
+  transition: all 0.2s ease;
+}
+
+/* Ghost element during drag */
+.drag-ghost {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.6;
+  z-index: 1000;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  background-color: white;
+}
+
+/* Smooth animations */
+.element-wrapper {
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+/* Toolbar animations */
+.element-toolbar {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.element-wrapper:hover .element-toolbar,
+.element-wrapper.is-selected .element-toolbar {
+  opacity: 1;
+  transform: translateY(0);
+}
