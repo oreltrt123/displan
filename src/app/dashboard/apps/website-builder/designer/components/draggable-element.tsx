@@ -16,7 +16,7 @@ interface DraggableElementProps {
   onMoveUp?: () => void
   onMoveDown?: () => void
   onAlignChange?: (align: "left" | "center" | "right") => void
-  onPositionChange: (id: string, x: number, y: number) => void
+  onPositionChange?: (id: string, x: number, y: number) => void // <- make optional
 }
 
 export function DraggableElement({
@@ -28,7 +28,7 @@ export function DraggableElement({
   onMoveUp,
   onMoveDown,
   onAlignChange,
-  onPositionChange,
+  onPositionChange, // <- remains optional
 }: DraggableElementProps) {
   const elementRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState({ x: element.style?.x || 0, y: element.style?.y || 0 })
@@ -56,17 +56,17 @@ export function DraggableElement({
   // Handle mouse down to start dragging
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return // Only left mouse button
-    
+
     e.stopPropagation()
     e.preventDefault()
-    
+
     setIsDragging(true)
     setInitialMousePos({ x: e.clientX, y: e.clientY })
-    
+
     // Add global event listeners
     window.addEventListener("mousemove", handleMouseMove)
     window.addEventListener("mouseup", handleMouseUp)
-    
+
     // Prevent text selection during drag
     document.body.style.userSelect = "none"
     elementRef.current?.classList.add("dragging")
@@ -75,14 +75,14 @@ export function DraggableElement({
   // Handle mouse move during drag
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return
-    
+
     // Calculate new position
     const deltaX = e.clientX - initialMousePos.x
     const deltaY = e.clientY - initialMousePos.y
-    
+
     const newX = position.x + deltaX
     const newY = position.y + deltaY
-    
+
     // Apply new position directly to the element for immediate visual feedback
     if (elementRef.current) {
       const snappedPos = showGrid ? snapToGrid({ x: newX, y: newY }) : { x: newX, y: newY }
@@ -94,29 +94,31 @@ export function DraggableElement({
   // Handle mouse up to end dragging
   const handleMouseUp = (e: MouseEvent) => {
     if (!isDragging) return
-    
+
     setIsDragging(false)
-    
+
     // Calculate final position
     const deltaX = e.clientX - initialMousePos.x
     const deltaY = e.clientY - initialMousePos.y
-    
+
     const newX = position.x + deltaX
     const newY = position.y + deltaY
-    
+
     // Apply snapping if grid is enabled
     const finalPosition = showGrid ? snapToGrid({ x: newX, y: newY }) : { x: newX, y: newY }
-    
+
     // Update state
     setPosition(finalPosition)
-    
-    // Update parent component with new position
-    onPositionChange(element.id, finalPosition.x, finalPosition.y)
-    
+
+    // Update parent component with new position (safe call)
+    if (typeof onPositionChange === 'function') {
+      onPositionChange(element.id, finalPosition.x, finalPosition.y)
+    }
+
     // Remove event listeners
     window.removeEventListener("mousemove", handleMouseMove)
     window.removeEventListener("mouseup", handleMouseUp)
-    
+
     // Restore text selection
     document.body.style.userSelect = ""
     elementRef.current?.classList.remove("dragging")
@@ -157,14 +159,14 @@ export function DraggableElement({
 
       <ElementRenderer element={element} isEditing={true} isSelected={isSelected} onClick={onClick} />
 
-      {/* Element toolbar - simplified for clarity */}
+      {/* Element toolbar */}
       {isSelected && (
         <div className="absolute -top-8 right-0 bg-white shadow-sm rounded-md flex items-center p-1 z-30">
           {/* Toolbar buttons would go here */}
         </div>
       )}
 
-      {/* Resize handles - simplified for clarity */}
+      {/* Resize handles */}
       {isSelected && (
         <div className="absolute bottom-0 right-0 w-3 h-3 bg-blue-500 rounded-bl-sm cursor-se-resize z-20" />
       )}

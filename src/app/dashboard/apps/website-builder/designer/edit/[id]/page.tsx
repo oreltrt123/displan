@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Save, Eye, Plus, Layout, Trash, Grid, Monitor, Tablet, Smartphone } from "lucide-react"
+import { ArrowLeft, Save, Eye, Plus, Layout, Trash, Grid } from 'lucide-react'
 import { createClient } from "../../../../../../../../supabase/client"
+import type { PostgrestError } from "@supabase/supabase-js"
 
 // Import types
 import type { Project, Section, ElementType } from "../../types"
@@ -12,8 +13,15 @@ import type { Project, Section, ElementType } from "../../types"
 // Import components
 import { SidebarNavigation } from "../../components/sidebar-navigation"
 import { ElementsPanel } from "../../components/elements-panel"
+import { ImagesPanel } from "../../components/images-panel"
+import { AIDesignAssistant } from "../../components/ai-assistant-panel"
+import { SettingsPanel } from "../../components/settings-panel"
+import { ElementProperties } from "../../components/element-properties"
+import { PreviewToolbar } from "../../components/preview-toolbar"
+import { ElementRenderer } from "../../components/element-renderer"
 import { DragDropProvider } from "../../components/drag-drop-context"
 import { DroppableSection } from "../../components/droppable-section"
+import { StripeCheckoutModal } from "../../components/stripe-checkout-modal"
 
 // Import utilities
 import { createNewElement } from "../../utils/element-factory"
@@ -33,21 +41,20 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
   const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop")
   const [showPreview, setShowPreview] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [unsavedChanges, setUnsavedChanges] = useState(false)
   const [activePanel, setActivePanel] = useState<string>("elements")
   const [isPremiumUser, setIsPremiumUser] = useState(false)
   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [subscriptionChecked, setSubscriptionChecked] = useState(false)
-  const [showPublishModal, setShowPublishModal] = useState(false)
-  const [publishingStatus, setPublishingStatus] = useState<"idle" | "publishing" | "success" | "error">("idle")
-  const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
+  const [previewWindow, setPreviewWindow] = useState<Window | null>(null)
   const [showGrid, setShowGrid] = useState(true)
   const [gridSize, setGridSize] = useState(8)
   const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null)
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
-  const [exporting, setExporting] = useState(false)
-  const [previewWindow, setPreviewWindow] = useState<Window | null>(null)
+  const [publishingStatus, setPublishingStatus] = useState<"idle" | "publishing" | "success" | "error">("idle")
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
 
   // Fetch project data and user subscription status
   useEffect(() => {
@@ -68,10 +75,66 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
 
         setUserId(user.id)
 
-        // Check premium status
+        // Store user ID in localStorage for subscription verification
+        localStorage.setItem("userId", user.id)
+
+        // Check premium status from multiple sources
         let isPremium = false
+
+        // 1. Check cookies
+        const cookies = document.cookie.split(";").map((cookie) => cookie.trim())
+        const isPremiumCookie = cookies.find((cookie) => cookie.startsWith("isPremium="))
+        if (isPremiumCookie && isPremiumCookie.split("=")[1] === "true") {
+          isPremium = true
+        }
+
+        // 2. Check localStorage
         if (localStorage.getItem("userPremiumStatus") === "true") {
           isPremium = true
+        }
+
+        // 3. Check database if not already determined to be premium
+        if (!isPremium) {
+          const { data: subscription } = await supabase
+            .from("user_subscriptions")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("status", "active")
+            .single()
+
+          if (
+            subscription &&
+            subscription.current_period_end &&
+            new Date(subscription.current_period_end) > new Date()
+          ) {
+            isPremium = true
+
+            // Update client-side storage
+            localStorage.setItem("userPremiumStatus", "true")
+            document.cookie = `isPremium=true; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`
+          }
+        }
+
+        // 4. If still not determined, make API call to check
+        if (!isPremium) {
+          try {
+            const response = await fetch("/api/subscription/check", {
+              credentials: "include",
+            })
+
+            if (response.ok) {
+              const data = await response.json()
+              isPremium = data.isPremium
+
+              if (isPremium) {
+                // Update client-side storage
+                localStorage.setItem("userPremiumStatus", "true")
+                document.cookie = `isPremium=true; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`
+              }
+            }
+          } catch (error) {
+            console.error("Error checking subscription via API:", error)
+          }
         }
 
         setIsPremiumUser(isPremium)
@@ -116,6 +179,25 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     fetchData()
   }, [params.id, router, supabase])
 
+  // Listen for export events from the SettingsPanel
+  useEffect(() => {
+    const handleExportEvent = (event: CustomEvent) => {
+      const { format, type } = event.detail
+
+      if (type === "download") {
+        downloadProject(format)
+      } else if (type === "repository") {
+        uploadAsRepository(format)
+      }
+    }
+
+    window.addEventListener("export-project", handleExportEvent as EventListener)
+
+    return () => {
+      window.removeEventListener("export-project", handleExportEvent as EventListener)
+    }
+  }, [project]) // Re-add event listener when project changes
+
   // Initialize project structure if needed
   const initializeProjectStructure = (project: any): Project => {
     if (!project.content) {
@@ -138,54 +220,12 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
       .from("website_projects")
       .update({ content: project.content })
       .eq("id", project.id)
-      .then(({ error }) => {
+      .then(({ error }: { error: PostgrestError | null }) => {
         if (error) console.error("Error initializing project structure:", error)
       })
 
     return project
   }
-
-  // Listen for export events from the SettingsPanel
-  useEffect(() => {
-    const handleExportEvent = (event: CustomEvent) => {
-      const { format, type } = event.detail
-
-      if (type === "download") {
-        downloadProject(format)
-      } else if (type === "repository") {
-        uploadAsRepository(format)
-      }
-    }
-
-    window.addEventListener("export-project", handleExportEvent as EventListener)
-
-    return () => {
-      window.removeEventListener("export-project", handleExportEvent as EventListener)
-    }
-  }, [project]) // Re-add event listener when project changes
-
-  // Auto-save changes after a delay
-  useEffect(() => {
-    if (unsavedChanges && project) {
-      // Clear any existing timer
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer)
-      }
-
-      // Set a new timer to save after 1 second of inactivity
-      const timer = setTimeout(() => {
-        saveProject()
-      }, 1000)
-
-      setAutoSaveTimer(timer)
-    }
-
-    return () => {
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer)
-      }
-    }
-  }, [unsavedChanges, project])
 
   // Handle section selection
   const handleSectionSelect = (sectionId: string) => {
@@ -262,9 +302,6 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     setProject(updatedProject)
     setSelectedElement(newElement.id)
     setUnsavedChanges(true)
-
-    // Save immediately after adding a new element
-    saveProject()
   }
 
   // Delete the selected element
@@ -286,50 +323,6 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
 
     setProject(updatedProject)
     setSelectedElement(null)
-    setUnsavedChanges(true)
-  }
-
-  // Duplicate the selected element
-  const duplicateElement = () => {
-    if (!project || !selectedSection || !selectedElement) return
-
-    // Create a deep clone of the project
-    const updatedProject = deepClone(project)
-    const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
-
-    if (sectionIndex === -1) return
-
-    // Find the element to duplicate
-    const elementIndex = updatedProject.content.sections[sectionIndex].elements.findIndex(
-      (e) => e.id === selectedElement,
-    )
-
-    if (elementIndex === -1) return
-
-    // Clone the element
-    const sourceElement = deepClone(updatedProject.content.sections[sectionIndex].elements[elementIndex])
-
-    // Create a new ID for the duplicate
-    const newElement = {
-      ...sourceElement,
-      id: `element-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    }
-
-    // Offset the position slightly
-    if (newElement.style.x !== undefined && newElement.style.y !== undefined) {
-      newElement.style.x += 20
-      newElement.style.y += 20
-    }
-
-    // Set up callbacks for position and resize
-    newElement.onPositionChange = (x, y) => handleElementPositionChange(newElement.id, x, y)
-    newElement.onResize = (width, height) => handleElementResize(newElement.id, width, height)
-
-    // Add the duplicate element to the section
-    updatedProject.content.sections[sectionIndex].elements.push(newElement)
-
-    setProject(updatedProject)
-    setSelectedElement(newElement.id)
     setUnsavedChanges(true)
   }
 
@@ -426,9 +419,6 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
       if (found) {
         setProject(updatedProject)
         setUnsavedChanges(true)
-
-        // Save immediately after position change
-        saveProject()
       }
     },
     [project],
@@ -544,15 +534,6 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
       }
     }
 
-    // Set up callbacks for position and resize
-    for (let i = 0; i < updatedProject.content.sections.length; i++) {
-      for (let j = 0; j < updatedProject.content.sections[i].elements.length; j++) {
-        const element = updatedProject.content.sections[i].elements[j]
-        element.onPositionChange = (x, y) => handleElementPositionChange(element.id, x, y)
-        element.onResize = (width, height) => handleElementResize(element.id, width, height)
-      }
-    }
-
     setProject(updatedProject)
     setSelectedElement(sourceElement.id)
     setUnsavedChanges(true)
@@ -564,55 +545,17 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
 
     try {
       setSaving(true)
-      setSaveStatus("saving")
-
-      // Make sure all elements have position data
-      const updatedProject = deepClone(project)
-
-      // Ensure all elements have position data
-      for (let i = 0; i < updatedProject.content.sections.length; i++) {
-        for (let j = 0; j < updatedProject.content.sections[i].elements.length; j++) {
-          const element = updatedProject.content.sections[i].elements[j]
-
-          // Set default position if none exists
-          if (element.style.x === undefined || element.style.y === undefined) {
-            element.style.x = 20 + j * 10
-            element.style.y = 20 + j * 10
-          }
-
-          // Set up callbacks for position and resize
-          element.onPositionChange = (x, y) => handleElementPositionChange(element.id, x, y)
-          element.onResize = (width, height) => handleElementResize(element.id, width, height)
-        }
-      }
-
-      // Remove callback functions before saving to database
-      const cleanProject = deepClone(updatedProject)
-      for (let i = 0; i < cleanProject.content.sections.length; i++) {
-        for (let j = 0; j < cleanProject.content.sections[i].elements.length; j++) {
-          const element = cleanProject.content.sections[i].elements[j]
-          delete element.onPositionChange
-          delete element.onResize
-        }
-      }
 
       const { error } = await supabase
         .from("website_projects")
-        .update({ content: cleanProject.content })
-        .eq("id", cleanProject.id)
+        .update({ content: project.content })
+        .eq("id", project.id)
 
       if (error) throw error
 
       setUnsavedChanges(false)
-      setSaveStatus("saved")
-
-      // Reset save status after 2 seconds
-      setTimeout(() => {
-        setSaveStatus("idle")
-      }, 2000)
     } catch (err) {
       console.error("Error saving project:", err)
-      setSaveStatus("error")
       alert("Failed to save changes")
     } finally {
       setSaving(false)
@@ -637,6 +580,11 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     } finally {
       setSaving(false)
     }
+  }
+
+  // Toggle preview mode
+  const togglePreview = () => {
+    setShowPreview(!showPreview)
   }
 
   // Open preview in new window
@@ -886,7 +834,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     // Generate code for each section
     if (project.content && project.content.sections) {
       project.content.sections.forEach((section) => {
-        code += `      <section className="my-8 relative">\n`
+        code += `      <section className="my-8">\n`
         code += `        <h2 className="text-2xl font-bold mb-4">${section.name}</h2>\n`
 
         // Generate code for each element in the section
@@ -925,10 +873,6 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     code += `  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n`
     code += `  <title>${project.name}</title>\n`
     code += `  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">\n`
-    code += `  <style>\n`
-    code += `    .relative { position: relative; }\n`
-    code += `    .absolute { position: absolute; }\n`
-    code += `  </style>\n`
     code += `</head>\n`
     code += `<body>\n`
     code += `  <div class="container mx-auto">\n`
@@ -936,7 +880,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     // Generate HTML for each section
     if (project.content && project.content.sections) {
       project.content.sections.forEach((section) => {
-        code += `    <section class="my-8 relative">\n`
+        code += `    <section class="my-8">\n`
         code += `      <h2 class="text-2xl font-bold mb-4">${section.name}</h2>\n`
 
         // Generate HTML for each element in the section
@@ -962,40 +906,22 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     const indent = " ".repeat(indentLevel)
     let code = ""
 
-    // Position styles
-    const positionStyle =
-      element.style.x !== undefined && element.style.y !== undefined
-        ? `position: 'absolute', left: '${element.style.x}px', top: '${element.style.y}px'`
-        : ""
-
-    // Size styles
-    const sizeStyle =
-      element.style.width || element.style.height
-        ? `${positionStyle ? ", " : ""}${element.style.width ? `width: '${element.style.width}'` : ""}${element.style.width && element.style.height ? ", " : ""}${element.style.height ? `height: '${element.style.height}'` : ""}`
-        : ""
-
-    // Combined inline style
-    const inlineStyle =
-      positionStyle || sizeStyle
-        ? ` style={{${positionStyle}${sizeStyle ? (positionStyle ? ", " : "") + sizeStyle : ""}}}`
-        : ""
-
     switch (element.type) {
       case "heading":
         const HeadingTag = `h${element.content?.level || 2}`
-        code += `${indent}<${HeadingTag} className="${getStyleClasses(element.style)}"${inlineStyle}>${element.content?.text || "Heading"}</${HeadingTag}>\n`
+        code += `${indent}<${HeadingTag} className="${getStyleClasses(element.style)}">${element.content?.text || "Heading"}</${HeadingTag}>\n`
         break
       case "paragraph":
-        code += `${indent}<p className="${getStyleClasses(element.style)}"${inlineStyle}>${element.content?.text || "Paragraph text"}</p>\n`
+        code += `${indent}<p className="${getStyleClasses(element.style)}">${element.content?.text || "Paragraph text"}</p>\n`
         break
       case "image":
-        code += `${indent}<img src="${element.content?.src || "/placeholder.svg"}" alt="${element.content?.alt || ""}" className="${getStyleClasses(element.style)}"${inlineStyle} />\n`
+        code += `${indent}<img src="${element.content?.src || "/placeholder.svg"}" alt="${element.content?.alt || ""}" className="${getStyleClasses(element.style)}" />\n`
         break
       case "button":
-        code += `${indent}<button className="${getStyleClasses(element.style)}"${inlineStyle}>${element.content?.buttonText || "Button"}</button>\n`
+        code += `${indent}<button className="${getStyleClasses(element.style)}">${element.content?.buttonText || "Button"}</button>\n`
         break
       case "container":
-        code += `${indent}<div className="${getStyleClasses(element.style)}"${inlineStyle}>\n`
+        code += `${indent}<div className="${getStyleClasses(element.style)}">\n`
         if (element.children && element.children.length) {
           element.children.forEach((child: any) => {
             code += generateElementCode(child, indentLevel + 2)
@@ -1004,7 +930,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
         code += `${indent}</div>\n`
         break
       default:
-        code += `${indent}<div className="${getStyleClasses(element.style)}"${inlineStyle}>${element.content?.text || ""}</div>\n`
+        code += `${indent}<div className="${getStyleClasses(element.style)}">${element.content?.text || ""}</div>\n`
     }
 
     return code
@@ -1195,10 +1121,6 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     newElement.content.src = imageUrl
     newElement.content.alt = "Uploaded image"
 
-    // Set up callbacks for position and resize
-    newElement.onPositionChange = (x, y) => handleElementPositionChange(newElement.id, x, y)
-    newElement.onResize = (width, height) => handleElementResize(newElement.id, width, height)
-
     // Add the element to the selected section
     const updatedProject = deepClone(project)
     const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
@@ -1222,17 +1144,6 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
 
     if (sectionIndex === -1) return
 
-    // Set up callbacks for position and resize for each element
-    elements.forEach((element, index) => {
-      // Set default positions with some spacing
-      element.style.x = 20 + index * 20
-      element.style.y = 20 + index * 20
-
-      // Set up callbacks
-      element.onPositionChange = (x, y) => handleElementPositionChange(element.id, x, y)
-      element.onResize = (width, height) => handleElementResize(element.id, width, height)
-    })
-
     // Add all generated elements to the section
     updatedProject.content.sections[sectionIndex].elements.push(...elements)
 
@@ -1251,74 +1162,6 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
 
     // Switch to AI panel after successful payment
     setActivePanel("ai")
-  }
-
-  // Publish website to a subdomain
-  const publishWebsite = async () => {
-    if (!project) return
-
-    try {
-      setPublishingStatus("publishing")
-
-      // Save any unsaved changes first
-      if (unsavedChanges) {
-        await saveProject()
-      }
-
-      // Generate the HTML code for the website
-      const htmlContent = generateHtmlCode()
-
-      // Call the publish API
-      const response = await fetch("/api/publish", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          projectId: project.id,
-          htmlContent,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        console.error("Publish API error:", data)
-        throw new Error(data.error || data.details || "Failed to publish website")
-      }
-
-      // Set the published URL
-      setPublishedUrl(data.url)
-      setPublishingStatus("success")
-    } catch (err) {
-      console.error("Error publishing website:", err)
-      setPublishingStatus("error")
-      // Re-throw the error so the modal can display details
-      throw err
-    }
-  }
-
-  // Handle element alignment change
-  const handleAlignChange = (align: "left" | "center" | "right") => {
-    if (!project || !selectedSection || !selectedElement) return
-
-    // Create a deep clone of the project
-    const updatedProject = deepClone(project)
-    const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
-
-    if (sectionIndex === -1) return
-
-    const elementIndex = updatedProject.content.sections[sectionIndex].elements.findIndex(
-      (e) => e.id === selectedElement,
-    )
-
-    if (elementIndex === -1) return
-
-    // Update the text alignment
-    updatedProject.content.sections[sectionIndex].elements[elementIndex].style.textAlign = align
-
-    setProject(updatedProject)
-    setUnsavedChanges(true)
   }
 
   if (loading) {
@@ -1363,26 +1206,10 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
             <button
               onClick={saveProject}
               disabled={!unsavedChanges || saving}
-              className={`flex items-center px-3 py-2 rounded text-sm ${
-                saveStatus === "saving"
-                  ? "bg-yellow-500 text-white"
-                  : saveStatus === "saved"
-                    ? "bg-green-500 text-white"
-                    : saveStatus === "error"
-                      ? "bg-red-500 text-white"
-                      : unsavedChanges
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground"
-              }`}
+              className={`flex items-center px-3 py-2 rounded text-sm ${unsavedChanges ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
             >
               <Save className="h-4 w-4 mr-1" />
-              {saveStatus === "saving"
-                ? "Saving..."
-                : saveStatus === "saved"
-                  ? "Saved!"
-                  : saveStatus === "error"
-                    ? "Error!"
-                    : "Save"}
+              {saving ? "Saving..." : "Save"}
             </button>
             <button
               onClick={openPreview}
@@ -1391,48 +1218,19 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
               <Eye className="h-4 w-4 mr-1" />
               Preview
             </button>
-            <div className="flex items-center bg-secondary rounded overflow-hidden">
-              <button
-                onClick={() => changePreviewMode("desktop")}
-                className={`p-1.5 ${previewMode === "desktop" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/80"}`}
-                title="Desktop View"
-              >
-                <Monitor className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => changePreviewMode("tablet")}
-                className={`p-1.5 ${previewMode === "tablet" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/80"}`}
-                title="Tablet View"
-              >
-                <Tablet className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => changePreviewMode("mobile")}
-                className={`p-1.5 ${previewMode === "mobile" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary/80"}`}
-                title="Mobile View"
-              >
-                <Smartphone className="h-4 w-4" />
-              </button>
-            </div>
             <button
-              onClick={() => setShowGrid(!showGrid)}
-              className={`flex items-center px-3 py-2 rounded text-sm ${showGrid ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"}`}
+              onClick={togglePreview}
+              className={`flex items-center px-3 py-2 rounded text-sm ${showPreview ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
             >
-              <Grid className="h-4 w-4 mr-1" />
-              {showGrid ? "Hide Grid" : "Show Grid"}
+              <Eye className="h-4 w-4 mr-1" />
+              {showPreview ? "Edit" : "Preview"}
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <DragDropProvider
-        onElementMove={handleElementMove}
-        showGrid={showGrid}
-        setShowGrid={setShowGrid}
-        gridSize={gridSize}
-        setGridSize={setGridSize}
-      >
+      <DragDropProvider onElementMove={handleElementMove}>
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar Navigation */}
           <SidebarNavigation
@@ -1446,6 +1244,27 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
           {!showPreview && (
             <>
               {activePanel === "elements" && <ElementsPanel onAddElement={addNewElement} />}
+
+              {activePanel === "images" && <ImagesPanel onSelectImage={handleImageSelect} projectId={params.id} />}
+
+              {activePanel === "ai" && (
+                <AIDesignAssistant
+                  isPremiumUser={isPremiumUser}
+                  onUpgradeClick={() => setShowCheckoutModal(true)}
+                  onAIGenerate={handleAIGenerate}
+                  projectId={params.id}
+                />
+              )}
+
+              {activePanel === "settings" && (
+                <SettingsPanel
+                  onSave={saveProject}
+                  onExport={() => {}} // This is now handled via the custom event
+                  projectName={project?.name || ""}
+                  onProjectNameChange={handleProjectNameChange}
+                  saving={saving}
+                />
+              )}
 
               {/* Sections Panel */}
               <div className="w-64 bg-card border-r border-border flex flex-col">
@@ -1486,1240 +1305,97 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
                   ))}
                 </div>
               </div>
+
+              {/* Properties Panel */}
+              {selectedElement && getSelectedElement() && (
+                <div className="w-72 bg-card border-r border-border flex flex-col">
+                  <div className="p-4 border-b border-border">
+                    <h2 className="font-medium text-foreground">Properties</h2>
+                  </div>
+                  <ElementProperties element={getSelectedElement()!} onPropertyChange={handlePropertyChange} />
+                </div>
+              )}
             </>
           )}
 
-          {/* Canvas */}
+          {/* Preview / Canvas */}
           <div className="flex-1 flex flex-col">
-            <div className="flex-1 bg-secondary/50 flex items-center justify-center p-4 overflow-auto">
-              <div className="bg-background shadow-lg w-full h-full overflow-auto">
-                <div className="p-4">
-                  {selectedSection ? (
-                    <div>
-                      {project?.content?.sections
-                        .filter((s) => s.id === selectedSection)
-                        .map((section) => (
-                          <DroppableSection
-                            key={section.id}
-                            section={section}
-                            selectedElement={selectedElement}
-                            onElementSelect={handleElementSelect}
-                            onElementPositionChange={handleElementPositionChange}
-                          />
-                        ))}
+            {showPreview ? (
+              <div className="flex-1 flex flex-col">
+                <PreviewToolbar previewMode={previewMode} onChangePreviewMode={changePreviewMode} />
+                <div className="flex-1 bg-secondary/50 flex items-center justify-center p-4 overflow-auto">
+                  <div
+                    className={`bg-background shadow-lg ${
+                      previewMode === "desktop"
+                        ? "w-full h-full"
+                        : previewMode === "tablet"
+                          ? "w-[768px] h-[1024px]"
+                          : "w-[375px] h-[667px]"
+                    } overflow-auto`}
+                  >
+                    <div className="p-4">
+                      {project?.content?.sections?.map((section) => (
+                        <div key={section.id} className="mb-8">
+                          <h2 className="text-lg font-semibold mb-4 text-muted-foreground border-b border-border pb-2">
+                            {section.name}
+                          </h2>
+                          <div>
+                            {section.elements.map((element) => (
+                              <div key={element.id}>
+                                <ElementRenderer element={element} isEditing={false} isSelected={false} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    <div className="text-center text-muted-foreground py-10">
-                      <div className="h-12 w-12 mx-auto mb-4 opacity-50 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
-                        +
-                      </div>
-                      <p>Select a section to edit or create a new one</p>
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex-1 bg-secondary/50 flex items-center justify-center p-4 overflow-auto">
+                <div className="bg-background shadow-lg w-full h-full overflow-auto">
+                  <div className="p-4">
+                    {selectedSection ? (
+                      <div>
+                        {project?.content?.sections
+                          .filter((s) => s.id === selectedSection)
+                          .map((section) => (
+                            <DroppableSection
+                              key={section.id}
+                              section={section}
+                              selectedElement={selectedElement}
+                              onElementSelect={handleElementSelect}
+                              onElementPositionChange={handleElementPositionChange}
+                            />
+                          ))}
+                      </div>
+                    ) : (
+                      <div className="text-center text-muted-foreground py-10">
+                        <div className="h-12 w-12 mx-auto mb-4 opacity-50 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
+                          +
+                        </div>
+                        <p>Select a section to edit or create a new one</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </DragDropProvider>
+
+      {/* Stripe Checkout Modal */}
+      {showCheckoutModal && userId && (
+        <StripeCheckoutModal
+          isOpen={showCheckoutModal}
+          onClose={() => setShowCheckoutModal(false)}
+          onSuccess={handleUpgradeSuccess}
+          userId={userId}
+          projectId={params.id}
+        />
+      )}
     </div>
   )
 }
-
-// "use client"
-
-// import { useState, useEffect } from "react"
-// import { useRouter } from "next/navigation"
-// import Link from "next/link"
-// import { ArrowLeft, Save, Eye, Plus, Layout, Trash } from "lucide-react"
-// import { createClient } from "../../../../../../../../supabase/client"
-// import type { PostgrestError } from "@supabase/supabase-js"
-// // Import types
-// import type { Project, Section, ElementType } from "../../types"
-
-// // Import components
-// import { SidebarNavigation } from "../../components/sidebar-navigation"
-// import { ElementsPanel } from "../../components/elements-panel"
-// import { ImagesPanel } from "../../components/images-panel"
-// import { AIDesignAssistant } from "../../components/ai-assistant-panel"
-// import { SettingsPanel } from "../../components/settings-panel"
-// import { ElementProperties } from "../../components/element-properties"
-// import { PreviewToolbar } from "../../components/preview-toolbar"
-// import { ElementRenderer } from "../../components/element-renderer"
-// import { DragDropProvider } from "../../components/drag-drop-context"
-// import { DroppableSection } from "../../components/droppable-section"
-// import { StripeCheckoutModal } from "../../components/stripe-checkout-modal"
-
-// // Import utilities
-// import { createNewElement } from "../../utils/element-factory"
-// import { deepClone } from "../../utils/deep-clone"
-
-// // Import styles
-// import "../../styles/designer.css"
-
-// export default function DesignerEditorPage({ params }: { params: { id: string } }) {
-//   const router = useRouter()
-//   const supabase = createClient()
-//   const [project, setProject] = useState<Project | null>(null)
-//   const [loading, setLoading] = useState(true)
-//   const [error, setError] = useState<string | null>(null)
-//   const [selectedSection, setSelectedSection] = useState<string | null>(null)
-//   const [selectedElement, setSelectedElement] = useState<string | null>(null)
-//   const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop")
-//   const [showPreview, setShowPreview] = useState(false)
-//   const [saving, setSaving] = useState(false)
-//   const [exporting, setExporting] = useState(false)
-//   const [unsavedChanges, setUnsavedChanges] = useState(false)
-//   const [activePanel, setActivePanel] = useState<string>("elements")
-//   const [isPremiumUser, setIsPremiumUser] = useState(false)
-//   const [showCheckoutModal, setShowCheckoutModal] = useState(false)
-//   const [userId, setUserId] = useState<string | null>(null)
-//   const [subscriptionChecked, setSubscriptionChecked] = useState(false)
-
-//   // Fetch project data and user subscription status
-//   useEffect(() => {
-//     async function fetchData() {
-//       try {
-//         setLoading(true)
-//         setError(null)
-
-//         // Get current user
-//         const {
-//           data: { user },
-//         } = await supabase.auth.getUser()
-
-//         if (!user) {
-//           router.push("/sign-in")
-//           return
-//         }
-
-//         setUserId(user.id)
-
-//         // Store user ID in localStorage for subscription verification
-//         localStorage.setItem("userId", user.id)
-
-//         // Check premium status from multiple sources
-//         let isPremium = false
-
-//         // 1. Check cookies
-//         const cookies = document.cookie.split(";").map((cookie) => cookie.trim())
-//         const isPremiumCookie = cookies.find((cookie) => cookie.startsWith("isPremium="))
-//         if (isPremiumCookie && isPremiumCookie.split("=")[1] === "true") {
-//           isPremium = true
-//         }
-
-//         // 2. Check localStorage
-//         if (localStorage.getItem("userPremiumStatus") === "true") {
-//           isPremium = true
-//         }
-
-//         // 3. Check database if not already determined to be premium
-//         if (!isPremium) {
-//           const { data: subscription } = await supabase
-//             .from("user_subscriptions")
-//             .select("*")
-//             .eq("user_id", user.id)
-//             .eq("status", "active")
-//             .single()
-
-//           if (
-//             subscription &&
-//             subscription.current_period_end &&
-//             new Date(subscription.current_period_end) > new Date()
-//           ) {
-//             isPremium = true
-
-//             // Update client-side storage
-//             localStorage.setItem("userPremiumStatus", "true")
-//             document.cookie = `isPremium=true; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`
-//           }
-//         }
-
-//         // 4. If still not determined, make API call to check
-//         if (!isPremium) {
-//           try {
-//             const response = await fetch("/api/subscription/check", {
-//               credentials: "include",
-//             })
-
-//             if (response.ok) {
-//               const data = await response.json()
-//               isPremium = data.isPremium
-
-//               if (isPremium) {
-//                 // Update client-side storage
-//                 localStorage.setItem("userPremiumStatus", "true")
-//                 document.cookie = `isPremium=true; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`
-//               }
-//             }
-//           } catch (error) {
-//             console.error("Error checking subscription via API:", error)
-//           }
-//         }
-
-//         setIsPremiumUser(isPremium)
-//         setSubscriptionChecked(true)
-
-//         // Get project data
-//         const { data: project, error: projectError } = await supabase
-//           .from("website_projects")
-//           .select("*")
-//           .eq("id", params.id)
-//           .eq("user_id", user.id)
-//           .single()
-
-//         if (projectError || !project) {
-//           setError("Project not found or you don't have access to it")
-//           setLoading(false)
-//           return
-//         }
-
-//         if (project.type !== "designer") {
-//           setError("This is not a designer project")
-//           setLoading(false)
-//           return
-//         }
-
-//         // Initialize project structure if needed
-//         const initializedProject = initializeProjectStructure(project)
-//         setProject(initializedProject)
-
-//         // Select the first section by default
-//         if (initializedProject.content?.sections && initializedProject.content.sections.length > 0) {
-//           setSelectedSection(initializedProject.content.sections[0].id)
-//         }
-//       } catch (err) {
-//         console.error("Error fetching data:", err)
-//         setError(err instanceof Error ? err.message : "Failed to load project")
-//       } finally {
-//         setLoading(false)
-//       }
-//     }
-
-//     fetchData()
-//   }, [params.id, router, supabase])
-
-//   // Listen for export events from the SettingsPanel
-//   useEffect(() => {
-//     const handleExportEvent = (event: CustomEvent) => {
-//       const { format, type } = event.detail
-
-//       if (type === "download") {
-//         downloadProject(format)
-//       } else if (type === "repository") {
-//         uploadAsRepository(format)
-//       }
-//     }
-
-//     window.addEventListener("export-project", handleExportEvent as EventListener)
-
-//     return () => {
-//       window.removeEventListener("export-project", handleExportEvent as EventListener)
-//     }
-//   }, [project]) // Re-add event listener when project changes
-
-//   // Initialize project structure if needed
-//   const initializeProjectStructure = (project: any): Project => {
-//     if (!project.content) {
-//       project.content = {
-//         sections: [],
-//         globalStyles: {},
-//       }
-//     }
-
-//     if (!project.content.sections) {
-//       project.content.sections = []
-//     }
-
-//     if (!project.content.globalStyles) {
-//       project.content.globalStyles = {}
-//     }
-
-//     // Save the initialized structure to the database
-//     supabase
-//       .from("website_projects")
-//       .update({ content: project.content })
-//       .eq("id", project.id)
-//       .then(({ error }: { error: PostgrestError | null }) => {
-//         if (error) console.error("Error initializing project structure:", error)
-//       })
-
-//     return project
-//   }
-
-//   // Handle section selection
-//   const handleSectionSelect = (sectionId: string) => {
-//     setSelectedSection(sectionId)
-//     setSelectedElement(null)
-//   }
-
-//   // Handle element selection
-//   const handleElementSelect = (elementId: string) => {
-//     setSelectedElement(elementId)
-//   }
-
-//   // Add a new section
-//   const addNewSection = () => {
-//     if (!project) return
-
-//     const sectionName = prompt("Enter section name:")
-//     if (!sectionName) return
-
-//     const newSection: Section = {
-//       id: `section-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-//       name: sectionName,
-//       elements: [],
-//     }
-
-//     // Create a deep clone of the project to avoid read-only property issues
-//     const updatedProject = deepClone(project)
-//     updatedProject.content.sections.push(newSection)
-
-//     setProject(updatedProject)
-//     setSelectedSection(newSection.id)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Delete a section
-//   const deleteSection = (sectionId: string) => {
-//     if (!project) return
-
-//     if (!confirm("Are you sure you want to delete this section?")) return
-
-//     // Create a deep clone of the project
-//     const updatedProject = deepClone(project)
-//     updatedProject.content.sections = updatedProject.content.sections.filter((s) => s.id !== sectionId)
-
-//     setProject(updatedProject)
-
-//     // Select another section if available
-//     if (updatedProject.content.sections.length > 0) {
-//       setSelectedSection(updatedProject.content.sections[0].id)
-//     } else {
-//       setSelectedSection(null)
-//     }
-
-//     setSelectedElement(null)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Add a new element to the selected section
-//   const addNewElement = (type: string) => {
-//     if (!project || !selectedSection) return
-
-//     // Create a deep clone of the project
-//     const updatedProject = deepClone(project)
-//     const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
-
-//     if (sectionIndex === -1) return
-
-//     // Create a new element
-//     const newElement = createNewElement(type)
-
-//     // Add the element to the section
-//     updatedProject.content.sections[sectionIndex].elements.push(newElement)
-
-//     setProject(updatedProject)
-//     setSelectedElement(newElement.id)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Delete the selected element
-//   const deleteElement = () => {
-//     if (!project || !selectedSection || !selectedElement) return
-
-//     if (!confirm("Are you sure you want to delete this element?")) return
-
-//     // Create a deep clone of the project
-//     const updatedProject = deepClone(project)
-//     const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
-
-//     if (sectionIndex === -1) return
-
-//     // Remove the element from the section
-//     updatedProject.content.sections[sectionIndex].elements = updatedProject.content.sections[
-//       sectionIndex
-//     ].elements.filter((e) => e.id !== selectedElement)
-
-//     setProject(updatedProject)
-//     setSelectedElement(null)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Move element up in the section
-//   const moveElementUp = () => {
-//     if (!project || !selectedSection || !selectedElement) return
-
-//     // Create a deep clone of the project
-//     const updatedProject = deepClone(project)
-//     const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
-
-//     if (sectionIndex === -1) return
-
-//     const elements = updatedProject.content.sections[sectionIndex].elements
-//     const elementIndex = elements.findIndex((e) => e.id === selectedElement)
-
-//     if (elementIndex <= 0) return // Swap with the element above
-//     ;[elements[elementIndex - 1], elements[elementIndex]] = [elements[elementIndex], elements[elementIndex - 1]]
-
-//     setProject(updatedProject)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Move element down in the section
-//   const moveElementDown = () => {
-//     if (!project || !selectedSection || !selectedElement) return
-
-//     // Create a deep clone of the project
-//     const updatedProject = deepClone(project)
-//     const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
-
-//     if (sectionIndex === -1) return
-
-//     const elements = updatedProject.content.sections[sectionIndex].elements
-//     const elementIndex = elements.findIndex((e) => e.id === selectedElement)
-
-//     if (elementIndex === -1 || elementIndex >= elements.length - 1) return // Swap with the element below
-//     ;[elements[elementIndex], elements[elementIndex + 1]] = [elements[elementIndex + 1], elements[elementIndex]]
-
-//     setProject(updatedProject)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Handle element property change
-//   const handlePropertyChange = (property: string, value: any) => {
-//     if (!project || !selectedSection || !selectedElement) return
-
-//     // Create a deep clone of the project
-//     const updatedProject = deepClone(project)
-//     const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
-
-//     if (sectionIndex === -1) return
-
-//     const elementIndex = updatedProject.content.sections[sectionIndex].elements.findIndex(
-//       (e) => e.id === selectedElement,
-//     )
-
-//     if (elementIndex === -1) return
-
-//     // Determine if this is a content or style property
-//     if (["text", "src", "alt", "href", "buttonText", "level", "height"].includes(property)) {
-//       updatedProject.content.sections[sectionIndex].elements[elementIndex].content[property] = value
-//     } else {
-//       updatedProject.content.sections[sectionIndex].elements[elementIndex].style[property] = value
-//     }
-
-//     setProject(updatedProject)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Handle element move via drag and drop
-//   const handleElementMove = (elementId: string, targetId: string, position: "before" | "after" | "inside") => {
-//     if (!project) return
-
-//     // Create a deep clone of the project
-//     const updatedProject = deepClone(project)
-
-//     // Find the element to move
-//     let sourceElement: ElementType | null = null
-//     let sourceSectionIndex = -1
-//     let sourceElementIndex = -1
-
-//     for (let i = 0; i < updatedProject.content.sections.length; i++) {
-//       const elementIndex = updatedProject.content.sections[i].elements.findIndex((e) => e.id === elementId)
-//       if (elementIndex !== -1) {
-//         sourceElement = deepClone(updatedProject.content.sections[i].elements[elementIndex])
-//         sourceSectionIndex = i
-//         sourceElementIndex = elementIndex
-//         break
-//       }
-//     }
-
-//     if (!sourceElement || sourceSectionIndex === -1 || sourceElementIndex === -1) return
-
-//     // Remove the element from its original position
-//     updatedProject.content.sections[sourceSectionIndex].elements.splice(sourceElementIndex, 1)
-
-//     // Find the target section and element
-//     let targetSectionIndex = -1
-//     let targetElementIndex = -1
-
-//     // Check if the target is a section
-//     const targetSectionIndex2 = updatedProject.content.sections.findIndex((s) => s.id === targetId)
-//     if (targetSectionIndex2 !== -1) {
-//       targetSectionIndex = targetSectionIndex2
-
-//       // If dropping inside a section, add to the end
-//       if (position === "inside") {
-//         updatedProject.content.sections[targetSectionIndex].elements.push(sourceElement)
-//       } else {
-//         // If dropping before or after a section, we need to handle differently
-//         // For simplicity, we'll just add to the beginning or end of the section
-//         if (position === "before") {
-//           updatedProject.content.sections[targetSectionIndex].elements.unshift(sourceElement)
-//         } else {
-//           updatedProject.content.sections[targetSectionIndex].elements.push(sourceElement)
-//         }
-//       }
-//     } else {
-//       // Target is an element
-//       for (let i = 0; i < updatedProject.content.sections.length; i++) {
-//         const elementIndex = updatedProject.content.sections[i].elements.findIndex((e) => e.id === targetId)
-//         if (elementIndex !== -1) {
-//           targetSectionIndex = i
-//           targetElementIndex = elementIndex
-//           break
-//         }
-//       }
-
-//       if (targetSectionIndex === -1 || targetElementIndex === -1) return
-
-//       // Insert the element at the target position
-//       if (position === "before") {
-//         updatedProject.content.sections[targetSectionIndex].elements.splice(targetElementIndex, 0, sourceElement)
-//       } else if (position === "after") {
-//         updatedProject.content.sections[targetSectionIndex].elements.splice(targetElementIndex + 1, 0, sourceElement)
-//       } else {
-//         // "inside" doesn't make sense for elements, so we'll just insert after
-//         updatedProject.content.sections[targetSectionIndex].elements.splice(targetElementIndex + 1, 0, sourceElement)
-//       }
-//     }
-
-//     setProject(updatedProject)
-//     setSelectedElement(sourceElement.id)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Save project changes
-//   const saveProject = async () => {
-//     if (!project) return
-
-//     try {
-//       setSaving(true)
-
-//       const { error } = await supabase
-//         .from("website_projects")
-//         .update({ content: project.content })
-//         .eq("id", project.id)
-
-//       if (error) throw error
-
-//       setUnsavedChanges(false)
-//     } catch (err) {
-//       console.error("Error saving project:", err)
-//       alert("Failed to save changes")
-//     } finally {
-//       setSaving(false)
-//     }
-//   }
-
-//   // Handle project name change
-//   const handleProjectNameChange = async (name: string) => {
-//     if (!project || name === project.name) return
-
-//     try {
-//       setSaving(true)
-
-//       const { error } = await supabase.from("website_projects").update({ name }).eq("id", project.id)
-
-//       if (error) throw error
-
-//       setProject({ ...project, name })
-//     } catch (err) {
-//       console.error("Error updating project name:", err)
-//       alert("Failed to update project name")
-//     } finally {
-//       setSaving(false)
-//     }
-//   }
-
-//   // Toggle preview mode
-//   const togglePreview = () => {
-//     setShowPreview(!showPreview)
-//   }
-
-//   // Change preview device mode
-//   const changePreviewMode = (mode: "desktop" | "tablet" | "mobile") => {
-//     setPreviewMode(mode)
-//   }
-
-//   // Generate TypeScript code
-//   const generateTypeScriptCode = (): string => {
-//     if (!project) return ""
-
-//     let code = `// TypeScript export of ${project.name}\n\n`
-//     code += `import React from 'react';\n\n`
-//     code += `export default function ${formatComponentName(project.name)}() {\n`
-//     code += `  return (\n`
-//     code += `    <div className="container mx-auto">\n`
-
-//     // Generate code for each section
-//     if (project.content && project.content.sections) {
-//       project.content.sections.forEach((section) => {
-//         code += `      <section className="my-8">\n`
-//         code += `        <h2 className="text-2xl font-bold mb-4">${section.name}</h2>\n`
-
-//         // Generate code for each element in the section
-//         if (section.elements && section.elements.length) {
-//           section.elements.forEach((element) => {
-//             code += generateElementCode(element, 8)
-//           })
-//         }
-
-//         code += `      </section>\n`
-//       })
-//     }
-
-//     code += `    </div>\n`
-//     code += `  );\n`
-//     code += `}\n`
-
-//     return code
-//   }
-
-//   // Generate JavaScript code
-//   const generateJavaScriptCode = (): string => {
-//     // Convert TypeScript code to JavaScript (simplified)
-//     const tsCode = generateTypeScriptCode()
-//     return tsCode.replace(/: [a-zA-Z<>[\]]+/g, "")
-//   }
-
-//   // Generate HTML code
-//   const generateHtmlCode = (): string => {
-//     if (!project) return ""
-
-//     let code = `<!DOCTYPE html>\n`
-//     code += `<html lang="en">\n`
-//     code += `<head>\n`
-//     code += `  <meta charset="UTF-8">\n`
-//     code += `  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n`
-//     code += `  <title>${project.name}</title>\n`
-//     code += `  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">\n`
-//     code += `</head>\n`
-//     code += `<body>\n`
-//     code += `  <div class="container mx-auto">\n`
-
-//     // Generate HTML for each section
-//     if (project.content && project.content.sections) {
-//       project.content.sections.forEach((section) => {
-//         code += `    <section class="my-8">\n`
-//         code += `      <h2 class="text-2xl font-bold mb-4">${section.name}</h2>\n`
-
-//         // Generate HTML for each element in the section
-//         if (section.elements && section.elements.length) {
-//           section.elements.forEach((element) => {
-//             code += generateElementHtml(element, 6)
-//           })
-//         }
-
-//         code += `    </section>\n`
-//       })
-//     }
-
-//     code += `  </div>\n`
-//     code += `</body>\n`
-//     code += `</html>`
-
-//     return code
-//   }
-
-//   // Generate element code
-//   const generateElementCode = (element: any, indentLevel: number): string => {
-//     const indent = " ".repeat(indentLevel)
-//     let code = ""
-
-//     switch (element.type) {
-//       case "heading":
-//         const HeadingTag = `h${element.content?.level || 2}`
-//         code += `${indent}<${HeadingTag} className="${getStyleClasses(element.style)}">${element.content?.text || "Heading"}</${HeadingTag}>\n`
-//         break
-//       case "paragraph":
-//         code += `${indent}<p className="${getStyleClasses(element.style)}">${element.content?.text || "Paragraph text"}</p>\n`
-//         break
-//       case "image":
-//         code += `${indent}<img src="${element.content?.src || "/placeholder.svg"}" alt="${element.content?.alt || ""}" className="${getStyleClasses(element.style)}" />\n`
-//         break
-//       case "button":
-//         code += `${indent}<button className="${getStyleClasses(element.style)}">${element.content?.buttonText || "Button"}</button>\n`
-//         break
-//       case "container":
-//         code += `${indent}<div className="${getStyleClasses(element.style)}">\n`
-//         if (element.children && element.children.length) {
-//           element.children.forEach((child: any) => {
-//             code += generateElementCode(child, indentLevel + 2)
-//           })
-//         }
-//         code += `${indent}</div>\n`
-//         break
-//       default:
-//         code += `${indent}<div className="${getStyleClasses(element.style)}">${element.content?.text || ""}</div>\n`
-//     }
-
-//     return code
-//   }
-
-//   // Generate element HTML
-//   const generateElementHtml = (element: any, indentLevel: number): string => {
-//     const indent = " ".repeat(indentLevel)
-//     let code = ""
-
-//     switch (element.type) {
-//       case "heading":
-//         const HeadingTag = `h${element.content?.level || 2}`
-//         code += `${indent}<${HeadingTag} class="${getStyleClasses(element.style, true)}">${element.content?.text || "Heading"}</${HeadingTag}>\n`
-//         break
-//       case "paragraph":
-//         code += `${indent}<p class="${getStyleClasses(element.style, true)}">${element.content?.text || "Paragraph text"}</p>\n`
-//         break
-//       case "image":
-//         code += `${indent}<img src="${element.content?.src || "/placeholder.svg"}" alt="${element.content?.alt || ""}" class="${getStyleClasses(element.style, true)}" />\n`
-//         break
-//       case "button":
-//         code += `${indent}<button class="${getStyleClasses(element.style, true)}">${element.content?.buttonText || "Button"}</button>\n`
-//         break
-//       case "container":
-//         code += `${indent}<div class="${getStyleClasses(element.style, true)}">\n`
-//         if (element.children && element.children.length) {
-//           element.children.forEach((child: any) => {
-//             code += generateElementHtml(child, indentLevel + 2)
-//           })
-//         }
-//         code += `${indent}</div>\n`
-//         break
-//       default:
-//         code += `${indent}<div class="${getStyleClasses(element.style, true)}">${element.content?.text || ""}</div>\n`
-//     }
-
-//     return code
-//   }
-
-//   // Get style classes
-//   const getStyleClasses = (style: Record<string, any> | undefined, isHtml = false): string => {
-//     if (!style) return ""
-
-//     const classes = []
-
-//     // Map some common style properties to Tailwind classes
-//     if (style.color) classes.push(`text-${style.color}`)
-//     if (style.backgroundColor) classes.push(`bg-${style.backgroundColor}`)
-//     if (style.fontSize) classes.push(`text-${style.fontSize}`)
-//     if (style.fontWeight) classes.push(`font-${style.fontWeight}`)
-//     if (style.textAlign) classes.push(`text-${style.textAlign}`)
-//     if (style.padding) classes.push(`p-${style.padding}`)
-//     if (style.margin) classes.push(`m-${style.margin}`)
-//     if (style.borderRadius) classes.push(`rounded-${style.borderRadius}`)
-
-//     return classes.join(" ")
-//   }
-
-//   // Format component name
-//   const formatComponentName = (name: string): string => {
-//     // Remove non-alphanumeric characters and convert to PascalCase
-//     return name
-//       .replace(/[^a-zA-Z0-9]/g, " ")
-//       .split(" ")
-//       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-//       .join("")
-//   }
-
-//   // Download project as code
-//   const downloadProject = (format = "typescript") => {
-//     if (!project) return
-
-//     try {
-//       setExporting(true)
-//       let code = ""
-//       let fileName = ""
-
-//       // Generate code based on format
-//       switch (format) {
-//         case "typescript":
-//           code = generateTypeScriptCode()
-//           fileName = `${project.name.toLowerCase().replace(/\s+/g, "-")}.tsx`
-//           break
-//         case "javascript":
-//           code = generateJavaScriptCode()
-//           fileName = `${project.name.toLowerCase().replace(/\s+/g, "-")}.jsx`
-//           break
-//         case "html":
-//           code = generateHtmlCode()
-//           fileName = `${project.name.toLowerCase().replace(/\s+/g, "-")}.html`
-//           break
-//         default:
-//           code = JSON.stringify(project.content, null, 2)
-//           fileName = `${project.name.toLowerCase().replace(/\s+/g, "-")}.json`
-//       }
-
-//       // Create a blob and download it
-//       const blob = new Blob([code], { type: "text/plain" })
-//       const url = URL.createObjectURL(blob)
-//       const a = document.createElement("a")
-//       a.href = url
-//       a.download = fileName
-//       document.body.appendChild(a)
-//       a.click()
-//       document.body.removeChild(a)
-//       URL.revokeObjectURL(url)
-//     } catch (err) {
-//       console.error("Error exporting project:", err)
-//       alert("Failed to export project")
-//     } finally {
-//       setExporting(false)
-//     }
-//   }
-
-//   // Upload project as repository
-//   const uploadAsRepository = async (format = "typescript") => {
-//     if (!project || !userId) return
-
-//     try {
-//       setExporting(true)
-
-//       // Generate files based on format
-//       const files = []
-//       const projectName = `${project.name}-export`
-
-//       switch (format) {
-//         case "typescript":
-//           // Add main component file
-//           files.push({
-//             name: `${formatComponentName(project.name)}.tsx`,
-//             content: generateTypeScriptCode(),
-//           })
-
-//           // Add package.json
-//           files.push({
-//             name: "package.json",
-//             content: JSON.stringify(
-//               {
-//                 name: project.name.toLowerCase().replace(/\s+/g, "-"),
-//                 version: "1.0.0",
-//                 private: true,
-//                 dependencies: {
-//                   react: "^18.2.0",
-//                   "react-dom": "^18.2.0",
-//                   next: "^13.4.0",
-//                   typescript: "^5.0.0",
-//                 },
-//               },
-//               null,
-//               2,
-//             ),
-//           })
-
-//           // Add tsconfig.json
-//           files.push({
-//             name: "tsconfig.json",
-//             content: JSON.stringify(
-//               {
-//                 compilerOptions: {
-//                   target: "es5",
-//                   lib: ["dom", "dom.iterable", "esnext"],
-//                   allowJs: true,
-//                   skipLibCheck: true,
-//                   strict: true,
-//                   forceConsistentCasingInFileNames: true,
-//                   noEmit: true,
-//                   esModuleInterop: true,
-//                   module: "esnext",
-//                   moduleResolution: "node",
-//                   resolveJsonModule: true,
-//                   isolatedModules: true,
-//                   jsx: "preserve",
-//                   incremental: true,
-//                 },
-//                 include: ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-//                 exclude: ["node_modules"],
-//               },
-//               null,
-//               2,
-//             ),
-//           })
-
-//           // Add README.md
-//           files.push({
-//             name: "README.md",
-//             content: `# ${project.name}\n\nThis project was exported from the Website Builder.\n\n## Getting Started\n\n1. Install dependencies:\n\n\`\`\`bash\nnpm install\n\`\`\`\n\n2. Run the development server:\n\n\`\`\`bash\nnpm run dev\n\`\`\`\n\n3. Open [http://localhost:3000](http://localhost:3000) in your browser.\n`,
-//           })
-//           break
-
-//         case "javascript":
-//           // Add main component file
-//           files.push({
-//             name: `${formatComponentName(project.name)}.jsx`,
-//             content: generateJavaScriptCode(),
-//           })
-
-//           // Add package.json
-//           files.push({
-//             name: "package.json",
-//             content: JSON.stringify(
-//               {
-//                 name: project.name.toLowerCase().replace(/\s+/g, "-"),
-//                 version: "1.0.0",
-//                 private: true,
-//                 dependencies: {
-//                   react: "^18.2.0",
-//                   "react-dom": "^18.2.0",
-//                   next: "^13.4.0",
-//                 },
-//               },
-//               null,
-//               2,
-//             ),
-//           })
-
-//           // Add README.md
-//           files.push({
-//             name: "README.md",
-//             content: `# ${project.name}\n\nThis project was exported from the Website Builder.\n\n## Getting Started\n\n1. Install dependencies:\n\n\`\`\`bash\nnpm install\n\`\`\`\n\n2. Run the development server:\n\n\`\`\`bash\nnpm run dev\n\`\`\`\n\n3. Open [http://localhost:3000](http://localhost:3000) in your browser.\n`,
-//           })
-//           break
-
-//         case "html":
-//           // Add HTML file
-//           files.push({
-//             name: "index.html",
-//             content: generateHtmlCode(),
-//           })
-
-//           // Add README.md
-//           files.push({
-//             name: "README.md",
-//             content: `# ${project.name}\n\nThis project was exported from the Website Builder as a static HTML file.\n\n## Getting Started\n\nSimply open the index.html file in your browser to view the website.\n`,
-//           })
-//           break
-//       }
-
-//       // Create repository project
-//       const { data: repoProject, error: projectError } = await supabase
-//         .from("projects")
-//         .insert({
-//           name: projectName,
-//           description: `Exported from Website Builder: ${project.name}`,
-//           visibility: "private",
-//           owner_id: userId,
-//           created_at: new Date().toISOString(),
-//         })
-//         .select()
-//         .single()
-
-//       if (projectError) throw new Error("Failed to create repository project")
-
-//       // Add files to the project
-//       const fileInserts = files.map((file) => ({
-//         project_id: repoProject.id,
-//         name: file.name,
-//         content: file.content,
-//         path: file.name,
-//         type: "file",
-//         created_at: new Date().toISOString(),
-//       }))
-
-//       const { error: filesError } = await supabase.from("project_files").insert(fileInserts)
-
-//       if (filesError) throw new Error("Failed to add files to repository project")
-
-//       alert(`Project successfully uploaded as repository: ${projectName}`)
-
-//       // Optionally redirect to the new project
-//       if (confirm("Would you like to view your new repository project?")) {
-//         router.push(`/dashboard/project/${repoProject.id}`)
-//       }
-//     } catch (err) {
-//       console.error("Error uploading as repository:", err)
-//       alert(err instanceof Error ? err.message : "Failed to upload as repository")
-//     } finally {
-//       setExporting(false)
-//     }
-//   }
-
-//   // Get the currently selected element
-//   const getSelectedElement = (): ElementType | null => {
-//     if (!project || !selectedSection || !selectedElement) return null
-
-//     const section = project.content.sections.find((s) => s.id === selectedSection)
-//     if (!section) return null
-
-//     return section.elements.find((e) => e.id === selectedElement) || null
-//   }
-
-//   // Handle image selection from the images panel
-//   const handleImageSelect = (imageUrl: string) => {
-//     if (!project || !selectedSection) return
-
-//     // Create a new image element with the selected image
-//     const newElement = createNewElement("image")
-//     newElement.content.src = imageUrl
-//     newElement.content.alt = "Uploaded image"
-
-//     // Add the element to the selected section
-//     const updatedProject = deepClone(project)
-//     const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
-
-//     if (sectionIndex === -1) return
-
-//     updatedProject.content.sections[sectionIndex].elements.push(newElement)
-
-//     setProject(updatedProject)
-//     setSelectedElement(newElement.id)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Handle AI-generated elements
-//   const handleAIGenerate = (elements: any[]) => {
-//     if (!project || !selectedSection || !elements.length) return
-
-//     // Create a deep clone of the project
-//     const updatedProject = deepClone(project)
-//     const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
-
-//     if (sectionIndex === -1) return
-
-//     // Add all generated elements to the section
-//     updatedProject.content.sections[sectionIndex].elements.push(...elements)
-
-//     setProject(updatedProject)
-//     setUnsavedChanges(true)
-//   }
-
-//   // Handle premium upgrade success
-//   const handleUpgradeSuccess = () => {
-//     setShowCheckoutModal(false)
-//     setIsPremiumUser(true)
-
-//     // Update client-side storage
-//     localStorage.setItem("userPremiumStatus", "true")
-//     document.cookie = `isPremium=true; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`
-
-//     // Switch to AI panel after successful payment
-//     setActivePanel("ai")
-//   }
-
-//   if (loading) {
-//     return (
-//       <div className="flex items-center justify-center min-h-screen bg-background">
-//         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-//       </div>
-//     )
-//   }
-
-//   if (error) {
-//     return (
-//       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
-//         <h1 className="text-2xl font-bold text-destructive mb-4">Error</h1>
-//         <p className="text-foreground mb-6">{error}</p>
-//         <Link
-//           href="/dashboard/apps/website-builder/designer"
-//           className="flex items-center text-primary hover:underline"
-//         >
-//           <ArrowLeft className="mr-2 h-4 w-4" />
-//           Back to Projects
-//         </Link>
-//       </div>
-//     )
-//   }
-
-//   return (
-//     <div className="flex flex-col h-screen bg-background">
-//       {/* Header */}
-//       <header className="bg-background border-b border-border p-4">
-//         <div className="flex items-center justify-between">
-//           <div className="flex items-center">
-//             <Link
-//               href="/dashboard/apps/website-builder/designer"
-//               className="mr-4 text-muted-foreground hover:text-foreground"
-//             >
-//               <ArrowLeft className="h-5 w-5" />
-//             </Link>
-//             <h1 className="text-xl font-semibold text-foreground">{project?.name || "Website Designer"}</h1>
-//           </div>
-//           <div className="flex items-center space-x-3">
-//             <button
-//               onClick={saveProject}
-//               disabled={!unsavedChanges || saving}
-//               className={`flex items-center px-3 py-2 rounded text-sm ${unsavedChanges ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
-//             >
-//               <Save className="h-4 w-4 mr-1" />
-//               {saving ? "Saving..." : "Save"}
-//             </button>
-//             <button
-//               onClick={togglePreview}
-//               className={`flex items-center px-3 py-2 rounded text-sm ${showPreview ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
-//             >
-//               <Eye className="h-4 w-4 mr-1" />
-//               {showPreview ? "Edit" : "Preview"}
-//             </button>
-//           </div>
-//         </div>
-//       </header>
-
-//       {/* Main Content */}
-//       <DragDropProvider onElementMove={handleElementMove}>
-//         <div className="flex flex-1 overflow-hidden">
-//           {/* Sidebar Navigation */}
-//           <SidebarNavigation
-//             onSelectPanel={setActivePanel}
-//             activePanel={activePanel}
-//             isPremiumUser={isPremiumUser}
-//             onUpgradeClick={() => setShowCheckoutModal(true)}
-//           />
-
-//           {/* Panel Content */}
-//           {!showPreview && (
-//             <>
-//               {activePanel === "elements" && <ElementsPanel onAddElement={addNewElement} />}
-
-//               {activePanel === "images" && <ImagesPanel onSelectImage={handleImageSelect} projectId={params.id} />}
-
-//               {activePanel === "ai" && (
-//                 <AIDesignAssistant
-//                   isPremiumUser={isPremiumUser}
-//                   onUpgradeClick={() => setShowCheckoutModal(true)}
-//                   onAIGenerate={handleAIGenerate}
-//                   projectId={params.id}
-//                 />
-//               )}
-
-//               {activePanel === "settings" && (
-//                 <SettingsPanel
-//                   onSave={saveProject}
-//                   onExport={() => {}} // This is now handled via the custom event
-//                   projectName={project?.name || ""}
-//                   onProjectNameChange={handleProjectNameChange}
-//                   saving={saving}
-//                 />
-//               )}
-
-//               {/* Sections Panel */}
-//               <div className="w-64 bg-card border-r border-border flex flex-col">
-//                 <div className="p-4 border-b border-border">
-//                   <div className="flex items-center justify-between">
-//                     <h2 className="font-medium text-foreground">Sections</h2>
-//                     <button
-//                       onClick={addNewSection}
-//                       className="p-1 text-muted-foreground hover:text-foreground hover:bg-secondary rounded"
-//                     >
-//                       <Plus className="h-4 w-4" />
-//                     </button>
-//                   </div>
-//                 </div>
-//                 <div className="flex-1 overflow-y-auto p-2">
-//                   {project?.content?.sections?.map((section) => (
-//                     <div
-//                       key={section.id}
-//                       onClick={() => handleSectionSelect(section.id)}
-//                       className={`flex items-center p-2 rounded cursor-pointer ${
-//                         selectedSection === section.id ? "bg-secondary" : "hover:bg-secondary/50"
-//                       }`}
-//                     >
-//                       <Layout className="h-4 w-4 mr-2 text-muted-foreground" />
-//                       <span className="flex-1 truncate text-sm text-foreground">{section.name}</span>
-//                       {selectedSection === section.id && (
-//                         <button
-//                           onClick={(e) => {
-//                             e.stopPropagation()
-//                             deleteSection(section.id)
-//                           }}
-//                           className="p-1 text-muted-foreground hover:text-destructive"
-//                         >
-//                           <Trash className="h-3 w-3" />
-//                         </button>
-//                       )}
-//                     </div>
-//                   ))}
-//                 </div>
-//               </div>
-
-//               {/* Properties Panel */}
-//               {selectedElement && getSelectedElement() && (
-//                 <div className="w-72 bg-card border-r border-border flex flex-col">
-//                   <div className="p-4 border-b border-border">
-//                     <h2 className="font-medium text-foreground">Properties</h2>
-//                   </div>
-//                   <ElementProperties element={getSelectedElement()!} onPropertyChange={handlePropertyChange} />
-//                 </div>
-//               )}
-//             </>
-//           )}
-
-//           {/* Preview / Canvas */}
-//           <div className="flex-1 flex flex-col">
-//             {showPreview ? (
-//               <div className="flex-1 flex flex-col">
-//                 <PreviewToolbar previewMode={previewMode} onChangePreviewMode={changePreviewMode} />
-//                 <div className="flex-1 bg-secondary/50 flex items-center justify-center p-4 overflow-auto">
-//                   <div
-//                     className={`bg-background shadow-lg ${
-//                       previewMode === "desktop"
-//                         ? "w-full h-full"
-//                         : previewMode === "tablet"
-//                           ? "w-[768px] h-[1024px]"
-//                           : "w-[375px] h-[667px]"
-//                     } overflow-auto`}
-//                   >
-//                     <div className="p-4">
-//                       {project?.content?.sections?.map((section) => (
-//                         <div key={section.id} className="mb-8">
-//                           <h2 className="text-lg font-semibold mb-4 text-muted-foreground border-b border-border pb-2">
-//                             {section.name}
-//                           </h2>
-//                           <div>
-//                             {section.elements.map((element) => (
-//                               <div key={element.id}>
-//                                 <ElementRenderer element={element} isEditing={false} isSelected={false} />
-//                               </div>
-//                             ))}
-//                           </div>
-//                         </div>
-//                       ))}
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//             ) : (
-//               <div className="flex-1 bg-secondary/50 flex items-center justify-center p-4 overflow-auto">
-//                 <div className="bg-background shadow-lg w-full h-full overflow-auto">
-//                   <div className="p-4">
-//                     {selectedSection ? (
-//                       <div>
-//                         {project?.content?.sections
-//                           .filter((s) => s.id === selectedSection)
-//                           .map((section) => (
-//                             <DroppableSection
-//                               key={section.id}
-//                               section={section}
-//                               selectedElement={selectedElement}
-//                               onElementSelect={handleElementSelect}
-//                             />
-//                           ))}
-//                       </div>
-//                     ) : (
-//                       <div className="text-center text-muted-foreground py-10">
-//                         <div className="h-12 w-12 mx-auto mb-4 opacity-50 border-2 border-dashed border-border rounded-lg flex items-center justify-center">
-//                           +
-//                         </div>
-//                         <p>Select a section to edit or create a new one</p>
-//                       </div>
-//                     )}
-//                   </div>
-//                 </div>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       </DragDropProvider>
-
-//       {/* Stripe Checkout Modal */}
-//       {showCheckoutModal && userId && (
-//         <StripeCheckoutModal
-//           isOpen={showCheckoutModal}
-//           onClose={() => setShowCheckoutModal(false)}
-//           onSuccess={handleUpgradeSuccess}
-//           userId={userId}
-//           projectId={params.id}
-//         />
-//       )}
-//     </div>
-//   )
-// }
