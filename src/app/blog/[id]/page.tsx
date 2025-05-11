@@ -596,7 +596,7 @@ export default function BlogPostPage() {
   }
 
   return (
-    <div className="w-full min-h-screen text-white bg-black relative">
+    <div className="w-full min-h-screen text-white bg-background relative">
       <Navbar />
       <main className="flex flex-col pt-32 pb-20">
         <div className="px-6 mx-auto max-w-4xl w-full">

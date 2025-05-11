@@ -122,7 +122,7 @@ export default function BlogPage() {
   return (
     <div>
       <Navbar />
-      <div className="w-full min-h-screen text-white bg-black relative">
+      <div className="w-full min-h-screen text-white bg-background relative">
         <main className="flex flex-col pt-24 pb-20">
           <div className="px-4 sm:px-6 mx-auto max-w-7xl w-full">
             <div className="flex flex-col items-center text-center mb-10">

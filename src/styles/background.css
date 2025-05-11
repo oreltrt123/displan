@@ -1,0 +1,72 @@
+.grid-background {
+  background-color: #f8fafc;
+  background-image: linear-gradient(rgba(220, 220, 220, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(220, 220, 220, 0.5) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.card-container {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  width: 460px;
+}
+
+.cube-icon {
+  margin-bottom: 4px;
+}
+
+.button-primary {
+  background-color: #4285f4;
+  border: none;
+  height: 48px;
+}
+
+.button-primary:hover {
+  background-color: #3b78e7;
+}
+
+.button-secondary {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  height: 48px;
+}
+
+.button-secondary:hover {
+  background-color: #f8fafc;
+}
+
+.disclaimer-text {
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+/* Typing animation */
+.typing-container {
+  height: 48px;
+}
+
+#typing-text {
+  overflow: hidden;
+  border-right: 2px solid transparent;
+  white-space: normal;
+  animation: typing 0.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from {
+    clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+@keyframes blink-caret {
+  from,
+  to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: #4285f4;
+  }
+}

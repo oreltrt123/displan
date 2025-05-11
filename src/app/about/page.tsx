@@ -6,7 +6,7 @@ import Link from "next/link"
 
 export default function AboutPage() {
   return (
-    <div className="w-full min-h-screen text-white bg-black relative">
+    <div className="w-full min-h-screen text-white bg-background relative">
       <Navbar />
       <main className="flex flex-col gap-16 items-center pt-32 pb-20">
         <section className="px-6 mx-auto max-w-[800px]">

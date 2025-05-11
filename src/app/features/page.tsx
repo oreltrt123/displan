@@ -53,7 +53,7 @@ export default function FeaturesPage() {
   }, [showInfo])
 
   return (
-    <div className="w-full min-h-screen text-white bg-black relative">
+    <div className="w-full min-h-screen text-white bg-background relative">
       <Navbar />
       <main className="flex flex-col gap-20 items-center pt-32 pb-20">
         {/* Hero Section */}

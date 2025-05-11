@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     // Generate a safe subdomain from the project name
     const subdomain = project.name.toLowerCase().replace(/[^a-z0-9]/g, "-")
-    const fullDomain = `${subdomain}.displan.design`
+    const fullDomain = `${subdomain}www.displan.design`
 
     // Add metadata to the HTML content
     const enhancedHtml = addMetadataToHtml(htmlContent, project.name, subdomain)
@@ -92,7 +92,7 @@ function addMetadataToHtml(html: string, projectName: string, subdomain: string)
     <meta name="generator" content="Displan Website Builder">
     <meta property="og:title" content="${projectName}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://${subdomain}.displan.design">
+    <meta property="og:url" content="https://${subdomain}www.displan.design">
   `
 
   // Insert meta tags after the head tag

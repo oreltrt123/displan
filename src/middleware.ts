@@ -10,10 +10,10 @@ export async function middleware(req: NextRequest) {
   const hostname = req.headers.get("host") || ""
 
   // Check if the request is for a subdomain of displan.design
-  const subdomain = hostname.split(".displan.design")[0]
+  const subdomain = hostname.split("www.displan.design")[0]
 
   // If this is a subdomain request and not the main domain
-  if (hostname.includes(".displan.design") && !hostname.startsWith("www")) {
+  if (hostname.includes("www.displan.design") && !hostname.startsWith("www")) {
     return NextResponse.rewrite(new URL(`/sites/${subdomain}`, req.url))
   }
 
