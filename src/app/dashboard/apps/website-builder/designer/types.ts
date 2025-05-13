@@ -11,6 +11,8 @@ export interface ElementType {
       height?: string
       [key: string]: any
     }
+  transitions?: Transition[]
+  children?: ElementType[]
     style: {
       color?: string
       backgroundColor?: string
@@ -28,7 +30,8 @@ export interface ElementType {
       [key: string]: any
     }
   }
-  
+
+
   export interface Section {
     id: string
     name: string
@@ -45,9 +48,11 @@ export interface ElementType {
         [key: string]: any
       }
     }
+  type: string
+  created_at?: string
+  updated_at?: string
   }
   
-
 
 
 
@@ -58,19 +63,7 @@ export interface ElementType {
     timingFunction: string
     delay: number
   }
-  
-  export interface ElementType {
-    id: string
-    type: string
-    name: string
-  transitions?: {
-    property: string
-    duration: number
-    timingFunction: string
-    delay: number
-    animation?: string
-  }[]
-  }
+
 
   export interface Section {
     id: string
@@ -82,11 +75,44 @@ export interface ElementType {
     id: string
     name: string
     sections: Section[]
+    path: string
   }
-  
+
   export interface Website {
     id: string
     name: string
     pages: Page[]
   }
   
+
+export interface ProjectContent {
+  sections: Section[]
+  globalStyles?: Record<string, any>
+  pages?: Page[]
+  settings?: ProjectSettings
+}
+
+export interface Section {
+  id: string
+  name: string
+  elements: ElementType[]
+}
+
+
+export interface ProjectSettings {
+  siteName: string
+  favicon?: string
+  theme?: {
+    primaryColor?: string
+    secondaryColor?: string
+    fontFamily?: string
+  }
+}
+
+export interface Transition {
+  property: string
+  duration: number
+  timingFunction: string
+  delay: number
+  animation?: string
+}

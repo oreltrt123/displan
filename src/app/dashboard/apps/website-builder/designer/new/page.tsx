@@ -7,6 +7,12 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Palette, Save, X } from "lucide-react"
 import { createClient } from "../../../../../../../supabase/client"
+import { blankTemplate } from "../templates/blank-template"
+import { businessTemplate } from "../templates/business-template"
+import { portfolioTemplate } from "../templates/portfolio-template"
+import { ecommerceTemplate } from "../templates/ecommerce-template"
+import  blogTemplate from "../templates/blog-template"
+import { landingTemplate } from "../templates/landing-template"
 
 export default function NewDesignerProjectPage() {
   const router = useRouter()
@@ -39,212 +45,30 @@ export default function NewDesignerProjectPage() {
         return
       }
 
-      // Create initial content based on template
+      // Get the selected template
       let initialContent = {}
 
-      if (template === "blank") {
-        initialContent = {
-          pages: [
-            {
-              id: "home",
-              name: "Home",
-              elements: [
-                {
-                  id: "header",
-                  type: "header",
-                  content: {
-                    title: "My Website",
-                    subtitle: "Welcome to my website",
-                    showNav: true,
-                    navItems: [
-                      { label: "Home", link: "#" },
-                      { label: "About", link: "#" },
-                      { label: "Contact", link: "#" },
-                    ],
-                  },
-                  style: {
-                    backgroundColor: "#ffffff",
-                    textColor: "#000000",
-                    padding: "20px",
-                  },
-                },
-                {
-                  id: "hero",
-                  type: "hero",
-                  content: {
-                    heading: "Welcome to My Website",
-                    subheading: "This is a blank template. Start building your website!",
-                    buttonText: "Learn More",
-                    buttonLink: "#",
-                  },
-                  style: {
-                    backgroundColor: "#f5f5f5",
-                    textColor: "#333333",
-                    height: "500px",
-                    alignment: "center",
-                  },
-                },
-                {
-                  id: "footer",
-                  type: "footer",
-                  content: {
-                    copyright: "© 2023 My Website. All rights reserved.",
-                    showSocial: true,
-                    socialLinks: [
-                      { platform: "twitter", link: "#" },
-                      { platform: "facebook", link: "#" },
-                      { platform: "instagram", link: "#" },
-                    ],
-                  },
-                  style: {
-                    backgroundColor: "#333333",
-                    textColor: "#ffffff",
-                    padding: "20px",
-                  },
-                },
-              ],
-            },
-          ],
-          settings: {
-            siteName: name,
-            favicon: "",
-            theme: {
-              primaryColor: "#0066cc",
-              secondaryColor: "#f5f5f5",
-              fontFamily: "Arial, sans-serif",
-            },
-          },
-        }
-      } else if (template === "business") {
-        initialContent = {
-          pages: [
-            {
-              id: "home",
-              name: "Home",
-              elements: [
-                {
-                  id: "header",
-                  type: "header",
-                  content: {
-                    title: "Business Name",
-                    subtitle: "Professional services",
-                    showNav: true,
-                    navItems: [
-                      { label: "Home", link: "#" },
-                      { label: "Services", link: "#" },
-                      { label: "About", link: "#" },
-                      { label: "Contact", link: "#" },
-                    ],
-                  },
-                  style: {
-                    backgroundColor: "#ffffff",
-                    textColor: "#333333",
-                    padding: "20px",
-                  },
-                },
-                {
-                  id: "hero",
-                  type: "hero",
-                  content: {
-                    heading: "Professional Solutions for Your Business",
-                    subheading: "We provide top-quality services to help your business grow",
-                    buttonText: "Get Started",
-                    buttonLink: "#",
-                  },
-                  style: {
-                    backgroundColor: "#0066cc",
-                    textColor: "#ffffff",
-                    height: "600px",
-                    alignment: "center",
-                  },
-                },
-                {
-                  id: "services",
-                  type: "features",
-                  content: {
-                    heading: "Our Services",
-                    features: [
-                      {
-                        title: "Service 1",
-                        description: "Description of service 1",
-                        icon: "briefcase",
-                      },
-                      {
-                        title: "Service 2",
-                        description: "Description of service 2",
-                        icon: "chart",
-                      },
-                      {
-                        title: "Service 3",
-                        description: "Description of service 3",
-                        icon: "shield",
-                      },
-                    ],
-                  },
-                  style: {
-                    backgroundColor: "#ffffff",
-                    textColor: "#333333",
-                    padding: "60px 20px",
-                  },
-                },
-                {
-                  id: "testimonials",
-                  type: "testimonials",
-                  content: {
-                    heading: "What Our Clients Say",
-                    testimonials: [
-                      {
-                        quote: "This company provided excellent service!",
-                        author: "John Doe",
-                        company: "ABC Corp",
-                      },
-                      {
-                        quote: "Highly recommended for business solutions.",
-                        author: "Jane Smith",
-                        company: "XYZ Inc",
-                      },
-                    ],
-                  },
-                  style: {
-                    backgroundColor: "#f5f5f5",
-                    textColor: "#333333",
-                    padding: "60px 20px",
-                  },
-                },
-                {
-                  id: "footer",
-                  type: "footer",
-                  content: {
-                    copyright: "© 2023 Business Name. All rights reserved.",
-                    showSocial: true,
-                    socialLinks: [
-                      { platform: "twitter", link: "#" },
-                      { platform: "linkedin", link: "#" },
-                      { platform: "facebook", link: "#" },
-                    ],
-                    address: "123 Business St, City, Country",
-                    phone: "+1 234 567 890",
-                    email: "info@business.com",
-                  },
-                  style: {
-                    backgroundColor: "#333333",
-                    textColor: "#ffffff",
-                    padding: "40px 20px",
-                  },
-                },
-              ],
-            },
-          ],
-          settings: {
-            siteName: name,
-            favicon: "",
-            theme: {
-              primaryColor: "#0066cc",
-              secondaryColor: "#f5f5f5",
-              fontFamily: "Helvetica, Arial, sans-serif",
-            },
-          },
-        }
+      switch (template) {
+        case "blank":
+          initialContent = blankTemplate(name)
+          break
+        case "business":
+          initialContent = businessTemplate(name)
+          break
+        case "portfolio":
+          initialContent = portfolioTemplate(name)
+          break
+        case "ecommerce":
+          initialContent = ecommerceTemplate(name)
+          break
+        case "blog":
+          initialContent = blogTemplate(name)
+          break
+        case "landing":
+          initialContent = landingTemplate(name)
+          break
+        default:
+          initialContent = blankTemplate(name)
       }
 
       // Create new project in database
@@ -337,7 +161,7 @@ export default function NewDesignerProjectPage() {
 
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-3">Choose a Template</label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div
                     className={`border rounded-lg p-4 cursor-pointer ${
                       template === "blank"
@@ -346,8 +170,12 @@ export default function NewDesignerProjectPage() {
                     }`}
                     onClick={() => setTemplate("blank")}
                   >
-                    <div className="aspect-video bg-white/10 rounded flex items-center justify-center mb-3">
-                      <span className="text-lg font-medium">Blank</span>
+                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                      <img
+                        src="/placeholder.svg?height=200&width=320"
+                        alt="Blank Template Preview"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <h3 className="font-medium">Blank Template</h3>
                     <p className="text-sm text-white/70">Start with a clean slate</p>
@@ -361,11 +189,91 @@ export default function NewDesignerProjectPage() {
                     }`}
                     onClick={() => setTemplate("business")}
                   >
-                    <div className="aspect-video bg-white/10 rounded flex items-center justify-center mb-3">
-                      <span className="text-lg font-medium">Business</span>
+                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                      <img
+                        src="/placeholder.svg?height=200&width=320"
+                        alt="Business Template Preview"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <h3 className="font-medium">Business Template</h3>
                     <p className="text-sm text-white/70">Professional business website</p>
+                  </div>
+
+                  <div
+                    className={`border rounded-lg p-4 cursor-pointer ${
+                      template === "portfolio"
+                        ? "border-purple-500 bg-purple-500/10"
+                        : "border-white/10 bg-white/5 hover:bg-white/10"
+                    }`}
+                    onClick={() => setTemplate("portfolio")}
+                  >
+                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                      <img
+                        src="/placeholder.svg?height=200&width=320"
+                        alt="Portfolio Template Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <h3 className="font-medium">Portfolio Template</h3>
+                    <p className="text-sm text-white/70">Showcase your work beautifully</p>
+                  </div>
+
+                  <div
+                    className={`border rounded-lg p-4 cursor-pointer ${
+                      template === "ecommerce"
+                        ? "border-purple-500 bg-purple-500/10"
+                        : "border-white/10 bg-white/5 hover:bg-white/10"
+                    }`}
+                    onClick={() => setTemplate("ecommerce")}
+                  >
+                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                      <img
+                        src="/placeholder.svg?height=200&width=320"
+                        alt="E-commerce Template Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <h3 className="font-medium">E-commerce Template</h3>
+                    <p className="text-sm text-white/70">Online store with product showcase</p>
+                  </div>
+
+                  <div
+                    className={`border rounded-lg p-4 cursor-pointer ${
+                      template === "blog"
+                        ? "border-purple-500 bg-purple-500/10"
+                        : "border-white/10 bg-white/5 hover:bg-white/10"
+                    }`}
+                    onClick={() => setTemplate("blog")}
+                  >
+                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                      <img
+                        src="/placeholder.svg?height=200&width=320"
+                        alt="Blog Template Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <h3 className="font-medium">Blog Template</h3>
+                    <p className="text-sm text-white/70">Content-focused blog layout</p>
+                  </div>
+
+                  <div
+                    className={`border rounded-lg p-4 cursor-pointer ${
+                      template === "landing"
+                        ? "border-purple-500 bg-purple-500/10"
+                        : "border-white/10 bg-white/5 hover:bg-white/10"
+                    }`}
+                    onClick={() => setTemplate("landing")}
+                  >
+                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                      <img
+                        src="/placeholder.svg?height=200&width=320"
+                        alt="Landing Page Template Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <h3 className="font-medium">Landing Page</h3>
+                    <p className="text-sm text-white/70">High-conversion landing page</p>
                   </div>
                 </div>
               </div>

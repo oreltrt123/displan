@@ -3,12 +3,12 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Save, Eye, Plus, Layout, Trash, Grid } from 'lucide-react'
+import { ArrowLeft, Save, Eye, Plus, Layout, Trash } from "lucide-react"
 import { createClient } from "../../../../../../../../supabase/client"
 import type { PostgrestError } from "@supabase/supabase-js"
 
 // Import types
-import type { Project, Section, ElementType } from "../../types"
+import type { Project, Section, ElementType, Page } from "../../types"
 
 // Import components
 import { SidebarNavigation } from "../../components/sidebar-navigation"
@@ -22,6 +22,7 @@ import { ElementRenderer } from "../../components/element-renderer"
 import { DragDropProvider } from "../../components/drag-drop-context"
 import { DroppableSection } from "../../components/droppable-section"
 import { StripeCheckoutModal } from "../../components/stripe-checkout-modal"
+import { SimplePanel } from "../../components/simple-panel"
 
 // Import utilities
 import { createNewElement } from "../../utils/element-factory"
@@ -55,6 +56,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const [publishingStatus, setPublishingStatus] = useState<"idle" | "publishing" | "success" | "error">("idle")
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
+  const [selectedPage, setSelectedPage] = useState<string | null>(null)
 
   // Fetch project data and user subscription status
   useEffect(() => {
@@ -164,9 +166,20 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
         const initializedProject = initializeProjectStructure(project)
         setProject(initializedProject)
 
-        // Select the first section by default
-        if (initializedProject.content?.sections && initializedProject.content.sections.length > 0) {
-          setSelectedSection(initializedProject.content.sections[0].id)
+        // Select the first page by default
+        if (initializedProject.content?.pages && initializedProject.content.pages.length > 0) {
+          setSelectedPage(initializedProject.content.pages[0].id)
+
+          // Select the first section of the first page by default
+          const firstPageSections = initializedProject.content.pages[0].sections
+          if (firstPageSections && firstPageSections.length > 0) {
+            setSelectedSection(firstPageSections[0])
+          }
+        } else {
+          // If no pages, select the first section
+          if (initializedProject.content?.sections && initializedProject.content.sections.length > 0) {
+            setSelectedSection(initializedProject.content.sections[0].id)
+          }
         }
       } catch (err) {
         console.error("Error fetching data:", err)
@@ -204,6 +217,16 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
       project.content = {
         sections: [],
         globalStyles: {},
+        pages: [],
+        settings: {
+          siteName: project.name,
+          favicon: "",
+          theme: {
+            primaryColor: "#0066cc",
+            secondaryColor: "#f5f5f5",
+            fontFamily: "Arial, sans-serif",
+          },
+        },
       }
     }
 
@@ -213,6 +236,22 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
 
     if (!project.content.globalStyles) {
       project.content.globalStyles = {}
+    }
+
+    if (!project.content.pages) {
+      project.content.pages = []
+    }
+
+    if (!project.content.settings) {
+      project.content.settings = {
+        siteName: project.name,
+        favicon: "",
+        theme: {
+          primaryColor: "#0066cc",
+          secondaryColor: "#f5f5f5",
+          fontFamily: "Arial, sans-serif",
+        },
+      }
     }
 
     // Save the initialized structure to the database
@@ -227,6 +266,23 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     return project
   }
 
+  // Handle page selection
+  const handlePageSelect = (pageId: string) => {
+    setSelectedPage(pageId)
+
+    // Find the page
+    const page = project?.content.pages?.find((p) => p.id === pageId)
+
+    // If the page has sections, select the first one
+    if (page && page.sections && page.sections.length > 0) {
+      setSelectedSection(page.sections[0])
+      setSelectedElement(null)
+    } else {
+      setSelectedSection(null)
+      setSelectedElement(null)
+    }
+  }
+
   // Handle section selection
   const handleSectionSelect = (sectionId: string) => {
     setSelectedSection(sectionId)
@@ -238,9 +294,65 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     setSelectedElement(elementId)
   }
 
+  // Add a new page
+  const addNewPage = () => {
+    if (!project) return
+
+    const pageName = prompt("Enter page name:")
+    if (!pageName) return
+
+    const newPage: Page = {
+      id: `page-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name: pageName,
+      path: `/${pageName.toLowerCase().replace(/\s+/g, "-")}`,
+      sections: [],
+    }
+
+    // Create a deep clone of the project to avoid read-only property issues
+    const updatedProject = deepClone(project)
+    if (!updatedProject.content.pages) {
+      updatedProject.content.pages = []
+    }
+    updatedProject.content.pages.push(newPage)
+
+    setProject(updatedProject)
+    setSelectedPage(newPage.id)
+    setSelectedSection(null)
+    setUnsavedChanges(true)
+  }
+
+  // Delete a page
+  const deletePage = (pageId: string) => {
+    if (!project) return
+
+    if (!confirm("Are you sure you want to delete this page?")) return
+
+    // Create a deep clone of the project
+    const updatedProject = deepClone(project)
+    updatedProject.content.pages = updatedProject.content.pages.filter((p) => p.id !== pageId)
+
+    setProject(updatedProject)
+
+    // Select another page if available
+    if (updatedProject.content.pages.length > 0) {
+      setSelectedPage(updatedProject.content.pages[0].id)
+      if (updatedProject.content.pages[0].sections && updatedProject.content.pages[0].sections.length > 0) {
+        setSelectedSection(updatedProject.content.pages[0].sections[0])
+      } else {
+        setSelectedSection(null)
+      }
+    } else {
+      setSelectedPage(null)
+      setSelectedSection(null)
+    }
+
+    setSelectedElement(null)
+    setUnsavedChanges(true)
+  }
+
   // Add a new section
   const addNewSection = () => {
-    if (!project) return
+    if (!project || !selectedPage) return
 
     const sectionName = prompt("Enter section name:")
     if (!sectionName) return
@@ -253,7 +365,18 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
 
     // Create a deep clone of the project to avoid read-only property issues
     const updatedProject = deepClone(project)
+
+    // Add the section to the sections array
     updatedProject.content.sections.push(newSection)
+
+    // Add the section reference to the selected page
+    const pageIndex = updatedProject.content.pages.findIndex((p) => p.id === selectedPage)
+    if (pageIndex !== -1) {
+      if (!updatedProject.content.pages[pageIndex].sections) {
+        updatedProject.content.pages[pageIndex].sections = []
+      }
+      updatedProject.content.pages[pageIndex].sections.push(newSection.id)
+    }
 
     setProject(updatedProject)
     setSelectedSection(newSection.id)
@@ -262,19 +385,29 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
 
   // Delete a section
   const deleteSection = (sectionId: string) => {
-    if (!project) return
+    if (!project || !selectedPage) return
 
     if (!confirm("Are you sure you want to delete this section?")) return
 
     // Create a deep clone of the project
     const updatedProject = deepClone(project)
+
+    // Remove the section from the sections array
     updatedProject.content.sections = updatedProject.content.sections.filter((s) => s.id !== sectionId)
+
+    // Remove the section reference from all pages
+    updatedProject.content.pages.forEach((page) => {
+      if (page.sections) {
+        page.sections = page.sections.filter((id) => id !== sectionId)
+      }
+    })
 
     setProject(updatedProject)
 
     // Select another section if available
-    if (updatedProject.content.sections.length > 0) {
-      setSelectedSection(updatedProject.content.sections[0].id)
+    const currentPage = updatedProject.content.pages.find((p) => p.id === selectedPage)
+    if (currentPage && currentPage.sections && currentPage.sections.length > 0) {
+      setSelectedSection(currentPage.sections[0])
     } else {
       setSelectedSection(null)
     }
@@ -304,11 +437,11 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     setUnsavedChanges(true)
   }
 
-  // Delete the selected element
-  const deleteElement = () => {
-    if (!project || !selectedSection || !selectedElement) return
+  // Delete the selected element - no confirmation needed
+  const deleteElement = (elementId: string) => {
+    if (!project || !selectedSection) return
 
-    if (!confirm("Are you sure you want to delete this element?")) return
+    console.log("Deleting element:", elementId)
 
     // Create a deep clone of the project
     const updatedProject = deepClone(project)
@@ -319,7 +452,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     // Remove the element from the section
     updatedProject.content.sections[sectionIndex].elements = updatedProject.content.sections[
       sectionIndex
-    ].elements.filter((e) => e.id !== selectedElement)
+    ].elements.filter((e) => e.id !== elementId)
 
     setProject(updatedProject)
     setSelectedElement(null)
@@ -539,12 +672,62 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     setUnsavedChanges(true)
   }
 
+  // Update element with new properties
+  const handleUpdateElement = (elementId: string, updates: Partial<ElementType>) => {
+    if (!project || !selectedSection) return
+
+    console.log("Updating element:", elementId, updates)
+
+    // Create a deep clone of the project
+    const updatedProject = deepClone(project)
+    const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
+
+    if (sectionIndex === -1) return
+
+    const elementIndex = updatedProject.content.sections[sectionIndex].elements.findIndex((e) => e.id === elementId)
+
+    if (elementIndex === -1) return
+
+    // Update the element with the new properties
+    const updatedElement = {
+      ...updatedProject.content.sections[sectionIndex].elements[elementIndex],
+    }
+
+    // Handle style updates
+    if (updates.style) {
+      updatedElement.style = {
+        ...updatedElement.style,
+        ...updates.style,
+      }
+    }
+
+    // Handle content updates
+    if (updates.content) {
+      updatedElement.content = {
+        ...updatedElement.content,
+        ...updates.content,
+      }
+    }
+
+    // Handle transitions updates
+    if (updates.transitions) {
+      updatedElement.transitions = updates.transitions
+    }
+
+    // Apply the updated element
+    updatedProject.content.sections[sectionIndex].elements[elementIndex] = updatedElement
+
+    setProject(updatedProject)
+    setUnsavedChanges(true)
+  }
+
   // Save project changes
   const saveProject = async () => {
     if (!project) return
 
     try {
       setSaving(true)
+      setSaveStatus("saving")
 
       const { error } = await supabase
         .from("website_projects")
@@ -554,9 +737,16 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
       if (error) throw error
 
       setUnsavedChanges(false)
+      setSaveStatus("saved")
+
+      // Reset save status after 3 seconds
+      setTimeout(() => {
+        setSaveStatus("idle")
+      }, 3000)
     } catch (err) {
       console.error("Error saving project:", err)
       alert("Failed to save changes")
+      setSaveStatus("error")
     } finally {
       setSaving(false)
     }
@@ -1112,6 +1302,16 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     return section.elements.find((e) => e.id === selectedElement) || null
   }
 
+  // Get the sections for the currently selected page
+  const getPageSections = (): Section[] => {
+    if (!project || !selectedPage) return []
+
+    const page = project.content.pages.find((p) => p.id === selectedPage)
+    if (!page || !page.sections || page.sections.length === 0) return []
+
+    return project.content.sections.filter((section) => page.sections.includes(section.id))
+  }
+
   // Handle image selection from the images panel
   const handleImageSelect = (imageUrl: string) => {
     if (!project || !selectedSection) return
@@ -1164,6 +1364,30 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     setActivePanel("ai")
   }
 
+  // Apply theme to all elements
+  const applyTheme = (theme: string) => {
+    if (!project) return
+
+    console.log("Applying theme:", theme)
+
+    // Import the theme manager utility
+    import("../../utils/theme-manager").then(({ applyThemeToPage }) => {
+      // Create a deep clone of the project
+      const updatedProject = deepClone(project)
+
+      // Apply theme to all sections
+      for (let i = 0; i < updatedProject.content.sections.length; i++) {
+        updatedProject.content.sections[i].elements = applyThemeToPage(
+          updatedProject.content.sections[i].elements,
+          theme,
+        )
+      }
+
+      setProject(updatedProject)
+      setUnsavedChanges(true)
+    })
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -1209,7 +1433,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
               className={`flex items-center px-3 py-2 rounded text-sm ${unsavedChanges ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
             >
               <Save className="h-4 w-4 mr-1" />
-              {saving ? "Saving..." : "Save"}
+              {saving ? "Saving..." : saveStatus === "saved" ? "Saved!" : "Save"}
             </button>
             <button
               onClick={openPreview}
@@ -1247,6 +1471,8 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
 
               {activePanel === "images" && <ImagesPanel onSelectImage={handleImageSelect} projectId={params.id} />}
 
+              {activePanel === "simple" && <SimplePanel onAddElement={addNewElement} onApplyTheme={applyTheme} />}
+
               {activePanel === "ai" && (
                 <AIDesignAssistant
                   isPremiumUser={isPremiumUser}
@@ -1266,6 +1492,46 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
                 />
               )}
 
+              {/* Pages Panel */}
+              <div className="w-64 bg-card border-r border-border flex flex-col">
+                <div className="p-4 border-b border-border">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-medium text-foreground">Pages</h2>
+                    <button
+                      onClick={addNewPage}
+                      className="p-1 text-muted-foreground hover:text-foreground hover:bg-secondary rounded"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2">
+                  {project?.content?.pages?.map((page) => (
+                    <div
+                      key={page.id}
+                      onClick={() => handlePageSelect(page.id)}
+                      className={`flex items-center p-2 rounded cursor-pointer ${
+                        selectedPage === page.id ? "bg-secondary" : "hover:bg-secondary/50"
+                      }`}
+                    >
+                      <Layout className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="flex-1 truncate text-sm text-foreground">{page.name}</span>
+                      {selectedPage === page.id && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deletePage(page.id)
+                          }}
+                          className="p-1 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Sections Panel */}
               <div className="w-64 bg-card border-r border-border flex flex-col">
                 <div className="p-4 border-b border-border">
@@ -1274,13 +1540,14 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
                     <button
                       onClick={addNewSection}
                       className="p-1 text-muted-foreground hover:text-foreground hover:bg-secondary rounded"
+                      disabled={!selectedPage}
                     >
                       <Plus className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2">
-                  {project?.content?.sections?.map((section) => (
+                  {getPageSections().map((section) => (
                     <div
                       key={section.id}
                       onClick={() => handleSectionSelect(section.id)}
@@ -1334,7 +1601,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
                     } overflow-auto`}
                   >
                     <div className="p-4">
-                      {project?.content?.sections?.map((section) => (
+                      {getPageSections().map((section) => (
                         <div key={section.id} className="mb-8">
                           <h2 className="text-lg font-semibold mb-4 text-muted-foreground border-b border-border pb-2">
                             {section.name}
@@ -1367,6 +1634,9 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
                               selectedElement={selectedElement}
                               onElementSelect={handleElementSelect}
                               onElementPositionChange={handleElementPositionChange}
+                              onElementResize={handleElementResize}
+                              onDeleteElement={deleteElement}
+                              onUpdateElement={handleUpdateElement}
                             />
                           ))}
                       </div>

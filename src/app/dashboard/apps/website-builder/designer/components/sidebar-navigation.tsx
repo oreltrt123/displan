@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Layers, ImageIcon, Bot, Settings, Lock, RefreshCw, Loader2 } from "lucide-react"
+import { Layers, ImageIcon, Bot, Settings, Lock, RefreshCw, Loader2, Palette } from "lucide-react"
 
 interface SidebarNavigationProps {
   onSelectPanel: (panel: string) => void
@@ -179,6 +179,16 @@ export function SidebarNavigation({
           title="Images"
         >
           <ImageIcon className="h-6 w-6" />
+        </button>
+
+        <button
+          onClick={() => onSelectPanel("simple")}
+          className={`p-3 rounded-lg ${
+            activePanel === "simple" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+          }`}
+          title="Simple Designs"
+        >
+          <Palette className="h-6 w-6" />
         </button>
 
         {localIsPremium ? (

@@ -1,14 +1,17 @@
 "use client"
 import { useRef, useEffect } from "react"
-import type { Section } from "../types"
-import { DraggableElement } from "./draggable-element"
+import type { Section, ElementType } from "../types"
 import { useDragDrop } from "./drag-drop-context"
+import { ElementRenderer } from "./element-renderer"
 
 interface DroppableSectionProps {
   section: Section
   selectedElement: string | null
   onElementSelect: (elementId: string) => void
-  onElementPositionChange: (elementId: string, x: number, y: number) => void
+  onElementPositionChange?: (elementId: string, x: number, y: number) => void
+  onElementResize?: (id: string, width: number, height: number) => void
+  onDeleteElement?: (id: string) => void
+  onUpdateElement?: (id: string, updates: Partial<ElementType>) => void
 }
 
 export function DroppableSection({
@@ -16,6 +19,9 @@ export function DroppableSection({
   selectedElement,
   onElementSelect,
   onElementPositionChange,
+  onElementResize,
+  onDeleteElement,
+  onUpdateElement,
 }: DroppableSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null)
   const { registerDropTarget, unregisterDropTarget, showGrid } = useDragDrop()
@@ -53,11 +59,14 @@ export function DroppableSection({
         )}
 
         {section.elements.map((element) => (
-          <DraggableElement
+          <ElementRenderer
             key={element.id}
             element={element}
+            isEditing={true}
             isSelected={selectedElement === element.id}
             onClick={() => onElementSelect(element.id)}
+            onDelete={onDeleteElement}
+            onUpdateElement={onUpdateElement}
             onPositionChange={onElementPositionChange}
           />
         ))}

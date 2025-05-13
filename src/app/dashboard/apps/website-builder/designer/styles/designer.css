@@ -130,3 +130,174 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Import animations */
+@import "./animations.css";
+
+/* Designer styles */
+.element-wrapper {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.element-wrapper:hover {
+  z-index: 10;
+}
+
+.element-wrapper.dragging {
+  opacity: 0.8;
+  z-index: 100;
+  cursor: grabbing;
+}
+
+/* Grid styles */
+.with-grid {
+  background-size: 8px 8px;
+  background-image: linear-gradient(to right, rgba(81, 92, 230, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(81, 92, 230, 0.05) 1px, transparent 1px);
+}
+
+/* Toolbar styles */
+.element-toolbar {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.element-wrapper:hover .element-toolbar,
+.element-wrapper.selected .element-toolbar {
+  opacity: 1;
+}
+
+/* Resize handle styles */
+.resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+}
+
+.resize-handle-nw {
+  top: -4px;
+  left: -4px;
+  cursor: nw-resize;
+}
+
+.resize-handle-ne {
+  top: -4px;
+  right: -4px;
+  cursor: ne-resize;
+}
+
+.resize-handle-sw {
+  bottom: -4px;
+  left: -4px;
+  cursor: sw-resize;
+}
+
+.resize-handle-se {
+  bottom: -4px;
+  right: -4px;
+  cursor: se-resize;
+}
+
+.resize-handle-n {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: n-resize;
+}
+
+.resize-handle-e {
+  top: 50%;
+  right: -4px;
+  transform: translateY(-50%);
+  cursor: e-resize;
+}
+
+.resize-handle-s {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: s-resize;
+}
+
+.resize-handle-w {
+  top: 50%;
+  left: -4px;
+  transform: translateY(-50%);
+  cursor: w-resize;
+}
+
+/* Preview mode styles */
+.preview-device {
+  margin: 0 auto;
+  background-color: white;
+  overflow: auto;
+  transition: all 0.3s ease;
+}
+
+.preview-device.desktop {
+  width: 100%;
+  height: 100%;
+}
+
+.preview-device.tablet {
+  width: 768px;
+  height: 1024px;
+  border: 12px solid #374151;
+  border-radius: 12px;
+}
+
+.preview-device.mobile {
+  width: 375px;
+  height: 667px;
+  border: 12px solid #374151;
+  border-radius: 12px;
+}
+
+/* Font loading */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Oswald:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700&family=Ubuntu:wght@300;400;500;700&family=Playfair+Display:wght@400;500;600;700&display=swap");

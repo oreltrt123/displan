@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Search } from "lucide-react"
+import { X, Search, Check } from "lucide-react"
 
 interface FontsPanelProps {
   onClose: () => void
@@ -14,6 +14,7 @@ export function FontsPanel({ onClose, onApply, position = { top: "0", right: "0"
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedFont, setSelectedFont] = useState<string | null>(null)
 
   // Google Fonts API integration
   useEffect(() => {
@@ -21,8 +22,9 @@ export function FontsPanel({ onClose, onApply, position = { top: "0", right: "0"
       try {
         setLoading(true)
         // Using Google Fonts API
-        // Note: In a real implementation, you would need to add your API key
-        const response = await fetch("https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyBd0tCWjSSTCxolTyXEjDNofsnFezQqQy0&sort=popularity")
+        const response = await fetch(
+          "https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyBd0tCWjSSTCxolTyXEjDNofsnFezQqQy0&sort=popularity",
+        )
 
         if (!response.ok) {
           throw new Error("Failed to fetch fonts")
@@ -30,6 +32,13 @@ export function FontsPanel({ onClose, onApply, position = { top: "0", right: "0"
 
         const data = await response.json()
         const fontFamilies = data.items.map((font: any) => font.family)
+
+        // Load the first 20 fonts for preview
+        const link = document.createElement("link")
+        link.rel = "stylesheet"
+        link.href = `https://fonts.googleapis.com/css2?family=${fontFamilies.slice(0, 20).join("&family=").replace(/ /g, "+")}&display=swap`
+        document.head.appendChild(link)
+
         setFonts(fontFamilies)
         setLoading(false)
       } catch (err) {
@@ -84,6 +93,25 @@ export function FontsPanel({ onClose, onApply, position = { top: "0", right: "0"
     zIndex: 50,
   }
 
+  const handleApply = () => {
+    if (selectedFont) {
+      onApply(selectedFont)
+    }
+  }
+
+  // Load font when selected for preview
+  const handleSelectFont = (font: string) => {
+    setSelectedFont(font)
+
+    // Load the font if not already loaded
+    if (!document.querySelector(`link[href*="${font.replace(/ /g, "+")}"]`)) {
+      const link = document.createElement("link")
+      link.rel = "stylesheet"
+      link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, "+")}&display=swap`
+      document.head.appendChild(link)
+    }
+  }
+
   return (
     <div
       className="bg-white rounded-lg shadow-xl w-[300px] border border-gray-200"
@@ -99,6 +127,7 @@ export function FontsPanel({ onClose, onApply, position = { top: "0", right: "0"
 
       <div className="p-3 border-b border-gray-200">
         <div className="relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <input
             type="text"
             placeholder="Search fonts..."
@@ -106,7 +135,6 @@ export function FontsPanel({ onClose, onApply, position = { top: "0", right: "0"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
         </div>
       </div>
 
@@ -124,22 +152,34 @@ export function FontsPanel({ onClose, onApply, position = { top: "0", right: "0"
             {filteredFonts.map((font) => (
               <div
                 key={font}
-                className="p-2 hover:bg-blue-50 rounded cursor-pointer transition-colors"
-                onClick={() => onApply(font)}
+                className={`p-2 rounded cursor-pointer transition-colors ${
+                  selectedFont === font ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
+                }`}
+                onClick={() => handleSelectFont(font)}
                 style={{ fontFamily: font }}
               >
-                <p className="text-base">{font}</p>
-                <p className="text-xs text-gray-500" style={{ fontFamily: font }}>
-                  The quick brown fox jumps over the lazy dog
-                </p>
+                <div className="flex justify-between items-center">
+                  <p className="text-base">{font}</p>
+                  {selectedFont === font && <Check className="h-4 w-4 text-blue-500" />}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">The quick brown fox jumps over the lazy dog</p>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      <div className="p-3 border-t border-gray-200 text-xs text-gray-500">
-        <p>The fonts are allowed to work by Google Cloud.</p>
+      <div className="p-3 border-t border-gray-200 flex justify-between items-center">
+        <p className="text-xs text-gray-500">Powered by Google Fonts</p>
+        <button
+          onClick={handleApply}
+          disabled={!selectedFont}
+          className={`px-4 py-2 rounded text-sm font-medium ${
+            selectedFont ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-gray-200 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          Apply
+        </button>
       </div>
     </div>
   )

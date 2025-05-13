@@ -1,6 +1,6 @@
 "use client"
 
-import React, { type CSSProperties, useState } from "react"
+import React, { type CSSProperties, useState, useEffect, useRef } from "react"
 import type { ElementType } from "../types"
 import {
   Play,
@@ -21,10 +21,13 @@ import {
   Trash2,
   Type,
   VideoIcon as Animation,
+  Palette,
+  Move,
 } from "lucide-react"
 import { AnimationPanel } from "./animation-panel"
 import { FontsPanel } from "./fonts-panel"
-import { DeleteConfirmationDialog } from "./delete-confirmation-dialog"
+import { ColorPicker } from "./color-picker"
+import { useDragDrop } from "./drag-drop-context"
 
 interface ElementRendererProps {
   element: ElementType
@@ -33,6 +36,7 @@ interface ElementRendererProps {
   onClick?: () => void
   onDelete?: (id: string) => void
   onUpdateElement?: (id: string, updates: Partial<ElementType>) => void
+  onPositionChange?: (elementId: string, x: number, y: number) => void
 }
 
 export function ElementRenderer({
@@ -42,19 +46,132 @@ export function ElementRenderer({
   onClick,
   onDelete,
   onUpdateElement,
+  onPositionChange,
 }: ElementRendererProps) {
   // Create a deep copy of the style and cast it to CSSProperties
   const styleCopy = { ...element.style } as CSSProperties
   const [isPlaying, setIsPlaying] = useState(false)
   const [showAnimationPanel, setShowAnimationPanel] = useState(false)
   const [showFontsPanel, setShowFontsPanel] = useState(false)
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
+  const [showColorPicker, setShowColorPicker] = useState(false)
+  const [animationClass, setAnimationClass] = useState("")
+  const elementRef = useRef<HTMLDivElement>(null)
+
+  // Dragging state
+  const [position, setPosition] = useState({ x: element.style?.x || 0, y: element.style?.y || 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 })
+  const { registerDropTarget, unregisterDropTarget, showGrid, snapToGrid } = useDragDrop()
+
+  // Register as drop target
+  useEffect(() => {
+    if (elementRef.current) {
+      registerDropTarget(element.id, elementRef)
+    }
+    return () => {
+      unregisterDropTarget(element.id)
+    }
+  }, [element.id, registerDropTarget, unregisterDropTarget])
+
+  // Initialize position from element style
+  useEffect(() => {
+    if (element.style?.x !== undefined && element.style?.y !== undefined) {
+      setPosition({ x: element.style.x, y: element.style.y })
+    }
+  }, [element.style?.x, element.style?.y])
+
+  // Handle mouse down to start dragging
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return // Only left mouse button
+
+    e.stopPropagation()
+    e.preventDefault()
+
+    setIsDragging(true)
+    setInitialMousePos({ x: e.clientX, y: e.clientY })
+
+    // Add global event listeners
+    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mouseup", handleMouseUp)
+
+    // Prevent text selection during drag
+    document.body.style.userSelect = "none"
+    elementRef.current?.classList.add("dragging")
+  }
+
+  // Handle mouse move during drag
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return
+
+    // Calculate new position
+    const deltaX = e.clientX - initialMousePos.x
+    const deltaY = e.clientY - initialMousePos.y
+
+    const newX = position.x + deltaX
+    const newY = position.y + deltaY
+
+    // Apply new position directly to the element for immediate visual feedback
+    if (elementRef.current) {
+      const snappedPos = showGrid ? snapToGrid({ x: newX, y: newY }) : { x: newX, y: newY }
+      elementRef.current.style.left = `${snappedPos.x}px`
+      elementRef.current.style.top = `${snappedPos.y}px`
+    }
+  }
+
+  // Handle mouse up to end dragging
+  const handleMouseUp = (e: MouseEvent) => {
+    if (!isDragging) return
+
+    setIsDragging(false)
+
+    // Calculate final position
+    const deltaX = e.clientX - initialMousePos.x
+    const deltaY = e.clientY - initialMousePos.y
+
+    const newX = position.x + deltaX
+    const newY = position.y + deltaY
+
+    // Apply snapping if grid is enabled
+    const finalPosition = showGrid ? snapToGrid({ x: newX, y: newY }) : { x: newX, y: newY }
+
+    // Update state
+    setPosition(finalPosition)
+
+    // Update parent component with new position (safe call)
+    if (typeof onPositionChange === "function") {
+      onPositionChange(element.id, finalPosition.x, finalPosition.y)
+    }
+
+    // Update element style with new position
+    if (onUpdateElement) {
+      onUpdateElement(element.id, {
+        style: {
+          ...element.style,
+          x: finalPosition.x,
+          y: finalPosition.y,
+        },
+      })
+    }
+
+    // Remove event listeners
+    window.removeEventListener("mousemove", handleMouseMove)
+    window.removeEventListener("mouseup", handleMouseUp)
+
+    // Restore text selection
+    document.body.style.userSelect = ""
+    elementRef.current?.classList.remove("dragging")
+  }
 
   // Apply transitions if they exist
   if (element.transitions) {
     styleCopy.transition = element.transitions
       .map((t) => `${t.property} ${t.duration}ms ${t.timingFunction} ${t.delay}ms`)
       .join(", ")
+  }
+
+  // Apply font family if it exists
+  if (element.style?.fontFamily) {
+    styleCopy.fontFamily = element.style.fontFamily
   }
 
   // Parse the element type to extract the base type and design ID
@@ -69,38 +186,103 @@ export function ElementRenderer({
 
   const { baseType, designId } = parseElementTypeAndDesign()
 
-  // Debug logging to help identify issues
-  console.log("Rendering element:", {
-    id: element.id,
-    type: element.type,
-    baseType,
-    designId,
-    content: element.content,
-  })
+  // Load Google Fonts when font family changes
+  useEffect(() => {
+    if (element.style?.fontFamily && !document.querySelector(`link[href*="${element.style.fontFamily}"]`)) {
+      const link = document.createElement("link")
+      link.rel = "stylesheet"
+      link.href = `https://fonts.googleapis.com/css2?family=${element.style.fontFamily.replace(/ /g, "+")}&display=swap`
+      document.head.appendChild(link)
+    }
+  }, [element.style?.fontFamily])
+
+  // Apply animation class based on element transitions
+  useEffect(() => {
+    if (!isEditing && element.transitions && element.transitions.length > 0) {
+      const animation = element.transitions[0].animation
+      if (animation) {
+        setAnimationClass(getAnimationClass(animation))
+
+        // If we're in preview mode, apply the animation
+        if (elementRef.current) {
+          elementRef.current.style.opacity = "0"
+          setTimeout(() => {
+            if (elementRef.current) {
+              elementRef.current.style.opacity = "1"
+              elementRef.current.className = `${elementRef.current.className} ${getAnimationClass(animation)}`
+            }
+          }, 100)
+        }
+      }
+    } else {
+      setAnimationClass("")
+    }
+  }, [element.transitions, isEditing])
+
+  // Get CSS animation class based on animation type
+  const getAnimationClass = (animationType: string): string => {
+    switch (animationType) {
+      case "fade-in":
+        return "animate-fade-in"
+      case "slide-up":
+        return "animate-slide-up"
+      case "slide-down":
+        return "animate-slide-down"
+      case "slide-left":
+        return "animate-slide-left"
+      case "slide-right":
+        return "animate-slide-right"
+      case "zoom-in":
+        return "animate-zoom-in"
+      case "zoom-out":
+        return "animate-zoom-out"
+      case "bounce":
+        return "animate-bounce"
+      case "pulse":
+        return "animate-pulse"
+      case "flip":
+        return "animate-flip"
+      case "shake":
+        return "animate-shake"
+      case "rotate":
+        return "animate-rotate"
+      default:
+        return ""
+    }
+  }
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setShowDeleteConfirmation(true)
+    console.log("Delete clicked for element:", element.id)
+    // Immediately delete without confirmation
+    if (onDelete) {
+      onDelete(element.id)
+    }
   }
 
   const handleAnimationClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     setShowAnimationPanel(true)
+    setShowFontsPanel(false)
+    setShowColorPicker(false)
   }
 
   const handleFontsClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     setShowFontsPanel(true)
+    setShowAnimationPanel(false)
+    setShowColorPicker(false)
   }
 
-  const handleConfirmDelete = () => {
-    if (onDelete) {
-      onDelete(element.id)
-    }
-    setShowDeleteConfirmation(false)
+  const handleColorClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowColorPicker(true)
+    setShowAnimationPanel(false)
+    setShowFontsPanel(false)
   }
 
   const handleApplyAnimation = (animationType: string) => {
+    console.log("Applying animation:", animationType, "to element:", element.id)
     if (onUpdateElement) {
       onUpdateElement(element.id, {
         transitions: [
@@ -113,11 +295,17 @@ export function ElementRenderer({
           },
         ],
       })
+
+      // Apply animation immediately for preview
+      if (elementRef.current) {
+        elementRef.current.className = `${elementRef.current.className.replace(/animate-[a-z-]+/g, "")} ${getAnimationClass(animationType)}`
+      }
     }
     setShowAnimationPanel(false)
   }
 
   const handleApplyFont = (fontFamily: string) => {
+    console.log("Applying font:", fontFamily, "to element:", element.id)
     if (onUpdateElement) {
       onUpdateElement(element.id, {
         style: {
@@ -125,8 +313,40 @@ export function ElementRenderer({
           fontFamily,
         },
       })
+
+      // Load the font immediately
+      const link = document.createElement("link")
+      link.rel = "stylesheet"
+      link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, "+")}&display=swap`
+      document.head.appendChild(link)
     }
     setShowFontsPanel(false)
+  }
+
+  const handleApplyColor = (color: string) => {
+    console.log("Applying text color:", color, "to element:", element.id)
+    if (onUpdateElement) {
+      onUpdateElement(element.id, {
+        style: {
+          ...element.style,
+          color,
+        },
+      })
+    }
+    setShowColorPicker(false)
+  }
+
+  const handleApplyBackgroundColor = (color: string) => {
+    console.log("Applying background color:", color, "to element:", element.id)
+    if (onUpdateElement) {
+      onUpdateElement(element.id, {
+        style: {
+          ...element.style,
+          backgroundColor: color,
+        },
+      })
+    }
+    setShowColorPicker(false)
   }
 
   const renderElement = () => {
@@ -148,6 +368,12 @@ export function ElementRenderer({
         return renderCyberNetwork(designId)
       } else if (baseType === "cyber-security") {
         return renderCyberSecurity(designId)
+      } else if (baseType === "simple-button") {
+        return renderSimpleButton(designId)
+      } else if (baseType === "simple-card") {
+        return renderSimpleCard(designId)
+      } else if (baseType === "simple-header") {
+        return renderSimpleHeader(designId)
       }
     }
 
@@ -328,6 +554,207 @@ export function ElementRenderer({
           </div>
         )
 
+      case "hero":
+        return (
+          <div
+            style={
+              {
+                ...styleCopy,
+                backgroundColor: element.style?.backgroundColor || "#f5f5f5",
+                color: element.style?.textColor || "#333333",
+                height: element.style?.height || "500px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: element.style?.alignment || "center",
+                padding: "2rem",
+                position: "relative",
+                overflow: "hidden",
+              } as CSSProperties
+            }
+            className="rounded-lg"
+          >
+            {element.content?.src && (
+              <div className="absolute inset-0 z-0">
+                <img
+                  src={element.content.src || "/placeholder.svg"}
+                  alt={element.content?.alt || ""}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black opacity-40"></div>
+              </div>
+            )}
+            <div className="relative z-10 text-center max-w-3xl mx-auto">
+              <h1 className="text-4xl font-bold mb-4">{element.content?.heading || "Hero Heading"}</h1>
+              <p className="text-xl mb-6">{element.content?.subheading || "Hero subheading text goes here"}</p>
+              {element.content?.buttonText && (
+                <a
+                  href={isEditing ? "#" : element.content?.buttonLink || "#"}
+                  className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {element.content.buttonText}
+                </a>
+              )}
+            </div>
+          </div>
+        )
+
+      case "features":
+        const features = Array.isArray(element.content?.features)
+          ? element.content.features
+          : [
+              { title: "Feature 1", description: "Description of feature 1", icon: "zap" },
+              { title: "Feature 2", description: "Description of feature 2", icon: "shield" },
+              { title: "Feature 3", description: "Description of feature 3", icon: "globe" },
+            ]
+
+        return (
+          <div style={styleCopy} className="py-12">
+            {element.content?.heading && (
+              <h2 className="text-3xl font-bold text-center mb-12">{element.content.heading}</h2>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {features.map((feature, index) => {
+                const FeatureIcon = getIconComponent(feature.icon || "zap")
+                return (
+                  <div key={index} className="text-center p-6 rounded-lg">
+                    {feature.src ? (
+                      <img
+                        src={feature.src || "/placeholder.svg"}
+                        alt={feature.title}
+                        className="w-16 h-16 mx-auto mb-4"
+                      />
+                    ) : (
+                      <div className="flex justify-center mb-4">
+                        <FeatureIcon className="h-12 w-12 text-blue-500" />
+                      </div>
+                    )}
+                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                    <p className="text-gray-600">{feature.description}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+
+      case "testimonials":
+        const testimonials = Array.isArray(element.content?.testimonials)
+          ? element.content.testimonials
+          : [
+              { quote: "This is an amazing product!", author: "John Doe", company: "ABC Corp" },
+              { quote: "Highly recommended!", author: "Jane Smith", company: "XYZ Inc" },
+            ]
+
+        return (
+          <div style={styleCopy} className="py-12">
+            {element.content?.heading && (
+              <h2 className="text-3xl font-bold text-center mb-12">{element.content.heading}</h2>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {testimonials.map((testimonial, index) => (
+                <div key={index} className="bg-white p-6 rounded-lg shadow-md">
+                  <p className="text-lg italic mb-4">"{testimonial.quote}"</p>
+                  <div className="flex items-center">
+                    {testimonial.src && (
+                      <img
+                        src={testimonial.src || "/placeholder.svg"}
+                        alt={testimonial.author}
+                        className="w-12 h-12 rounded-full mr-4"
+                      />
+                    )}
+                    <div>
+                      <p className="font-semibold">{testimonial.author}</p>
+                      {testimonial.company && <p className="text-gray-600 text-sm">{testimonial.company}</p>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+
+      case "footer":
+        const socialLinks = Array.isArray(element.content?.socialLinks) ? element.content.socialLinks : []
+
+        return (
+          <footer
+            style={
+              {
+                ...styleCopy,
+                backgroundColor: element.style?.backgroundColor || "#333333",
+                color: element.style?.textColor || "#ffffff",
+                padding: element.style?.padding || "40px 20px",
+              } as CSSProperties
+            }
+          >
+            <div className="container mx-auto">
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="mb-6 md:mb-0">
+                  <p>{element.content?.copyright || `© ${new Date().getFullYear()} All rights reserved.`}</p>
+                  {element.content?.address && <p className="mt-2">{element.content.address}</p>}
+                  {element.content?.phone && <p className="mt-1">{element.content.phone}</p>}
+                  {element.content?.email && <p className="mt-1">{element.content.email}</p>}
+                </div>
+                {element.content?.showSocial && socialLinks.length > 0 && (
+                  <div className="flex space-x-4">
+                    {socialLinks.map((link, index) => {
+                      const SocialIcon = getIconComponent(link.platform || "facebook")
+                      return (
+                        <a
+                          key={index}
+                          href={isEditing ? "#" : link.link || "#"}
+                          className="text-white hover:text-gray-300 transition-colors"
+                        >
+                          <SocialIcon className="h-6 w-6" />
+                        </a>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </footer>
+        )
+
+      case "header":
+        const navItems = Array.isArray(element.content?.navItems) ? element.content.navItems : []
+
+        return (
+          <header
+            style={
+              {
+                ...styleCopy,
+                backgroundColor: element.style?.backgroundColor || "#ffffff",
+                color: element.style?.textColor || "#000000",
+                padding: element.style?.padding || "20px",
+              } as CSSProperties
+            }
+          >
+            <div className="container mx-auto">
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="mb-4 md:mb-0">
+                  <h1 className="text-2xl font-bold">{element.content?.title || "Website Title"}</h1>
+                  {element.content?.subtitle && <p className="text-sm">{element.content.subtitle}</p>}
+                </div>
+                {element.content?.showNav && navItems.length > 0 && (
+                  <nav>
+                    <ul className="flex space-x-6">
+                      {navItems.map((item, index) => (
+                        <li key={index}>
+                          <a href={isEditing ? "#" : item.link || "#"} className="hover:underline">
+                            {item.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </nav>
+                )}
+              </div>
+            </div>
+          </header>
+        )
+
       default:
         console.error(`Unknown element type: ${element.type} (baseType: ${baseType}, designId: ${designId})`)
         return (
@@ -445,6 +872,240 @@ export function ElementRenderer({
           <button className="w-full px-4 py-2 bg-black border-2 border-purple-500 text-purple-500 hover:bg-purple-900 transition-colors">
             {buttonText}
           </button>
+        )
+    }
+  }
+
+  // Simple Button Renderer
+  function renderSimpleButton(designId: string | null) {
+    const buttonText = element.content?.buttonText || "Simple Button"
+
+    switch (designId) {
+      case "sb-1": // Flat Blue
+        return (
+          <button className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+            {buttonText}
+          </button>
+        )
+      case "sb-2": // Flat Green
+        return (
+          <button className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+            {buttonText}
+          </button>
+        )
+      case "sb-3": // Flat Red
+        return (
+          <button className="w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
+            {buttonText}
+          </button>
+        )
+      case "sb-4": // Flat Purple
+        return (
+          <button className="w-full px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors">
+            {buttonText}
+          </button>
+        )
+      case "sb-5": // Outline Blue
+        return (
+          <button className="w-full px-4 py-2 bg-transparent border-2 border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors">
+            {buttonText}
+          </button>
+        )
+      case "sb-6": // Outline Green
+        return (
+          <button className="w-full px-4 py-2 bg-transparent border-2 border-green-500 text-green-500 rounded-md hover:bg-green-50 transition-colors">
+            {buttonText}
+          </button>
+        )
+      case "sb-7": // Outline Red
+        return (
+          <button className="w-full px-4 py-2 bg-transparent border-2 border-red-500 text-red-500 rounded-md hover:bg-red-50 transition-colors">
+            {buttonText}
+          </button>
+        )
+      case "sb-8": // Outline Purple
+        return (
+          <button className="w-full px-4 py-2 bg-transparent border-2 border-purple-500 text-purple-500 rounded-md hover:bg-purple-50 transition-colors">
+            {buttonText}
+          </button>
+        )
+      case "sb-9": // Soft Blue
+        return (
+          <button className="w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors">
+            {buttonText}
+          </button>
+        )
+      case "sb-10": // Soft Green
+        return (
+          <button className="w-full px-4 py-2 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors">
+            {buttonText}
+          </button>
+        )
+      default:
+        return (
+          <button className="w-full px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors">
+            {buttonText}
+          </button>
+        )
+    }
+  }
+
+  // Simple Card Renderer
+  function renderSimpleCard(designId: string | null) {
+    const cardTitle = element.content?.title || "Simple Card"
+    const cardText = element.content?.text || "This is a clean, modern card with simple design elements."
+
+    switch (designId) {
+      case "sc-1": // White Card with Shadow
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-2 text-gray-800">{cardTitle}</h3>
+            <p className="text-gray-600">{cardText}</p>
+          </div>
+        )
+      case "sc-2": // Blue Accent
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500">
+            <h3 className="text-xl font-semibold mb-2 text-gray-800">{cardTitle}</h3>
+            <p className="text-gray-600">{cardText}</p>
+          </div>
+        )
+      case "sc-3": // Green Accent
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-500">
+            <h3 className="text-xl font-semibold mb-2 text-gray-800">{cardTitle}</h3>
+            <p className="text-gray-600">{cardText}</p>
+          </div>
+        )
+      case "sc-4": // Red Accent
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-red-500">
+            <h3 className="text-xl font-semibold mb-2 text-gray-800">{cardTitle}</h3>
+            <p className="text-gray-600">{cardText}</p>
+          </div>
+        )
+      case "sc-5": // Purple Accent
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md border-t-4 border-purple-500">
+            <h3 className="text-xl font-semibold mb-2 text-gray-800">{cardTitle}</h3>
+            <p className="text-gray-600">{cardText}</p>
+          </div>
+        )
+      case "sc-6": // Soft Blue Background
+        return (
+          <div className="bg-blue-50 p-6 rounded-lg border border-blue-100">
+            <h3 className="text-xl font-semibold mb-2 text-blue-800">{cardTitle}</h3>
+            <p className="text-blue-700">{cardText}</p>
+          </div>
+        )
+      case "sc-7": // Soft Green Background
+        return (
+          <div className="bg-green-50 p-6 rounded-lg border border-green-100">
+            <h3 className="text-xl font-semibold mb-2 text-green-800">{cardTitle}</h3>
+            <p className="text-green-700">{cardText}</p>
+          </div>
+        )
+      case "sc-8": // Soft Red Background
+        return (
+          <div className="bg-red-50 p-6 rounded-lg border border-red-100">
+            <h3 className="text-xl font-semibold mb-2 text-red-800">{cardTitle}</h3>
+            <p className="text-red-700">{cardText}</p>
+          </div>
+        )
+      case "sc-9": // Soft Purple Background
+        return (
+          <div className="bg-purple-50 p-6 rounded-lg border border-purple-100">
+            <h3 className="text-xl font-semibold mb-2 text-purple-800">{cardTitle}</h3>
+            <p className="text-purple-700">{cardText}</p>
+          </div>
+        )
+      case "sc-10": // Dark Card
+        return (
+          <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-2 text-white">{cardTitle}</h3>
+            <p className="text-gray-300">{cardText}</p>
+          </div>
+        )
+      default:
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-2 text-gray-800">{cardTitle}</h3>
+            <p className="text-gray-600">{cardText}</p>
+          </div>
+        )
+    }
+  }
+
+  // Simple Header Renderer
+  function renderSimpleHeader(designId: string | null) {
+    const headerText = element.content?.text || "SIMPLE HEADER"
+
+    switch (designId) {
+      case "sh-1": // Blue Header
+        return (
+          <div className="bg-blue-600 text-white font-bold p-4">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      case "sh-2": // Green Header
+        return (
+          <div className="bg-green-600 text-white font-bold p-4">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      case "sh-3": // Red Header
+        return (
+          <div className="bg-red-600 text-white font-bold p-4">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      case "sh-4": // Purple Header
+        return (
+          <div className="bg-purple-600 text-white font-bold p-4">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      case "sh-5": // Gray Header
+        return (
+          <div className="bg-gray-800 text-white font-bold p-4">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      case "sh-6": // White Header with Blue Border
+        return (
+          <div className="bg-white text-blue-600 font-bold p-4 border-b-2 border-blue-500">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      case "sh-7": // White Header with Green Border
+        return (
+          <div className="bg-white text-green-600 font-bold p-4 border-b-2 border-green-500">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      case "sh-8": // White Header with Red Border
+        return (
+          <div className="bg-white text-red-600 font-bold p-4 border-b-2 border-red-500">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      case "sh-9": // White Header with Purple Border
+        return (
+          <div className="bg-white text-purple-600 font-bold p-4 border-b-2 border-purple-500">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      case "sh-10": // Gradient Header
+        return (
+          <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold p-4">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
+        )
+      default:
+        return (
+          <div className="bg-white text-gray-800 font-bold p-4 border-b border-gray-200">
+            <h2 className="text-xl">{headerText}</h2>
+          </div>
         )
     }
   }
@@ -882,16 +1543,41 @@ export function ElementRenderer({
   if (isEditing) {
     return (
       <div
-        onClick={onClick}
+        ref={elementRef}
+        style={{
+          position: "absolute",
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          zIndex: isSelected ? 10 : isDragging ? 100 : 1,
+          transition: isDragging ? "none" : "box-shadow 0.2s ease",
+          boxShadow: isSelected ? "0 0 0 2px rgba(59, 130, 246, 0.5)" : "none",
+          width: element.style?.width,
+          height: element.style?.height,
+          cursor: isDragging ? "grabbing" : "default",
+        }}
+        onClick={(e) => {
+          e.stopPropagation()
+          if (onClick) onClick()
+        }}
         className={`
           element-wrapper relative group 
           ${isSelected ? "ring-2 ring-primary ring-offset-2" : "hover:outline hover:outline-gray-200"}
           ${baseType === "container" ? "p-4 border border-dashed border-gray-300" : ""}
+          ${isDragging ? "dragging" : ""}
+          ${showGrid ? "with-grid" : ""}
         `}
         data-element-type={baseType}
         data-element-id={element.id}
       >
         {renderElement()}
+
+        {/* Drag handle */}
+        <div
+          className="absolute -top-6 left-0 bg-white shadow-sm rounded-md p-1 cursor-move z-30 opacity-0 group-hover:opacity-100 hover:opacity-100"
+          onMouseDown={handleMouseDown}
+        >
+          <Move className="h-4 w-4 text-gray-500" />
+        </div>
 
         {isSelected && (
           <>
@@ -909,6 +1595,15 @@ export function ElementRenderer({
                 title="Add Animation"
               >
                 <Animation className="h-4 w-4" />
+              </button>
+
+              {/* Color button */}
+              <button
+                onClick={handleColorClick}
+                className="bg-purple-500 hover:bg-purple-600 text-white rounded-full p-1 shadow-md"
+                title="Change Colors"
+              >
+                <Palette className="h-4 w-4" />
               </button>
 
               {/* Fonts button - only for text elements */}
@@ -950,18 +1645,27 @@ export function ElementRenderer({
               />
             )}
 
-            {/* Delete confirmation dialog */}
-            {showDeleteConfirmation && (
-              <DeleteConfirmationDialog
-                onConfirm={handleConfirmDelete}
-                onCancel={() => setShowDeleteConfirmation(false)}
+            {/* Color picker */}
+            {showColorPicker && (
+              <ColorPicker
+                onClose={() => setShowColorPicker(false)}
+                onApplyTextColor={handleApplyColor}
+                onApplyBackgroundColor={handleApplyBackgroundColor}
+                position={{ top: "-3px", right: "80px" }}
               />
             )}
+
+            {/* Resize handles */}
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-blue-500 rounded-bl-sm cursor-se-resize z-20" />
           </>
         )}
       </div>
     )
   }
 
-  return renderElement()
+  return (
+    <div ref={elementRef} className={animationClass}>
+      {renderElement()}
+    </div>
+  )
 }
