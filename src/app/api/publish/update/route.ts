@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createClient } from "../../../../supabase/server"
+import { createClient } from "../../../../../supabase/server"
 
 export async function POST(request: Request) {
   try {
@@ -15,61 +15,45 @@ export async function POST(request: Request) {
     }
 
     // Get request body
-    const { projectId, siteName, content } = await request.json()
+    const { projectId, content } = await request.json()
 
-    if (!projectId || !siteName || !content) {
+    if (!projectId || !content) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
     }
 
-    // Generate HTML for the website
-    const html = generateHtml(content, siteName, true)
-
-    // Store the HTML in the database
-    // First, check if the site already exists
-    const { data: existingSite } = await supabase
+    // Get the published site record
+    const { data: publishedSite, error: siteError } = await supabase
       .from("published_sites")
-      .select("id")
+      .select("site_name")
       .eq("project_id", projectId)
       .single()
 
-    if (existingSite) {
-      // Update existing site
-      const { error: updateError } = await supabase
-        .from("published_sites")
-        .update({
-          site_name: siteName,
-          html_content: html,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", existingSite.id)
+    if (siteError || !publishedSite) {
+      return NextResponse.json({ message: "Site not published yet" }, { status: 404 })
+    }
 
-      if (updateError) {
-        console.error("Error updating site:", updateError)
-        return NextResponse.json({ message: "Failed to update site" }, { status: 500 })
-      }
-    } else {
-      // Create new site
-      const { error: insertError } = await supabase.from("published_sites").insert({
-        project_id: projectId,
-        user_id: user.id,
-        site_name: siteName,
+    // Generate updated HTML
+    const html = generateHtml(content, publishedSite.site_name, true)
+
+    // Update the HTML in the published sites table
+    const { error: updateError } = await supabase
+      .from("published_sites")
+      .update({
         html_content: html,
-        published_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
+      .eq("project_id", projectId)
 
-      if (insertError) {
-        console.error("Error creating site:", insertError)
-        return NextResponse.json({ message: "Failed to create site" }, { status: 500 })
-      }
+    if (updateError) {
+      console.error("Error updating published site:", updateError)
+      return NextResponse.json({ message: "Failed to update site" }, { status: 500 })
     }
 
     return NextResponse.json({
-      message: "Site published successfully",
-      url: `https://www.${siteName}.displan.design`,
+      message: "Site updated successfully",
     })
   } catch (error) {
-    console.error("Error publishing site:", error)
+    console.error("Error updating site:", error)
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

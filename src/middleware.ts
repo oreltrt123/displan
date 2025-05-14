@@ -4,17 +4,18 @@ import { createServerClient } from "@supabase/ssr"
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
-
-  // Subdomain handling
   const url = req.nextUrl
   const hostname = req.headers.get("host") || ""
 
-  // Check if the request is for a subdomain of displan.design
-  const subdomain = hostname.split("www.displan.design")[0]
+  // Check if this is a subdomain request
+  // Format: www.[subdomain].displan.design
+  const subdomainMatch = hostname.match(/^www\.([^.]+)\.displan\.design$/)
 
-  // If this is a subdomain request and not the main domain
-  if (hostname.includes("www.displan.design") && !hostname.startsWith("www")) {
-    return NextResponse.rewrite(new URL(`/sites/${subdomain}`, req.url))
+  if (subdomainMatch) {
+    const subdomain = subdomainMatch[1]
+
+    // Rewrite to the API route that will serve the site
+    return NextResponse.rewrite(new URL(`/api/sites/${subdomain}`, req.url))
   }
 
   // Supabase session/auth handling

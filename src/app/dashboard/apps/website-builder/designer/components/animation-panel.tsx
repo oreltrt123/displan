@@ -1,11 +1,11 @@
 "use client"
 import { useState } from "react"
-import { X, Play } from "lucide-react"
+import { X, Play } from 'lucide-react'
 
 interface AnimationPanelProps {
   onClose: () => void
   onApply: (animationType: string) => void
-  position: {
+  position?: {
     top?: string
     right?: string
     bottom?: string
@@ -13,7 +13,7 @@ interface AnimationPanelProps {
   }
 }
 
-export function AnimationPanel({ onClose, onApply, position }: AnimationPanelProps) {
+export function AnimationPanel({ onClose, onApply, position = { top: "0", right: "0" } }: AnimationPanelProps) {
   const [previewAnimation, setPreviewAnimation] = useState<string | null>(null)
 
   const animations = [
@@ -71,10 +71,10 @@ export function AnimationPanel({ onClose, onApply, position }: AnimationPanelPro
     <div
       className="absolute bg-white rounded-md shadow-lg z-50 w-64 border border-gray-200"
       style={{
-        top: position.top,
-        right: position.right,
-        bottom: position.bottom,
-        left: position.left,
+        top: position?.top,
+        right: position?.right,
+        bottom: position?.bottom,
+        left: position?.left,
       }}
     >
       <div className="flex items-center justify-between p-3 border-b border-gray-200">

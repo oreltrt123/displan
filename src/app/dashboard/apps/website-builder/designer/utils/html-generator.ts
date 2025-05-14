@@ -1,81 +1,6 @@
-import { NextResponse } from "next/server"
-import { createClient } from "../../../../supabase/server"
+import type { ProjectContent } from "../types"
 
-export async function POST(request: Request) {
-  try {
-    const supabase = createClient()
-
-    // Get current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
-    }
-
-    // Get request body
-    const { projectId, siteName, content } = await request.json()
-
-    if (!projectId || !siteName || !content) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
-    }
-
-    // Generate HTML for the website
-    const html = generateHtml(content, siteName, true)
-
-    // Store the HTML in the database
-    // First, check if the site already exists
-    const { data: existingSite } = await supabase
-      .from("published_sites")
-      .select("id")
-      .eq("project_id", projectId)
-      .single()
-
-    if (existingSite) {
-      // Update existing site
-      const { error: updateError } = await supabase
-        .from("published_sites")
-        .update({
-          site_name: siteName,
-          html_content: html,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", existingSite.id)
-
-      if (updateError) {
-        console.error("Error updating site:", updateError)
-        return NextResponse.json({ message: "Failed to update site" }, { status: 500 })
-      }
-    } else {
-      // Create new site
-      const { error: insertError } = await supabase.from("published_sites").insert({
-        project_id: projectId,
-        user_id: user.id,
-        site_name: siteName,
-        html_content: html,
-        published_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-
-      if (insertError) {
-        console.error("Error creating site:", insertError)
-        return NextResponse.json({ message: "Failed to create site" }, { status: 500 })
-      }
-    }
-
-    return NextResponse.json({
-      message: "Site published successfully",
-      url: `https://www.${siteName}.displan.design`,
-    })
-  } catch (error) {
-    console.error("Error publishing site:", error)
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
-  }
-}
-
-// Function to generate HTML
-function generateHtml(content: any, siteName: string, includeLogo = true): string {
+export function generateHtml(content: ProjectContent, siteName: string, includeLogo = true): string {
   // Get site settings
   const settings = content.settings || {
     siteName: siteName,
@@ -142,11 +67,11 @@ function generateHtml(content: any, siteName: string, includeLogo = true): strin
   if (mainPage && mainPage.sections && mainPage.sections.length > 0) {
     // Get the sections for the main page
     const pageSections = mainPage.sections
-      .map((sectionId: string) => content.sections.find((section: any) => section.id === sectionId))
+      .map((sectionId) => content.sections.find((section) => section.id === sectionId))
       .filter(Boolean)
 
     // Generate HTML for each section
-    pageSections.forEach((section: any) => {
+    pageSections.forEach((section) => {
       if (!section) return
 
       html += `    <section class="my-8">
@@ -155,7 +80,7 @@ function generateHtml(content: any, siteName: string, includeLogo = true): strin
 
       // Generate HTML for each element in the section
       if (section.elements && section.elements.length) {
-        section.elements.forEach((element: any) => {
+        section.elements.forEach((element) => {
           html += generateElementHtml(element, 8)
         })
       }
@@ -166,14 +91,14 @@ function generateHtml(content: any, siteName: string, includeLogo = true): strin
     })
   } else {
     // Fallback to all sections if no pages defined
-    content.sections.forEach((section: any) => {
+    content.sections.forEach((section) => {
       html += `    <section class="my-8">
       <div class="relative">
 `
 
       // Generate HTML for each element in the section
       if (section.elements && section.elements.length) {
-        section.elements.forEach((element: any) => {
+        section.elements.forEach((element) => {
           html += generateElementHtml(element, 8)
         })
       }

@@ -2,28 +2,7 @@
 
 import React, { type CSSProperties, useState, useEffect, useRef } from "react"
 import type { ElementType } from "../types"
-import {
-  Play,
-  Pause,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-  Youtube,
-  Zap,
-  Shield,
-  Terminal,
-  Cpu,
-  Code,
-  Server,
-  Globe,
-  Lock,
-  Trash2,
-  Type,
-  VideoIcon as Animation,
-  Palette,
-  Move,
-} from "lucide-react"
+import { Play, Pause, Facebook, Twitter, Instagram, Linkedin, Youtube, Zap, Shield, Terminal, Cpu, Code, Server, Globe, Lock, Trash2, Type, VideoIcon as Animation, Palette, Move, Database, User, CheckCircle, Star, ChevronDown, Check, Flower } from 'lucide-react'
 import { AnimationPanel } from "./animation-panel"
 import { FontsPanel } from "./fonts-panel"
 import { ColorPicker } from "./color-picker"
@@ -56,6 +35,9 @@ export function ElementRenderer({
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [animationClass, setAnimationClass] = useState("")
   const elementRef = useRef<HTMLDivElement>(null)
+
+  // For accordion items
+  const [openAccordionItem, setOpenAccordionItem] = useState<number | null>(null)
 
   // Dragging state
   const [position, setPosition] = useState({ x: element.style?.x || 0, y: element.style?.y || 0 })
@@ -349,6 +331,10 @@ export function ElementRenderer({
     setShowColorPicker(false)
   }
 
+  const toggleAccordionItem = (index: number) => {
+    setOpenAccordionItem(openAccordionItem === index ? null : index)
+  }
+
   const renderElement = () => {
     // First check for cyber elements
     if (baseType.startsWith("cyber-")) {
@@ -599,6 +585,36 @@ export function ElementRenderer({
           </div>
         )
 
+      case "hero-form":
+        return (
+          <div style={styleCopy} className="hero-form">
+            <input
+              type="email"
+              placeholder={element.content?.placeholder || "Enter your email..."}
+              className="hero-input"
+            />
+            <button className="hero-button">
+              {element.content?.buttonText || "Subscribe"}
+            </button>
+          </div>
+        )
+
+      case "hero-mockups":
+        return (
+          <div style={styleCopy} className="hero-mockups">
+            <img
+              src={element.content?.desktopSrc || "/placeholder.svg?height=400&width=600"}
+              alt="Desktop mockup"
+              className="desktop-mockup"
+            />
+            <img
+              src={element.content?.mobileSrc || "/placeholder.svg?height=500&width=250"}
+              alt="Mobile mockup"
+              className="mobile-mockup"
+            />
+          </div>
+        )
+
       case "features":
         const features = Array.isArray(element.content?.features)
           ? element.content.features
@@ -755,6 +771,28 @@ export function ElementRenderer({
           </header>
         )
 
+      // NEW ELEMENT TYPES
+      case "badge":
+        return renderBadge()
+
+      case "feature-card":
+        return renderFeatureCard()
+
+      case "testimonial-card":
+        return renderTestimonialCard()
+
+      case "pricing-cards":
+        return renderPricingCards()
+
+      case "accordion":
+        return renderAccordion()
+
+      case "navbar":
+        return renderNavbar()
+
+      case "modern-button":
+        return renderModernButton()
+
       default:
         console.error(`Unknown element type: ${element.type} (baseType: ${baseType}, designId: ${designId})`)
         return (
@@ -766,6 +804,284 @@ export function ElementRenderer({
           </div>
         )
     }
+  }
+
+  // NEW ELEMENT RENDERERS
+
+  // Modern Button Renderer
+  function renderModernButton() {
+    const buttonText = element.content?.buttonText || "Button"
+    const buttonLink = element.content?.buttonLink || "#"
+
+    return (
+      <a
+        href={isEditing ? "#" : buttonLink}
+        className="modern-button"
+      >
+        {buttonText}
+      </a>
+    )
+  }
+
+  // Navbar Renderer
+  function renderNavbar() {
+    const logo = element.content?.logo || { text: "frankie", icon: "flower" }
+    const navItems = element.content?.navItems || [
+      { label: "Home", link: "#" },
+      { label: "Features", link: "#" },
+      { label: "Pricing", link: "#" },
+      { label: "Blog", link: "#" },
+    ]
+    const ctaButton = element.content?.ctaButton || { text: "Get the Template", link: "#" }
+
+    const LogoIcon = getIconComponent(logo.icon || "flower")
+
+    return (
+      <nav
+        style={{
+          ...styleCopy,
+          backgroundColor: element.style?.backgroundColor || "#121212",
+          color: element.style?.textColor || "#ffffff",
+        }}
+        className="navbar"
+      >
+        <div className="navbar-logo">
+          <LogoIcon className="icon h-5 w-5" />
+          <span>{logo.text}</span>
+        </div>
+
+        <div className="navbar-links">
+          {navItems.map((item, index) => (
+            <a
+              key={index}
+              href={isEditing ? "#" : item.link}
+              className="navbar-link"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+
+        <a
+          href={isEditing ? "#" : ctaButton.link}
+          className="navbar-cta"
+        >
+          {ctaButton.text}
+        </a>
+      </nav>
+    )
+  }
+
+  // Badge Renderer
+  function renderBadge() {
+    const text = element.content?.text || "Badge"
+    const variant = element.content?.variant || "light"
+
+    let badgeClasses = "badge"
+
+    if (variant === "light") {
+      badgeClasses += " badge-light"
+    } else if (variant === "dark") {
+      badgeClasses += " badge-dark"
+    } else if (variant === "primary") {
+      badgeClasses += " badge-primary"
+    } else if (variant === "custom") {
+      badgeClasses += " badge-custom"
+    }
+
+    return (
+      <div style={styleCopy} className="flex justify-center">
+        <span className={badgeClasses}>{text}</span>
+      </div>
+    )
+  }
+
+  // Feature Card Renderer
+  function renderFeatureCard() {
+    const title = element.content?.title || "Feature"
+    const text = element.content?.text || "Feature description"
+    const iconName = element.content?.icon || "zap"
+    const buttonText = element.content?.buttonText
+    const buttonLink = element.content?.buttonLink || "#"
+    const mockupSrc = element.content?.mockupSrc || "/placeholder.svg?height=300&width=400"
+    const mockupAlt = element.content?.mockupAlt || "Feature mockup"
+    const queryExamples = element.content?.queryExamples || []
+
+    const IconComponent = getIconComponent(iconName)
+
+    return (
+      <div style={styleCopy} className="feature-card">
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex-1">
+            <div className="feature-header">
+              <div className="feature-icon-wrapper">
+                <IconComponent className="feature-icon h-6 w-6" />
+              </div>
+              <h3 className="feature-title">{title}</h3>
+            </div>
+
+            <div className="feature-content">
+              <p className="feature-text">{text}</p>
+
+              {buttonText && (
+                <a
+                  href={isEditing ? "#" : buttonLink}
+                  className="feature-button"
+                >
+                  {buttonText}
+                </a>
+              )}
+
+              {queryExamples.length > 0 && (
+                <div className="feature-queries">
+                  {queryExamples.map((query, index) => (
+                    <div
+                      key={index}
+                      className="feature-query"
+                    >
+                      {query}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <img src={mockupSrc || "/placeholder.svg"} alt={mockupAlt} className="feature-image" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Testimonial Card Renderer
+  function renderTestimonialCard() {
+    const quote = element.content?.quote || "This is a testimonial quote."
+    const author = element.content?.author || "John Doe"
+    const position = element.content?.position || "CEO"
+    const avatarSrc = element.content?.avatarSrc || "/placeholder.svg?height=100&width=100"
+    const rating = element.content?.rating || 5
+
+    return (
+      <div style={styleCopy} className="testimonial-card">
+        <p className="testimonial-quote">{quote}</p>
+
+        <div className="testimonial-author">
+          <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+            <img src={avatarSrc || "/placeholder.svg"} alt={author} className="testimonial-avatar" />
+          </div>
+
+          <div className="testimonial-info">
+            <h4 className="testimonial-name">{author}</h4>
+            <p className="testimonial-position">{position}</p>
+          </div>
+        </div>
+
+        {rating > 0 && (
+          <div className="testimonial-rating">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className="rating-star w-4 h-4"
+                fill={i < rating ? "#FFC107" : "#E5E7EB"}
+                color={i < rating ? "#FFC107" : "#E5E7EB"}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Pricing Cards Renderer
+  function renderPricingCards() {
+    const plans = element.content?.plans || [
+      {
+        name: "Basic",
+        price: "$9.99",
+        period: "per month",
+        features: ["Feature 1", "Feature 2", "Feature 3"],
+        buttonText: "Choose Plan",
+        buttonLink: "#",
+        popular: false,
+      },
+    ]
+
+    return (
+      <div style={styleCopy} className="pricing-container">
+        {plans.map((plan, index) => (
+          <div
+            key={index}
+            className={`pricing-card ${plan.popular ? "popular" : ""}`}
+          >
+            {plan.popular && plan.badge && (
+              <div className="pricing-badge">
+                ✦ {plan.badge}
+              </div>
+            )}
+
+            <div className={`${plan.popular && plan.badge ? "mt-6" : ""}`}>
+              <h3 className="pricing-name">{plan.name}</h3>
+            </div>
+
+            <div>
+              <span className="pricing-price">{plan.price}</span>
+              <span className="pricing-period">/{plan.period}</span>
+            </div>
+
+            <ul className="pricing-features">
+              {plan.features.map((feature, i) => (
+                <li
+                  key={i}
+                  className="pricing-feature"
+                >
+                  <Check className="pricing-feature-icon h-4 w-4" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <a
+              href={isEditing ? "#" : plan.buttonLink}
+              className="pricing-button"
+            >
+              {plan.buttonText || "Get Started"}
+            </a>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // Accordion Renderer
+  function renderAccordion() {
+    const items = element.content?.items || [
+      { question: "Question 1", answer: "Answer 1" },
+      { question: "Question 2", answer: "Answer 2" },
+    ]
+
+    return (
+      <div style={styleCopy} className="accordion">
+        {items.map((item, index) => (
+          <div key={index} className={`accordion-item ${openAccordionItem === index ? "open" : ""}`}>
+            <button
+              className="accordion-button"
+              onClick={() => toggleAccordionItem(index)}
+            >
+              <h3>{item.question}</h3>
+              <ChevronDown
+                className="accordion-icon w-5 h-5"
+              />
+            </button>
+
+            <div className="accordion-content">
+              <p className="accordion-answer">{item.answer}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
   // Helper function to get icon component
@@ -797,6 +1113,14 @@ export function ElementRenderer({
         return Globe
       case "lock":
         return Lock
+      case "database":
+        return Database
+      case "user":
+        return User
+      case "check-circle":
+        return CheckCircle
+      case "flower":
+        return Flower
       default:
         return Facebook
     }
@@ -1207,9 +1531,9 @@ export function ElementRenderer({
             <h2 className="text-xl">&gt; {headerText}</h2>
           </div>
         )
-      case "ch-2": // Neon Title
+      case "ch-2": // Neon Glow
         return (
-          <div className="bg-gray-900 text-cyan-400 font-bold p-4 shadow-[0_0_10px_rgba(6,182,212,0.5)]">
+          <div className="bg-gray-900 text-cyan-400 font-bold border border-cyan-500 p-4 shadow-[0_0_10px_rgba(6,182,212,0.5)]">
             <h2 className="text-xl">{headerText}</h2>
           </div>
         )
@@ -1499,41 +1823,25 @@ export function ElementRenderer({
   // Cyber Security Renderer
   function renderCyberSecurity(designId: string | null) {
     return (
-      <div className="bg-gray-900 border border-red-500 rounded p-4">
+      <div className="bg-gray-900 border border-yellow-500 rounded p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
-            <Lock className="h-5 w-5 text-red-400 mr-2" />
-            <span className="text-red-400 font-bold">SECURITY SYSTEM</span>
+            <Lock className="h-5 w-5 text-yellow-400 mr-2" />
+            <span className="text-yellow-400 font-bold">SECURITY ALERT</span>
           </div>
-          <span className="px-2 py-1 bg-green-900/50 text-green-400 rounded text-xs font-mono">ACTIVE</span>
         </div>
-        <div className="space-y-3">
-          <div className="bg-gray-800 p-2 rounded border border-gray-700">
-            <div className="flex justify-between mb-1">
-              <span className="text-xs text-gray-400">Firewall</span>
-              <span className="text-xs text-green-400">ENABLED</span>
-            </div>
-            <div className="h-2 bg-gray-700 rounded overflow-hidden">
-              <div className="h-full bg-green-500 w-full"></div>
-            </div>
+        <div className="space-y-2">
+          <div className="flex items-center">
+            <Shield className="h-4 w-4 text-red-500 mr-2" />
+            <span className="text-sm text-gray-300">Unauthorized access attempt detected.</span>
           </div>
-          <div className="bg-gray-800 p-2 rounded border border-gray-700">
-            <div className="flex justify-between mb-1">
-              <span className="text-xs text-gray-400">Encryption</span>
-              <span className="text-xs text-green-400">ACTIVE</span>
-            </div>
-            <div className="h-2 bg-gray-700 rounded overflow-hidden">
-              <div className="h-full bg-blue-500 w-full"></div>
-            </div>
+          <div className="flex items-center">
+            <Terminal className="h-4 w-4 text-yellow-500 mr-2" />
+            <span className="text-sm text-gray-300">Firewall status: Active.</span>
           </div>
-          <div className="bg-gray-800 p-2 rounded border border-gray-700">
-            <div className="flex justify-between mb-1">
-              <span className="text-xs text-gray-400">Intrusion Detection</span>
-              <span className="text-xs text-yellow-400">MONITORING</span>
-            </div>
-            <div className="h-2 bg-gray-700 rounded overflow-hidden">
-              <div className="h-full bg-yellow-500 w-4/5 animate-pulse"></div>
-            </div>
+          <div className="flex items-center">
+            <Cpu className="h-4 w-4 text-blue-500 mr-2" />
+            <span className="text-sm text-gray-300">System integrity check: Passed.</span>
           </div>
         </div>
       </div>
@@ -1610,7 +1918,7 @@ export function ElementRenderer({
               {(baseType === "heading" || baseType === "paragraph") && (
                 <button
                   onClick={handleFontsClick}
-                  className="bg-purple-500 hover:bg-purple-600 text-white rounded-full p-1 shadow-md"
+                  className="bg-green-500 hover:bg-green-600 text-white rounded-full p-1 shadow-md"
                   title="Change Font"
                 >
                   <Type className="h-4 w-4" />

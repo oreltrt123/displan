@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Save, Eye, Plus, Layout, Trash } from "lucide-react"
+import { ArrowLeft, Save, Eye, Plus, Layout, Trash } from 'lucide-react'
 import { createClient } from "../../../../../../../../supabase/client"
 import type { PostgrestError } from "@supabase/supabase-js"
 
@@ -23,6 +23,7 @@ import { DragDropProvider } from "../../components/drag-drop-context"
 import { DroppableSection } from "../../components/droppable-section"
 import { StripeCheckoutModal } from "../../components/stripe-checkout-modal"
 import { SimplePanel } from "../../components/simple-panel"
+import { PublishButton } from "../../components/publish-button"
 
 // Import utilities
 import { createNewElement } from "../../utils/element-factory"
@@ -1442,6 +1443,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
               <Eye className="h-4 w-4 mr-1" />
               Preview
             </button>
+            <PublishButton project={project} />
             <button
               onClick={togglePreview}
               className={`flex items-center px-3 py-2 rounded text-sm ${showPreview ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
@@ -1603,9 +1605,9 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
                     <div className="p-4">
                       {getPageSections().map((section) => (
                         <div key={section.id} className="mb-8">
-                          <h2 className="text-lg font-semibold mb-4 text-muted-foreground border-b border-border pb-2">
+                          {/* <h2 className="text-lg font-semibold mb-4 text-muted-foreground border-b border-border pb-2">
                             {section.name}
-                          </h2>
+                          </h2> */}
                           <div>
                             {section.elements.map((element) => (
                               <div key={element.id}>

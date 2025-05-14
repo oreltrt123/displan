@@ -1604,30 +1604,30 @@ export function ElementProperties({
   return (
     <div className="flex h-full">
       {/* Vertical Tab Navigation */}
-      <div className="w-14 bg-gray-100 border-r border-gray-200 flex flex-col items-center py-4 space-y-6">
+      <div className="w-14 bg-background border-r flex flex-col items-center py-4 space-y-6">
         <button
-          className={`w-10 h-10 flex items-center justify-center rounded-md ${activeTab === "content" ? "bg-white shadow-md" : "text-gray-500 hover:bg-gray-200"}`}
+          className={`w-10 h-10 flex items-center justify-center rounded-md ${activeTab === "content" ? "bg-background shadow-md" : "text-gray-500"}`}
           onClick={() => setActiveTab("content")}
           title="Content"
         >
           <Type className="h-5 w-5" />
         </button>
         <button
-          className={`w-10 h-10 flex items-center justify-center rounded-md ${activeTab === "style" ? "bg-white shadow-md" : "text-gray-500 hover:bg-gray-200"}`}
+          className={`w-10 h-10 flex items-center justify-center rounded-md ${activeTab === "style" ? "bg-background shadow-md" : "text-gray-500"}`}
           onClick={() => setActiveTab("style")}
           title="Style"
         >
           <Palette className="h-5 w-5" />
         </button>
         <button
-          className={`w-10 h-10 flex items-center justify-center rounded-md ${activeTab === "layout" ? "bg-white shadow-md" : "text-gray-500 hover:bg-gray-200"}`}
+          className={`w-10 h-10 flex items-center justify-center rounded-md ${activeTab === "layout" ? "bg-background shadow-md" : "text-gray-500"}`}
           onClick={() => setActiveTab("layout")}
           title="Layout"
         >
           <Layout className="h-5 w-5" />
         </button>
         <button
-          className={`w-10 h-10 flex items-center justify-center rounded-md ${activeTab === "advanced" ? "bg-white shadow-md" : "text-gray-500 hover:bg-gray-200"}`}
+          className={`w-10 h-10 flex items-center justify-center rounded-md ${activeTab === "advanced" ? "bg-background shadow-md" : "text-gray-500"}`}
           onClick={() => setActiveTab("advanced")}
           title="Advanced"
         >

@@ -43,7 +43,7 @@ export function DroppableSection({
       data-section-id={section.id}
       style={{ position: "relative", minHeight: "200px" }}
     >
-      <h2 className="text-lg font-semibold mb-4 text-gray-400 border-b border-gray-200 pb-2">{section.name}</h2>
+      {/* <h2 className="text-lg font-semibold mb-4 text-gray-400 border-b border-gray-200 pb-2">{section.name}</h2> */}
 
       <div className="relative min-h-[100px]">
         {/* Grid background when grid is enabled */}
