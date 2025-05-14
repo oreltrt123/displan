@@ -9,7 +9,8 @@ export async function middleware(req: NextRequest) {
 
   // Check if this is a subdomain request
   // Format: www.[subdomain].displan.design
-  const subdomainMatch = hostname.match(/^www\.([^.]+)\.displan\.design$/)
+  const subdomainMatch =
+    hostname.match(/^([^.]+)\.displan\.design$/) || hostname.match(/^www\.([^.]+)\.displan\.design$/)
 
   if (subdomainMatch) {
     const subdomain = subdomainMatch[1]
