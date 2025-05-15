@@ -2,11 +2,40 @@
 
 import React, { type CSSProperties, useState, useEffect, useRef } from "react"
 import type { ElementType } from "../types"
-import { Play, Pause, Facebook, Twitter, Instagram, Linkedin, Youtube, Zap, Shield, Terminal, Cpu, Code, Server, Globe, Lock, Trash2, Type, VideoIcon as Animation, Palette, Move, Database, User, CheckCircle, Star, ChevronDown, Check, Flower } from 'lucide-react'
+import {
+  Play,
+  Pause,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Zap,
+  Shield,
+  Terminal,
+  Cpu,
+  Code,
+  Server,
+  Globe,
+  Lock,
+  Trash2,
+  Type,
+  VideoIcon as Animation,
+  Palette,
+  Move,
+  Database,
+  User,
+  CheckCircle,
+  Star,
+  ChevronDown,
+  Check,
+  Flower,
+} from "lucide-react"
 import { AnimationPanel } from "./animation-panel"
 import { FontsPanel } from "./fonts-panel"
 import { ColorPicker } from "./color-picker"
 import { useDragDrop } from "./drag-drop-context"
+import * as BlogElements from "./blog-elements"
 
 interface ElementRendererProps {
   element: ElementType
@@ -38,6 +67,22 @@ export function ElementRenderer({
 
   // For accordion items
   const [openAccordionItem, setOpenAccordionItem] = useState<number | null>(null)
+
+  // For announcement dismissal
+  const [isDismissed, setIsDismissed] = useState(false)
+
+  // For slider
+  const [activeSlide, setActiveSlide] = useState(0)
+  const [autoplayInterval, setAutoplayInterval] = useState<NodeJS.Timeout | null>(null)
+
+  // For tab filter
+  const [activeFilter, setActiveFilter] = useState("")
+
+  // For author carousel
+  const [activeAuthor, setActiveAuthor] = useState(0)
+
+  // For category popular
+  const [currentTab, setCurrentTab] = useState(0)
 
   // Dragging state
   const [position, setPosition] = useState({ x: element.style?.x || 0, y: element.style?.y || 0 })
@@ -201,6 +246,28 @@ export function ElementRenderer({
     }
   }, [element.transitions, isEditing])
 
+  // Slider autoplay effect
+  useEffect(() => {
+    if (baseType === "slider" && element.content?.autoplay && !isEditing) {
+      const interval = element.content.interval || 5000
+
+      const autoplayTimer = setInterval(() => {
+        const slides = element.content?.slides || []
+        if (slides.length > 0) {
+          setActiveSlide((prev) => (prev + 1) % slides.length)
+        }
+      }, interval)
+
+      setAutoplayInterval(autoplayTimer)
+
+      return () => {
+        if (autoplayInterval) {
+          clearInterval(autoplayInterval)
+        }
+      }
+    }
+  }, [baseType, element.content?.autoplay, element.content?.interval, isEditing, autoplayInterval])
+
   // Get CSS animation class based on animation type
   const getAnimationClass = (animationType: string): string => {
     switch (animationType) {
@@ -361,6 +428,66 @@ export function ElementRenderer({
       } else if (baseType === "simple-header") {
         return renderSimpleHeader(designId)
       }
+    }
+
+    // Then check for blog elements
+    switch (baseType) {
+      case "mega-menu":
+        return BlogElements.renderMegaMenu(element)
+
+      case "announcement":
+        return BlogElements.renderAnnouncement(element, isDismissed, setIsDismissed)
+
+      case "slider":
+        return BlogElements.renderSlider(element, activeSlide, setActiveSlide)
+
+      case "particles":
+        return BlogElements.renderParticles(element)
+
+      case "scroll-indicator":
+        return BlogElements.renderScrollIndicator(element, getIconComponent)
+
+      case "featured-grid":
+        return BlogElements.renderFeaturedGrid(element)
+
+      case "call-to-action":
+        return BlogElements.renderCallToAction(element)
+
+      case "pill-carousel":
+        return BlogElements.renderPillCarousel(element)
+
+      case "topic-highlights":
+        return BlogElements.renderTopicHighlights(element)
+
+      case "tab-filter":
+        return BlogElements.renderTabFilter(element, activeFilter, setActiveFilter)
+
+      case "article-grid":
+        return BlogElements.renderArticleGrid(element)
+
+      case "author-carousel":
+        return BlogElements.renderAuthorCarousel(element, activeAuthor, setActiveAuthor)
+
+      case "category-cards":
+        return BlogElements.renderCategoryCards(element, getIconComponent)
+
+      case "tag-cloud":
+        return BlogElements.renderTagCloud(element)
+
+      case "category-popular":
+        return BlogElements.renderCategoryPopular(element, currentTab, setCurrentTab)
+
+      case "stats-counter":
+        return BlogElements.renderStatsCounter(element)
+
+      case "newsletter-box":
+        return BlogElements.renderNewsletterBox(element)
+
+      case "social-follow":
+        return BlogElements.renderSocialFollow(element)
+
+      case "back-to-top":
+        return BlogElements.renderBackToTop(element, getIconComponent)
     }
 
     // Then check for standard elements
@@ -593,9 +720,7 @@ export function ElementRenderer({
               placeholder={element.content?.placeholder || "Enter your email..."}
               className="hero-input"
             />
-            <button className="hero-button">
-              {element.content?.buttonText || "Subscribe"}
-            </button>
+            <button className="hero-button">{element.content?.buttonText || "Subscribe"}</button>
           </div>
         )
 
@@ -814,10 +939,7 @@ export function ElementRenderer({
     const buttonLink = element.content?.buttonLink || "#"
 
     return (
-      <a
-        href={isEditing ? "#" : buttonLink}
-        className="modern-button"
-      >
+      <a href={isEditing ? "#" : buttonLink} className="modern-button">
         {buttonText}
       </a>
     )
@@ -852,20 +974,13 @@ export function ElementRenderer({
 
         <div className="navbar-links">
           {navItems.map((item, index) => (
-            <a
-              key={index}
-              href={isEditing ? "#" : item.link}
-              className="navbar-link"
-            >
+            <a key={index} href={isEditing ? "#" : item.link} className="navbar-link">
               {item.label}
             </a>
           ))}
         </div>
 
-        <a
-          href={isEditing ? "#" : ctaButton.link}
-          className="navbar-cta"
-        >
+        <a href={isEditing ? "#" : ctaButton.link} className="navbar-cta">
           {ctaButton.text}
         </a>
       </nav>
@@ -924,10 +1039,7 @@ export function ElementRenderer({
               <p className="feature-text">{text}</p>
 
               {buttonText && (
-                <a
-                  href={isEditing ? "#" : buttonLink}
-                  className="feature-button"
-                >
+                <a href={isEditing ? "#" : buttonLink} className="feature-button">
                   {buttonText}
                 </a>
               )}
@@ -935,10 +1047,7 @@ export function ElementRenderer({
               {queryExamples.length > 0 && (
                 <div className="feature-queries">
                   {queryExamples.map((query, index) => (
-                    <div
-                      key={index}
-                      className="feature-query"
-                    >
+                    <div key={index} className="feature-query">
                       {query}
                     </div>
                   ))}
@@ -1011,15 +1120,8 @@ export function ElementRenderer({
     return (
       <div style={styleCopy} className="pricing-container">
         {plans.map((plan, index) => (
-          <div
-            key={index}
-            className={`pricing-card ${plan.popular ? "popular" : ""}`}
-          >
-            {plan.popular && plan.badge && (
-              <div className="pricing-badge">
-                ✦ {plan.badge}
-              </div>
-            )}
+          <div key={index} className={`pricing-card ${plan.popular ? "popular" : ""}`}>
+            {plan.popular && plan.badge && <div className="pricing-badge">✦ {plan.badge}</div>}
 
             <div className={`${plan.popular && plan.badge ? "mt-6" : ""}`}>
               <h3 className="pricing-name">{plan.name}</h3>
@@ -1032,20 +1134,14 @@ export function ElementRenderer({
 
             <ul className="pricing-features">
               {plan.features.map((feature, i) => (
-                <li
-                  key={i}
-                  className="pricing-feature"
-                >
+                <li key={i} className="pricing-feature">
                   <Check className="pricing-feature-icon h-4 w-4" />
                   <span>{feature}</span>
                 </li>
               ))}
             </ul>
 
-            <a
-              href={isEditing ? "#" : plan.buttonLink}
-              className="pricing-button"
-            >
+            <a href={isEditing ? "#" : plan.buttonLink} className="pricing-button">
               {plan.buttonText || "Get Started"}
             </a>
           </div>
@@ -1065,14 +1161,9 @@ export function ElementRenderer({
       <div style={styleCopy} className="accordion">
         {items.map((item, index) => (
           <div key={index} className={`accordion-item ${openAccordionItem === index ? "open" : ""}`}>
-            <button
-              className="accordion-button"
-              onClick={() => toggleAccordionItem(index)}
-            >
+            <button className="accordion-button" onClick={() => toggleAccordionItem(index)}>
               <h3>{item.question}</h3>
-              <ChevronDown
-                className="accordion-icon w-5 h-5"
-              />
+              <ChevronDown className="accordion-icon w-5 h-5" />
             </button>
 
             <div className="accordion-content">
