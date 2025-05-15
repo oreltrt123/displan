@@ -1,0 +1,325 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+  font-family: adobe-clean, Helvetica, Arial, sans-serif;
+}
+
+/* App Card Styles */
+.app-card {
+  box-sizing: border-box;
+  color: rgb(235, 235, 235);
+  display: block;
+  background-color: rgb(30, 30, 30);
+  border: 1px solid rgb(44, 44, 44);
+  border-radius: 8px;
+  padding: 24px;
+  transition: background-color 0.2s ease;
+}
+
+.app-card:hover {
+  background-color: rgb(40, 40, 40);
+}
+
+.app-card-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-title {
+  color: rgb(255, 255, 255);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 24px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.app-description {
+  color: rgb(180, 180, 180);
+  font-size: 14px;
+  line-height: 20px;
+  margin-bottom: 16px;
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.app-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.app-learn-more {
+  display: flex;
+  align-items: center;
+  color: rgb(6, 108, 231);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.app-learn-more:hover {
+  color: rgb(64, 150, 255);
+}
+
+.app-open-button {
+  background-color: rgb(6, 108, 231);
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.app-open-button:hover {
+  background-color: rgb(28, 126, 241);
+}
+
+/* App Detail Page Styles */
+.app-detail-sidebar {
+  background-color: rgb(30, 30, 30);
+  border: 1px solid rgb(44, 44, 44);
+  border-radius: 8px;
+  padding: 24px;
+  height: fit-content;
+}
+
+.app-detail-title {
+  color: rgb(255, 255, 255);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.app-detail-description {
+  color: rgb(180, 180, 180);
+  font-size: 14px;
+  line-height: 21px;
+  margin-bottom: 24px;
+}
+
+.app-detail-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.app-detail-feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgb(200, 200, 200);
+  font-size: 14px;
+}
+
+.app-detail-open-button {
+  display: block;
+  width: 100%;
+  background-color: rgb(6, 108, 231);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 12px 24px;
+  border-radius: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.app-detail-open-button:hover {
+  background-color: rgb(28, 126, 241);
+}
+
+.app-detail-main-image-container {
+  background-color: rgb(30, 30, 30);
+  border: 1px solid rgb(44, 44, 44);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.app-detail-main-image {
+  position: relative;
+  width: 100%;
+  height: 400px;
+}
+
+.app-detail-thumbnails {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.app-detail-thumbnail {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgb(60, 60, 60);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.app-detail-thumbnail:hover {
+  border-color: rgb(100, 100, 100);
+}
+
+.app-detail-main-uses {
+  background-color: rgb(30, 30, 30);
+  border: 1px solid rgb(44, 44, 44);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.app-detail-section-title {
+  color: rgb(255, 255, 255);
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.app-detail-features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.app-detail-feature-item {
+  color: rgb(180, 180, 180);
+  font-size: 14px;
+  line-height: 21px;
+  position: relative;
+  padding-left: 16px;
+}
+
+.app-detail-feature-item::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: rgb(100, 100, 100);
+}
+
+/* Languages Modal Styles */
+.languages-modal {
+  background-color: rgb(30, 30, 30);
+  border-radius: 8px;
+  width: 600px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.languages-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgb(44, 44, 44);
+}
+
+.languages-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.languages-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.languages-sidebar {
+  width: 180px;
+  border-right: 1px solid rgb(44, 44, 44);
+  padding: 16px 0;
+}
+
+.languages-sidebar-item {
+  padding: 8px 20px;
+  font-size: 14px;
+  color: rgb(200, 200, 200);
+  cursor: pointer;
+}
+
+.languages-sidebar-item.active {
+  background-color: rgb(40, 40, 40);
+  color: white;
+  border-left: 3px solid rgb(6, 108, 231);
+}
+
+.languages-list {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.languages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.languages-item {
+  font-size: 14px;
+  color: rgb(200, 200, 200);
+  padding: 8px 0;
+}
+
+.languages-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgb(44, 44, 44);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.languages-done-button {
+  background-color: rgb(6, 108, 231);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 20px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.languages-done-button:hover {
+  background-color: rgb(28, 126, 241);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
