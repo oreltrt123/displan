@@ -85,27 +85,19 @@ export default function Navbar() {
       initial="hidden"
       animate="visible"
       // variants={navVariants}
-      className="fixed top-0 left-0 right-0 z-50 px-6 py-4 backdrop-blur-lg bg-background"
+      className="fixed top-0 left-0 right-0 z-50 px-6 py-4 backdrop-blur-lg bg-white/80 dark:bg-background/80"
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-12">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-white link_button dsafafwf">
-              <img 
-    src="/logo_light_mode.png" 
-    alt="Logo" 
-    className="dark:hidden" 
-  />
-  <img 
-    src="/logo_dark_mode.png" 
-    alt="Logo" 
-    className="hidden dark:block" 
-  />
+          <Link href="/" className="text-2xl font-bold tracking-tight text-black dark:text-white link_button dsafafwf">
+            <img src="/logo_light_mode.png" alt="Logo" className="dark:hidden" />
+            <img src="/logo_dark_mode.png" alt="Logo" className="hidden dark:block" />
           </Link>
           <div className="hidden md:flex items-center gap-8">
             <div>
               <Link
                 href="/features"
-                className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
                 data-i18n="features"
               >
                 Features
@@ -114,7 +106,7 @@ export default function Navbar() {
             <div>
               <Link
                 href="/blog"
-                className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
                 data-i18n="blog"
               >
                 Blog
@@ -123,7 +115,7 @@ export default function Navbar() {
             <div>
               <Link
                 href="/about"
-                className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
                 data-i18n="about"
               >
                 About
@@ -132,7 +124,7 @@ export default function Navbar() {
             <div>
               <Link
                 href="/projects"
-                className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
                 data-i18n="projects"
               >
                 Projects
@@ -142,17 +134,19 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-6">
+          {/* Theme Toggle */}
+
           {/* Only show LanguageSwitcher here if user is NOT logged in */}
           {!user && <LanguageSwitcher />}
 
           {loading ? (
             // Show loading state
-            <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse"></div>
+            <div className="w-8 h-8 rounded-full bg-black/10 dark:bg-white/10 animate-pulse"></div>
           ) : user ? (
             // User is logged in - show avatar dropdown with LanguageSwitcher inside
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="post-actions-menu-button">
+                <button className="post-actions-menu-button text-black dark:text-white">
                   <UserCircle className="h-5 w-5" />
                   <span className="sr-only">User menu</span>
                 </button>
@@ -182,7 +176,7 @@ export default function Navbar() {
               <div>
                 <Link
                   href="/sign-in"
-                  className="text-sm text-white/70 hover:text-white transition-colors link_button"
+                  className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
                   data-i18n="signIn"
                 >
                   Sign in
@@ -191,7 +185,7 @@ export default function Navbar() {
               <div>
                 <Link
                   href="/sign-up"
-                  className="px-4 py-2 text-sm font-medium bg-white text-black rounded-full hover:bg-white/90 transition-colors link_button"
+                  className="px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-black/90 dark:hover:bg-white/90 transition-colors link_button"
                   data-i18n="getStarted"
                 >
                   Get started
