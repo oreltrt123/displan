@@ -5,7 +5,8 @@ import Link from "next/link"
 import { Settings, User, LogOut } from "lucide-react"
 import { createClient } from "../../supabase/client"
 import { useRouter } from "next/navigation"
-
+import "../styles/navbar.css"
+import "../app/dashboard/apps/website-builder/designer/styles/button.css"
 interface DashboardNavbarProps {
   hasProfile?: boolean
 }
@@ -68,8 +69,7 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
         </div>
 
         <div className="flex items-center gap-4 relative">
-          <Link href="/dashboard/apps" className="text-white/70 hover:text-white">
-            <div className="px-3 py-1.5 rounded-md hover:bg-white/10 transition-colors flex items-center gap-2">
+          <Link href="/dashboard/apps" className="new_site_button_r2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="18"
@@ -80,7 +80,7 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="lucide lucide-layout-grid"
+                className="lucide lucide-layout-grid icon"
               >
                 <rect width="7" height="7" x="3" y="3" rx="1" />
                 <rect width="7" height="7" x="14" y="3" rx="1" />
@@ -88,7 +88,6 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
                 <rect width="7" height="7" x="3" y="14" rx="1" />
               </svg>
               <span>Apps</span>
-            </div>
           </Link>
           <button
             ref={avatarRef}
@@ -102,13 +101,13 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
           {isDropdownOpen && (
             <div
               ref={dropdownRef}
-              className="absolute right-0 top-12 w-48 bg-white/10 backdrop-blur-md border border-white/10 rounded-lg shadow-lg z-50 overflow-hidden"
+              className="menu_container_t3"
             >
               <div className="py-1">
                 {hasProfile ? (
                   <Link
                     href="/dashboard/profile/edit"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10 w-full text-left"
+                    className="menu_item"
                   >
                     <User size={16} />
                     Edit Profile
@@ -116,7 +115,7 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
                 ) : (
                   <Link
                     href="/profile/create"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10 w-full text-left"
+                    className="menu_item"
                   >
                     <User size={16} />
                     Create Profile
@@ -125,7 +124,7 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
 
                 <Link
                   href="/dashboard/settings"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10 w-full text-left"
+                  className="menu_item"
                 >
                   <Settings size={16} />
                   Settings
@@ -133,7 +132,7 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
 
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10 w-full text-left"
+                  className="menu_item"
                 >
                   <LogOut size={16} />
                   Sign Out

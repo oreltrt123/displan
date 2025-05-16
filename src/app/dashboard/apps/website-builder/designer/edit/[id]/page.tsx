@@ -6,7 +6,7 @@ import Link from "next/link"
 import { ArrowLeft, Save, Eye, Plus, Layout, Trash } from 'lucide-react'
 import { createClient } from "../../../../../../../../supabase/client"
 import type { PostgrestError } from "@supabase/supabase-js"
-
+import "../../styles/button.css"
 // Import types
 import type { Project, Section, ElementType, Page } from "../../types"
 
@@ -1431,26 +1431,17 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
             <button
               onClick={saveProject}
               disabled={!unsavedChanges || saving}
-              className={`flex items-center px-3 py-2 rounded text-sm ${unsavedChanges ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+              className="button_edit_project_r22"
             >
-              <Save className="h-4 w-4 mr-1" />
               {saving ? "Saving..." : saveStatus === "saved" ? "Saved!" : "Save"}
             </button>
             <button
-              onClick={openPreview}
-              className="flex items-center px-3 py-2 rounded text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              Preview
-            </button>
-            <PublishButton project={project} />
-            <button
               onClick={togglePreview}
-              className={`flex items-center px-3 py-2 rounded text-sm ${showPreview ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+              className="button_edit_project_r22"
             >
-              <Eye className="h-4 w-4 mr-1" />
               {showPreview ? "Edit" : "Preview"}
             </button>
+            <PublishButton project={project} />
           </div>
         </div>
       </header>

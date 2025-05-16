@@ -53,7 +53,7 @@ export default function WebsiteBuilderPage() {
   }
 
   return (
-    <div className="w-full min-h-screen text-white bg-black relative">
+    <div className="w-full min-h-screen text-white bg-background relative">
       <DashboardNavbar hasProfile={true} />
       <main className="w-full">
         <div className="container mx-auto px-4 py-8">
@@ -100,7 +100,7 @@ export default function WebsiteBuilderPage() {
                 </div>
               </div>
 
-              <a href={appData.url} target="_blank" rel="noopener noreferrer" className="app-detail-open-button">
+              <a href={appData.url} className="app-detail-open-button">
                 Open
               </a>
             </div>

@@ -269,7 +269,7 @@ export function SimplePanel({ onAddElement, onApplyTheme }: SimplePanelProps) {
         <h2 className="font-semibold text-foreground">Simple Designs</h2>
         <p className="text-xs text-muted-foreground mt-1">Clean, modern design elements</p>
       </div>
-
+{/* 
       <div className="flex border-b border-border overflow-x-auto">
         <button
           onClick={() => setActiveTab("themes")}
@@ -293,14 +293,14 @@ export function SimplePanel({ onAddElement, onApplyTheme }: SimplePanelProps) {
           <Layout className="h-4 w-4 mr-1.5" />
           <span>Elements</span>
         </button>
-      </div>
+      </div> */}
 
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === "themes" ? (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground mb-4">
+            {/* <p className="text-sm text-muted-foreground mb-4">
               Apply a color theme to change the look of your entire website
-            </p>
+            </p> */}
             <div className="grid grid-cols-1 gap-3">
               {colorThemes.map((theme) => (
                 <button

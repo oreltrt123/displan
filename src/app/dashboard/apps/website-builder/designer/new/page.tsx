@@ -5,13 +5,13 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Palette, Save, X } from "lucide-react"
+import { ArrowLeft, Palette, Save, X, FileText } from "lucide-react"
 import { createClient } from "../../../../../../../supabase/client"
 import { blankTemplate } from "../templates/blank-template"
 import { businessTemplate } from "../templates/business-template"
 import { portfolioTemplate } from "../templates/portfolio-template"
 import { ecommerceTemplate } from "../templates/ecommerce-template"
-import  blogTemplate from "../templates/blog-template"
+import blogTemplate from "../templates/blog-template"
 import { landingTemplate } from "../templates/landing-template"
 
 export default function NewDesignerProjectPage() {
@@ -22,6 +22,7 @@ export default function NewDesignerProjectPage() {
   const [template, setTemplate] = useState("blank")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showTemplates, setShowTemplates] = useState(true)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,6 +68,9 @@ export default function NewDesignerProjectPage() {
         case "landing":
           initialContent = landingTemplate(name)
           break
+        case "no-template":
+          initialContent = { name, pages: [] }
+          break
         default:
           initialContent = blankTemplate(name)
       }
@@ -94,6 +98,16 @@ export default function NewDesignerProjectPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleCreateWithoutTemplate = async () => {
+    if (!name.trim()) {
+      setError("Project name is required")
+      return
+    }
+
+    setTemplate("no-template")
+    handleSubmit(new Event("submit") as unknown as React.FormEvent)
   }
 
   return (
@@ -159,134 +173,182 @@ export default function NewDesignerProjectPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-3">Choose a Template</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div
-                    className={`border rounded-lg p-4 cursor-pointer ${
-                      template === "blank"
-                        ? "border-purple-500 bg-purple-500/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
-                    }`}
-                    onClick={() => setTemplate("blank")}
-                  >
-                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
-                      <img
-                        src="/placeholder.svg?height=200&width=320"
-                        alt="Blank Template Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <h3 className="font-medium">Blank Template</h3>
-                    <p className="text-sm text-white/70">Start with a clean slate</p>
-                  </div>
-
-                  <div
-                    className={`border rounded-lg p-4 cursor-pointer ${
-                      template === "business"
-                        ? "border-purple-500 bg-purple-500/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
-                    }`}
-                    onClick={() => setTemplate("business")}
-                  >
-                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
-                      <img
-                        src="/placeholder.svg?height=200&width=320"
-                        alt="Business Template Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <h3 className="font-medium">Business Template</h3>
-                    <p className="text-sm text-white/70">Professional business website</p>
-                  </div>
-
-                  <div
-                    className={`border rounded-lg p-4 cursor-pointer ${
-                      template === "portfolio"
-                        ? "border-purple-500 bg-purple-500/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
-                    }`}
-                    onClick={() => setTemplate("portfolio")}
-                  >
-                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
-                      <img
-                        src="/placeholder.svg?height=200&width=320"
-                        alt="Portfolio Template Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <h3 className="font-medium">Portfolio Template</h3>
-                    <p className="text-sm text-white/70">Showcase your work beautifully</p>
-                  </div>
-
-                  <div
-                    className={`border rounded-lg p-4 cursor-pointer ${
-                      template === "ecommerce"
-                        ? "border-purple-500 bg-purple-500/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
-                    }`}
-                    onClick={() => setTemplate("ecommerce")}
-                  >
-                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
-                      <img
-                        src="/placeholder.svg?height=200&width=320"
-                        alt="E-commerce Template Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <h3 className="font-medium">E-commerce Template</h3>
-                    <p className="text-sm text-white/70">Online store with product showcase</p>
-                  </div>
-
-                  <div
-                    className={`border rounded-lg p-4 cursor-pointer ${
-                      template === "blog"
-                        ? "border-purple-500 bg-purple-500/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
-                    }`}
-                    onClick={() => setTemplate("blog")}
-                  >
-                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
-                      <img
-                        src="/placeholder.svg?height=200&width=320"
-                        alt="Blog Template Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <h3 className="font-medium">Blog Template</h3>
-                    <p className="text-sm text-white/70">Content-focused blog layout</p>
-                  </div>
-
-                  <div
-                    className={`border rounded-lg p-4 cursor-pointer ${
-                      template === "landing"
-                        ? "border-purple-500 bg-purple-500/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
-                    }`}
-                    onClick={() => setTemplate("landing")}
-                  >
-                    <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
-                      <img
-                        src="/placeholder.svg?height=200&width=320"
-                        alt="Landing Page Template Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <h3 className="font-medium">Landing Page</h3>
-                    <p className="text-sm text-white/70">High-conversion landing page</p>
+              {/* Template Selection Options */}
+              <div className="flex flex-col gap-4 pt-4 border-t border-white/10">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-medium">Choose how to start</h2>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowTemplates(false)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        !showTemplates
+                          ? "bg-purple-500 text-white"
+                          : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      Without Template
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowTemplates(true)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        showTemplates
+                          ? "bg-purple-500 text-white"
+                          : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      Use Template
+                    </button>
                   </div>
                 </div>
-              </div>
 
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  <Save size={18} />
-                  {isLoading ? "Creating Project..." : "Create Project"}
-                </button>
+                {!showTemplates ? (
+                  <div className="bg-white/5 p-6 rounded-lg border border-white/10 text-center">
+                    <FileText size={48} className="mx-auto mb-4 text-purple-400" />
+                    <h3 className="text-xl font-medium mb-2">Start from scratch</h3>
+                    <p className="text-white/70 mb-6">Create a completely blank project with no pre-built elements</p>
+                    <button
+                      type="button"
+                      onClick={handleCreateWithoutTemplate}
+                      disabled={isLoading}
+                      className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
+                    >
+                      <Save size={18} />
+                      {isLoading ? "Creating Project..." : "Create Empty Project"}
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-white/80 mb-3">Choose a Template</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div
+                        className={`border rounded-lg p-4 cursor-pointer ${
+                          template === "blank"
+                            ? "border-purple-500 bg-purple-500/10"
+                            : "border-white/10 bg-white/5 hover:bg-white/10"
+                        }`}
+                        onClick={() => setTemplate("blank")}
+                      >
+                        <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                          <img
+                            src="/placeholder.svg?height=200&width=320"
+                            alt="Blank Template Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h3 className="font-medium">Blank Template</h3>
+                        <p className="text-sm text-white/70">Start with a clean slate</p>
+                      </div>
+
+                      <div
+                        className={`border rounded-lg p-4 cursor-pointer ${
+                          template === "business"
+                            ? "border-purple-500 bg-purple-500/10"
+                            : "border-white/10 bg-white/5 hover:bg-white/10"
+                        }`}
+                        onClick={() => setTemplate("business")}
+                      >
+                        <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                          <img
+                            src="/placeholder.svg?height=200&width=320"
+                            alt="Business Template Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h3 className="font-medium">Business Template</h3>
+                        <p className="text-sm text-white/70">Professional business website</p>
+                      </div>
+
+                      <div
+                        className={`border rounded-lg p-4 cursor-pointer ${
+                          template === "portfolio"
+                            ? "border-purple-500 bg-purple-500/10"
+                            : "border-white/10 bg-white/5 hover:bg-white/10"
+                        }`}
+                        onClick={() => setTemplate("portfolio")}
+                      >
+                        <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                          <img
+                            src="/placeholder.svg?height=200&width=320"
+                            alt="Portfolio Template Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h3 className="font-medium">Portfolio Template</h3>
+                        <p className="text-sm text-white/70">Showcase your work beautifully</p>
+                      </div>
+
+                      <div
+                        className={`border rounded-lg p-4 cursor-pointer ${
+                          template === "ecommerce"
+                            ? "border-purple-500 bg-purple-500/10"
+                            : "border-white/10 bg-white/5 hover:bg-white/10"
+                        }`}
+                        onClick={() => setTemplate("ecommerce")}
+                      >
+                        <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                          <img
+                            src="/placeholder.svg?height=200&width=320"
+                            alt="E-commerce Template Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h3 className="font-medium">E-commerce Template</h3>
+                        <p className="text-sm text-white/70">Online store with product showcase</p>
+                      </div>
+
+                      <div
+                        className={`border rounded-lg p-4 cursor-pointer ${
+                          template === "blog"
+                            ? "border-purple-500 bg-purple-500/10"
+                            : "border-white/10 bg-white/5 hover:bg-white/10"
+                        }`}
+                        onClick={() => setTemplate("blog")}
+                      >
+                        <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                          <img
+                            src="/placeholder.svg?height=200&width=320"
+                            alt="Blog Template Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h3 className="font-medium">Blog Template</h3>
+                        <p className="text-sm text-white/70">Content-focused blog layout</p>
+                      </div>
+
+                      <div
+                        className={`border rounded-lg p-4 cursor-pointer ${
+                          template === "landing"
+                            ? "border-purple-500 bg-purple-500/10"
+                            : "border-white/10 bg-white/5 hover:bg-white/10"
+                        }`}
+                        onClick={() => setTemplate("landing")}
+                      >
+                        <div className="aspect-video bg-white/5 rounded flex items-center justify-center mb-3 overflow-hidden">
+                          <img
+                            src="/placeholder.svg?height=200&width=320"
+                            alt="Landing Page Template Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h3 className="font-medium">Landing Page</h3>
+                        <p className="text-sm text-white/70">High-conversion landing page</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-6">
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        <Save size={18} />
+                        {isLoading ? "Creating Project..." : "Create Project with Template"}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </form>
           </div>

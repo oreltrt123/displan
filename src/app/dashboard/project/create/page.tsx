@@ -323,7 +323,7 @@ export default function CreateProjectPage() {
                   />
                   <div>
                     <label htmlFor="addGitignore" className="block text-sm font-medium text-white">
-                      Add .gitignore
+                      Add .displan
                     </label>
                     <p className="text-xs text-white/50">Choose which files not to track from a list of templates.</p>
                   </div>

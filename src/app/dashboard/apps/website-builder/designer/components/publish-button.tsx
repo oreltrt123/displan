@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Globe } from "lucide-react"
 import { PublishDialog } from "./publish-dialog"
 import type { Project } from "../types"
+import "../styles/button.css"
 
 interface PublishButtonProps {
   project: Project
@@ -16,9 +17,8 @@ export function PublishButton({ project }: PublishButtonProps) {
     <>
       <button
         onClick={() => setIsDialogOpen(true)}
-        className="flex items-center px-3 py-2 rounded text-sm bg-secondary text-secondary-foreground hover:bg-secondary/80"
+        className="button_edit_project"
       >
-        <Globe className="h-4 w-4 mr-1" />
         Publish
       </button>
 

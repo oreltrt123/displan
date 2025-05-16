@@ -1,15 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import { createClient } from "../../supabase/client"
 import { useRouter } from "next/navigation"
 import { UserCircle } from "lucide-react"
 import { LanguageSwitcher } from "./language-switcher"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import type { User } from "@supabase/supabase-js"
 import "../styles/actions.css"
+import "../styles/navbar.css"
 
 const navVariants = {
   hidden: { opacity: 0, y: -20 },
@@ -19,6 +19,8 @@ const navVariants = {
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -53,19 +55,39 @@ export default function Navbar() {
     checkUser()
 
     // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange((event: string, session: { user: User | null }) => {
-      console.log("Auth state changed:", event, session ? "Logged in" : "Not logged in")
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event: string, session: { user: User | null }) => {
+        console.log("Auth state changed:", event, session ? "Logged in" : "Not logged in")
 
-      if (session?.user) {
-        setUser(session.user)
-      } else {
-        setUser(null)
+        if (session?.user) {
+          setUser(session.user)
+        } else {
+          setUser(null)
+        }
       }
-    })
+    )
 
-    // Return cleanup function
+    // Cleanup on unmount
     return () => {
       authListener?.subscription.unsubscribe()
+    }
+  }, [supabase.auth])
+
+  // Toggle user menu dropdown
+  const handleToggleMenu = () => {
+    setMenuOpen((open) => !open)
+  }
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
 
@@ -75,6 +97,7 @@ export default function Navbar() {
       setUser(null)
       router.push("/")
       router.refresh()
+      setMenuOpen(false)
     } catch (error) {
       console.error("Error signing out:", error)
     }
@@ -94,103 +117,96 @@ export default function Navbar() {
             <img src="/logo_dark_mode.png" alt="Logo" className="hidden dark:block" />
           </Link>
           <div className="hidden md:flex items-center gap-8">
-            <div>
-              <Link
-                href="/features"
-                className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
-                data-i18n="features"
-              >
-                Features
-              </Link>
-            </div>
-            <div>
-              <Link
-                href="/blog"
-                className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
-                data-i18n="blog"
-              >
-                Blog
-              </Link>
-            </div>
-            <div>
-              <Link
-                href="/about"
-                className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
-                data-i18n="about"
-              >
-                About
-              </Link>
-            </div>
-            <div>
-              <Link
-                href="/projects"
-                className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
-                data-i18n="projects"
-              >
-                Projects
-              </Link>
-            </div>
+            <Link
+              href="/features"
+              className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
+              data-i18n="features"
+            >
+              Features
+            </Link>
+            <Link
+              href="/blog"
+              className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
+              data-i18n="blog"
+            >
+              Blog
+            </Link>
+            <Link
+              href="/about"
+              className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
+              data-i18n="about"
+            >
+              About
+            </Link>
+            <Link
+              href="/projects"
+              className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
+              data-i18n="projects"
+            >
+              Projects
+            </Link>
           </div>
         </div>
 
         <div className="flex items-center gap-6">
-          {/* Theme Toggle */}
-
-          {/* Only show LanguageSwitcher here if user is NOT logged in */}
+          {/* Show LanguageSwitcher only if no user */}
           {!user && <LanguageSwitcher />}
 
           {loading ? (
-            // Show loading state
             <div className="w-8 h-8 rounded-full bg-black/10 dark:bg-white/10 animate-pulse"></div>
           ) : user ? (
-            // User is logged in - show avatar dropdown with LanguageSwitcher inside
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="post-actions-menu-button text-black dark:text-white">
-                  <UserCircle className="h-5 w-5" />
-                  <span className="sr-only">User menu</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="post-dropdown-menu22" align="end">
-                {/* LanguageSwitcher inside dropdown when user is logged in */}
-                {/* <div className="px-2 py-1.5">
-                  <LanguageSwitcher />
-                </div> */}
-                <Link href="/dashboard">
-                  <DropdownMenuItem className="post-dropdown-item link_button" data-i18n="dashboard">
-                    Dashboard
-                  </DropdownMenuItem>
-                </Link>
-                <DropdownMenuItem
-                  onClick={handleSignOut}
-                  className="post-dropdown-item link_button"
-                  data-i18n="signOut"
+            // User is logged in - custom dropdown without third-party components
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={handleToggleMenu}
+                aria-haspopup="true"
+                aria-expanded={menuOpen}
+                className="post-actions-menu-button text-black dark:text-white flex items-center gap-1"
+              >
+                <UserCircle className="h-5 w-5" />
+                <span className="sr-only">User menu</span>
+              </button>
+
+              {menuOpen && (
+                <div
+                  className="menu_container"
+                  role="menu"
+                  aria-label="User menu"
                 >
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
+                    <button
+                      className="menu_item"
+                      role="menuitem"
+                    >
+                      Dashboard
+                    </button>
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="menu_item"
+                    role="menuitem"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
-            // User is not logged in - show sign in and get started buttons
             <>
-              <div>
-                <Link
-                  href="/sign-in"
-                  className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
-                  data-i18n="signIn"
-                >
-                  Sign in
-                </Link>
-              </div>
-              <div>
-                <Link
-                  href="/sign-up"
-                  className="px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-black/90 dark:hover:bg-white/90 transition-colors link_button"
-                  data-i18n="getStarted"
-                >
-                  Get started
-                </Link>
-              </div>
+              <Link
+                href="/sign-in"
+                className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
+                data-i18n="signIn"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-black/90 dark:hover:bg-white/90 transition-colors link_button"
+                data-i18n="getStarted"
+              >
+                Get started
+              </Link>
             </>
           )}
         </div>

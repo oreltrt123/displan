@@ -2,40 +2,29 @@
 
 import React, { type CSSProperties, useState, useEffect, useRef } from "react"
 import type { ElementType } from "../types"
-import {
-  Play,
-  Pause,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-  Youtube,
-  Zap,
-  Shield,
-  Terminal,
-  Cpu,
-  Code,
-  Server,
-  Globe,
-  Lock,
-  Trash2,
-  Type,
-  VideoIcon as Animation,
-  Palette,
-  Move,
-  Database,
-  User,
-  CheckCircle,
-  Star,
-  ChevronDown,
-  Check,
-  Flower,
-} from "lucide-react"
+import { Play, Pause, Facebook, Twitter, Instagram, Linkedin, Youtube, Zap, Shield, Terminal, Cpu, Code, Server, Globe, Lock, Trash2, Type, VideoIcon as Animation, Palette, Move, Database, User, CheckCircle, Star, ChevronDown, Check, Flower } from 'lucide-react'
 import { AnimationPanel } from "./animation-panel"
 import { FontsPanel } from "./fonts-panel"
 import { ColorPicker } from "./color-picker"
 import { useDragDrop } from "./drag-drop-context"
 import * as BlogElements from "./blog-elements"
+import {
+  renderSearch,
+  renderCard,
+  renderForm,
+  renderGallery,
+  renderSlider,
+  renderTabFilter as renderAdditionalTabFilter,
+  renderNewsletterBox as renderAdditionalNewsletterBox,
+  renderSocialFollow as renderAdditionalSocialFollow,
+  renderCta,
+  renderFaq,
+  renderPricing,
+  renderStats,
+  renderTeam,
+  renderTestimonials,
+  renderFeatures,
+} from "./additional-elements"
 
 interface ElementRendererProps {
   element: ElementType
@@ -404,7 +393,7 @@ export function ElementRenderer({
 
   const renderElement = () => {
     // First check for cyber elements
-    if (baseType.startsWith("cyber-")) {
+    if (typeof baseType === 'string' && baseType.startsWith("cyber-")) {
       if (baseType === "cyber-button") {
         return renderCyberButton(designId)
       } else if (baseType === "cyber-card") {
@@ -431,504 +420,562 @@ export function ElementRenderer({
     }
 
     // Then check for blog elements
-    switch (baseType) {
-      case "mega-menu":
-        return BlogElements.renderMegaMenu(element)
+    if (typeof baseType === 'string') {
+      switch (baseType) {
+        case "mega-menu":
+          return BlogElements.renderMegaMenu(element)
 
-      case "announcement":
-        return BlogElements.renderAnnouncement(element, isDismissed, setIsDismissed)
+        case "announcement":
+          return BlogElements.renderAnnouncement(element, isDismissed, setIsDismissed)
 
-      case "slider":
-        return BlogElements.renderSlider(element, activeSlide, setActiveSlide)
+        case "slider":
+          if (element.content?.customSlider) {
+            return renderSlider(element)
+          }
+          return BlogElements.renderSlider(element, activeSlide, setActiveSlide)
 
-      case "particles":
-        return BlogElements.renderParticles(element)
+        case "particles":
+          return BlogElements.renderParticles(element)
 
-      case "scroll-indicator":
-        return BlogElements.renderScrollIndicator(element, getIconComponent)
+        case "scroll-indicator":
+          return BlogElements.renderScrollIndicator(element, getIconComponent)
 
-      case "featured-grid":
-        return BlogElements.renderFeaturedGrid(element)
+        case "featured-grid":
+          return BlogElements.renderFeaturedGrid(element)
 
-      case "call-to-action":
-        return BlogElements.renderCallToAction(element)
+        case "call-to-action":
+          return BlogElements.renderCallToAction(element)
 
-      case "pill-carousel":
-        return BlogElements.renderPillCarousel(element)
+        case "pill-carousel":
+          return BlogElements.renderPillCarousel(element)
 
-      case "topic-highlights":
-        return BlogElements.renderTopicHighlights(element)
+        case "topic-highlights":
+          return BlogElements.renderTopicHighlights(element)
 
-      case "tab-filter":
-        return BlogElements.renderTabFilter(element, activeFilter, setActiveFilter)
+        case "tab-filter":
+          if (element.content?.customFilter) {
+            return renderAdditionalTabFilter(element)
+          }
+          return BlogElements.renderTabFilter(element, activeFilter, setActiveFilter)
 
-      case "article-grid":
-        return BlogElements.renderArticleGrid(element)
+        case "article-grid":
+          return BlogElements.renderArticleGrid(element)
 
-      case "author-carousel":
-        return BlogElements.renderAuthorCarousel(element, activeAuthor, setActiveAuthor)
+        case "author-carousel":
+          return BlogElements.renderAuthorCarousel(element, activeAuthor, setActiveAuthor)
 
-      case "category-cards":
-        return BlogElements.renderCategoryCards(element, getIconComponent)
+        case "category-cards":
+          return BlogElements.renderCategoryCards(element, getIconComponent)
 
-      case "tag-cloud":
-        return BlogElements.renderTagCloud(element)
+        case "tag-cloud":
+          return BlogElements.renderTagCloud(element)
 
-      case "category-popular":
-        return BlogElements.renderCategoryPopular(element, currentTab, setCurrentTab)
+        case "category-popular":
+          return BlogElements.renderCategoryPopular(element, currentTab, setCurrentTab)
 
-      case "stats-counter":
-        return BlogElements.renderStatsCounter(element)
+        case "stats-counter":
+          return BlogElements.renderStatsCounter(element)
 
-      case "newsletter-box":
-        return BlogElements.renderNewsletterBox(element)
+        case "newsletter-box":
+          if (element.content?.customNewsletter) {
+            return renderAdditionalNewsletterBox(element)
+          }
+          return BlogElements.renderNewsletterBox(element)
 
-      case "social-follow":
-        return BlogElements.renderSocialFollow(element)
+        case "social-follow":
+          if (element.content?.customSocial) {
+            return renderAdditionalSocialFollow(element)
+          }
+          return BlogElements.renderSocialFollow(element)
 
-      case "back-to-top":
-        return BlogElements.renderBackToTop(element, getIconComponent)
+        case "back-to-top":
+          return BlogElements.renderBackToTop(element, getIconComponent)
+
+        case "search":
+          return renderSearch(element)
+
+        case "card":
+          return renderCard(element)
+
+        case "form":
+          return renderForm(element)
+
+        case "gallery":
+          return renderGallery(element)
+
+        case "cta":
+          return renderCta(element)
+
+        case "faq":
+          return renderFaq(element)
+
+        case "pricing":
+          return renderPricing(element)
+
+        case "stats":
+          return renderStats(element)
+
+        case "team":
+          return renderTeam(element)
+
+        case "testimonials-grid":
+          return renderTestimonials(element)
+
+        case "features-grid":
+          return renderFeatures(element)
+      }
     }
 
     // Then check for standard elements
-    switch (baseType) {
-      case "heading":
-        // Use createElement instead of JSX for dynamic heading elements
-        const headingLevel = element.content?.level || "h2"
-        return React.createElement(headingLevel, { style: styleCopy }, element.content?.text || "Heading")
+    if (typeof baseType === 'string') {
+      switch (baseType) {
+        case "heading":
+          // FIX: Ensure we're using a valid HTML tag name, not a number
+          const headingLevel = element.content?.level || 2
+          // Convert the heading level to a valid tag name
+          const tagName = typeof headingLevel === 'number' ? `h${headingLevel}` : (typeof headingLevel === 'string' ? headingLevel : 'h2')
+          return React.createElement(tagName, { style: styleCopy }, element.content?.text || "Heading")
 
-      case "paragraph":
-        return <p style={styleCopy}>{element.content?.text || "Paragraph text"}</p>
+        case "paragraph":
+          return <p style={styleCopy}>{element.content?.text || "Paragraph text"}</p>
 
-      case "image":
-        return (
-          <img
-            src={element.content?.src || "/placeholder.svg?height=300&width=500"}
-            alt={element.content?.alt || ""}
-            style={styleCopy}
-          />
-        )
+        case "image":
+          return (
+            <img
+              src={element.content?.src || "/placeholder.svg?height=300&width=500"}
+              alt={element.content?.alt || ""}
+              style={styleCopy}
+            />
+          )
 
-      case "button":
-        return (
-          <a
-            href={isEditing ? "#" : element.content?.href || "#"}
-            style={styleCopy}
-            className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            {element.content?.buttonText || "Button"}
-          </a>
-        )
+        case "button":
+          return (
+            <a
+              href={isEditing ? "#" : element.content?.href || "#"}
+              style={styleCopy}
+              className="inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            >
+              {element.content?.buttonText || "Button"}
+            </a>
+          )
 
-      case "divider":
-        return <hr style={styleCopy} />
+        case "divider":
+          return <hr style={styleCopy} />
 
-      case "container":
-        return (
-          <div
-            style={{ ...styleCopy, minHeight: "100px" } as CSSProperties}
-            className="p-4 border border-dashed border-gray-300 rounded-lg"
-          >
-            {Array.isArray(element.content?.children)
-              ? element.content.children.map((child: ElementType) => (
-                  <ElementRenderer
-                    key={child.id}
-                    element={child}
-                    isEditing={isEditing}
-                    isSelected={false}
-                    onDelete={onDelete}
-                    onUpdateElement={onUpdateElement}
-                  />
-                ))
-              : element.content?.text || "Container"}
-          </div>
-        )
+        case "container":
+          return (
+            <div
+              style={{ ...styleCopy, minHeight: "100px" } as CSSProperties}
+              className="p-4 border border-dashed border-gray-300 rounded-lg"
+            >
+              {Array.isArray(element.content?.children)
+                ? element.content.children.map((child: ElementType) => (
+                    <ElementRenderer
+                      key={child.id}
+                      element={child}
+                      isEditing={isEditing}
+                      isSelected={false}
+                      onDelete={onDelete}
+                      onUpdateElement={onUpdateElement}
+                    />
+                  ))
+                : element.content?.text || "Container"}
+            </div>
+          )
 
-      case "spacer":
-        return <div style={{ ...styleCopy, height: element.content?.height || "50px" } as CSSProperties} />
+        case "spacer":
+          return <div style={{ ...styleCopy, height: element.content?.height || "50px" } as CSSProperties} />
 
-      case "list":
-        return (
-          <ul style={styleCopy} className="list-disc pl-5">
-            {Array.isArray(element.content?.items) ? (
-              element.content.items.map((item, index) => <li key={index}>{item}</li>)
-            ) : (
-              <>
-                <li>List item 1</li>
-                <li>List item 2</li>
-                <li>List item 3</li>
-              </>
-            )}
-          </ul>
-        )
-
-      case "columns":
-        // Ensure columns is an array before mapping
-        const columns = Array.isArray(element.content?.columns) ? element.content.columns : []
-
-        return (
-          <div style={styleCopy} className="grid grid-cols-2 gap-4">
-            {columns.length > 0 ? (
-              columns.map((column, index) => (
-                <div key={index} className="border border-dashed border-gray-300 p-4 rounded-lg">
-                  {Array.isArray(column.children)
-                    ? column.children.map((child: ElementType) => (
-                        <ElementRenderer
-                          key={child.id}
-                          element={child}
-                          isEditing={isEditing}
-                          isSelected={false}
-                          onDelete={onDelete}
-                          onUpdateElement={onUpdateElement}
-                        />
-                      ))
-                    : `Column ${index + 1}`}
-                </div>
-              ))
-            ) : (
-              <>
-                <div className="border border-dashed border-gray-300 p-4 rounded-lg">Column 1</div>
-                <div className="border border-dashed border-gray-300 p-4 rounded-lg">Column 2</div>
-              </>
-            )}
-          </div>
-        )
-
-      case "grid":
-        // Ensure cells is an array before mapping
-        const cells = Array.isArray(element.content?.cells) ? element.content.cells : []
-
-        return (
-          <div style={styleCopy} className="grid grid-cols-3 gap-4">
-            {cells.length > 0 ? (
-              cells.map((cell, index) => (
-                <div key={index} className="border border-dashed border-gray-300 p-4 rounded-lg">
-                  {Array.isArray(cell.children)
-                    ? cell.children.map((child: ElementType) => (
-                        <ElementRenderer
-                          key={child.id}
-                          element={child}
-                          isEditing={isEditing}
-                          isSelected={false}
-                          onDelete={onDelete}
-                          onUpdateElement={onUpdateElement}
-                        />
-                      ))
-                    : `Cell ${index + 1}`}
-                </div>
-              ))
-            ) : (
-              <>
-                <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 1</div>
-                <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 2</div>
-                <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 3</div>
-                <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 4</div>
-                <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 5</div>
-                <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 6</div>
-              </>
-            )}
-          </div>
-        )
-
-      case "video":
-        return (
-          <div style={styleCopy} className="relative">
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              {element.content?.videoUrl ? (
-                <iframe
-                  src={element.content.videoUrl}
-                  title={element.content?.title || "Video"}
-                  className="w-full h-full"
-                  allowFullScreen
-                ></iframe>
+        case "list":
+          return (
+            <ul style={styleCopy} className="list-disc pl-5">
+              {Array.isArray(element.content?.items) ? (
+                element.content.items.map((item, index) => <li key={index}>{String(item)}</li>)
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-800 text-white">
-                  <div className="text-center">
-                    <div className="flex justify-center mb-2">
-                      {isPlaying ? (
-                        <Pause className="h-12 w-12 cursor-pointer" onClick={() => setIsPlaying(false)} />
-                      ) : (
-                        <Play className="h-12 w-12 cursor-pointer" onClick={() => setIsPlaying(true)} />
-                      )}
-                    </div>
-                    <p>{element.content?.title || "Video placeholder"}</p>
+                <>
+                  <li>List item 1</li>
+                  <li>List item 2</li>
+                  <li>List item 3</li>
+                </>
+              )}
+            </ul>
+          )
+
+        case "columns":
+          // Ensure columns is an array before mapping
+          const columns = Array.isArray(element.content?.columns) ? element.content.columns : []
+
+          return (
+            <div style={styleCopy} className="grid grid-cols-2 gap-4">
+              {columns.length > 0 ? (
+                columns.map((column, index) => (
+                  <div key={index} className="border border-dashed border-gray-300 p-4 rounded-lg">
+                    {Array.isArray(column.children)
+                      ? column.children.map((child: ElementType) => (
+                          <ElementRenderer
+                            key={child.id}
+                            element={child}
+                            isEditing={isEditing}
+                            isSelected={false}
+                            onDelete={onDelete}
+                            onUpdateElement={onUpdateElement}
+                          />
+                        ))
+                      : `Column ${index + 1}`}
                   </div>
-                </div>
+                ))
+              ) : (
+                <>
+                  <div className="border border-dashed border-gray-300 p-4 rounded-lg">Column 1</div>
+                  <div className="border border-dashed border-gray-300 p-4 rounded-lg">Column 2</div>
+                </>
               )}
             </div>
-          </div>
-        )
+          )
 
-      case "icon":
-        const IconComponent = getIconComponent(element.content?.iconName || "facebook")
-        return (
-          <div style={styleCopy} className="flex justify-center">
-            <IconComponent className="h-8 w-8" />
-          </div>
-        )
+        case "grid":
+          // Ensure cells is an array before mapping
+          const cells = Array.isArray(element.content?.cells) ? element.content.cells : []
 
-      case "hero":
-        return (
-          <div
-            style={
-              {
-                ...styleCopy,
-                backgroundColor: element.style?.backgroundColor || "#f5f5f5",
-                color: element.style?.textColor || "#333333",
-                height: element.style?.height || "500px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: element.style?.alignment || "center",
-                padding: "2rem",
-                position: "relative",
-                overflow: "hidden",
-              } as CSSProperties
-            }
-            className="rounded-lg"
-          >
-            {element.content?.src && (
-              <div className="absolute inset-0 z-0">
-                <img
-                  src={element.content.src || "/placeholder.svg"}
-                  alt={element.content?.alt || ""}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black opacity-40"></div>
-              </div>
-            )}
-            <div className="relative z-10 text-center max-w-3xl mx-auto">
-              <h1 className="text-4xl font-bold mb-4">{element.content?.heading || "Hero Heading"}</h1>
-              <p className="text-xl mb-6">{element.content?.subheading || "Hero subheading text goes here"}</p>
-              {element.content?.buttonText && (
-                <a
-                  href={isEditing ? "#" : element.content?.buttonLink || "#"}
-                  className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  {element.content.buttonText}
-                </a>
+          return (
+            <div style={styleCopy} className="grid grid-cols-3 gap-4">
+              {cells.length > 0 ? (
+                cells.map((cell, index) => (
+                  <div key={index} className="border border-dashed border-gray-300 p-4 rounded-lg">
+                    {Array.isArray(cell.children)
+                      ? cell.children.map((child: ElementType) => (
+                          <ElementRenderer
+                            key={child.id}
+                            element={child}
+                            isEditing={isEditing}
+                            isSelected={false}
+                            onDelete={onDelete}
+                            onUpdateElement={onUpdateElement}
+                          />
+                        ))
+                      : `Cell ${index + 1}`}
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 1</div>
+                  <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 2</div>
+                  <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 3</div>
+                  <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 4</div>
+                  <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 5</div>
+                  <div className="border border-dashed border-gray-300 p-4 rounded-lg">Cell 6</div>
+                </>
               )}
             </div>
-          </div>
-        )
+          )
 
-      case "hero-form":
-        return (
-          <div style={styleCopy} className="hero-form">
-            <input
-              type="email"
-              placeholder={element.content?.placeholder || "Enter your email..."}
-              className="hero-input"
-            />
-            <button className="hero-button">{element.content?.buttonText || "Subscribe"}</button>
-          </div>
-        )
-
-      case "hero-mockups":
-        return (
-          <div style={styleCopy} className="hero-mockups">
-            <img
-              src={element.content?.desktopSrc || "/placeholder.svg?height=400&width=600"}
-              alt="Desktop mockup"
-              className="desktop-mockup"
-            />
-            <img
-              src={element.content?.mobileSrc || "/placeholder.svg?height=500&width=250"}
-              alt="Mobile mockup"
-              className="mobile-mockup"
-            />
-          </div>
-        )
-
-      case "features":
-        const features = Array.isArray(element.content?.features)
-          ? element.content.features
-          : [
-              { title: "Feature 1", description: "Description of feature 1", icon: "zap" },
-              { title: "Feature 2", description: "Description of feature 2", icon: "shield" },
-              { title: "Feature 3", description: "Description of feature 3", icon: "globe" },
-            ]
-
-        return (
-          <div style={styleCopy} className="py-12">
-            {element.content?.heading && (
-              <h2 className="text-3xl font-bold text-center mb-12">{element.content.heading}</h2>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {features.map((feature, index) => {
-                const FeatureIcon = getIconComponent(feature.icon || "zap")
-                return (
-                  <div key={index} className="text-center p-6 rounded-lg">
-                    {feature.src ? (
-                      <img
-                        src={feature.src || "/placeholder.svg"}
-                        alt={feature.title}
-                        className="w-16 h-16 mx-auto mb-4"
-                      />
-                    ) : (
-                      <div className="flex justify-center mb-4">
-                        <FeatureIcon className="h-12 w-12 text-blue-500" />
+        case "video":
+          return (
+            <div style={styleCopy} className="relative">
+              <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                {element.content?.videoUrl ? (
+                  <iframe
+                    src={element.content.videoUrl}
+                    title={element.content?.title || "Video"}
+                    className="w-full h-full"
+                    allowFullScreen
+                  ></iframe>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-800 text-white">
+                    <div className="text-center">
+                      <div className="flex justify-center mb-2">
+                        {isPlaying ? (
+                          <Pause className="h-12 w-12 cursor-pointer" onClick={() => setIsPlaying(false)} />
+                        ) : (
+                          <Play className="h-12 w-12 cursor-pointer" onClick={() => setIsPlaying(true)} />
+                        )}
                       </div>
-                    )}
-                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-gray-600">{feature.description}</p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )
-
-      case "testimonials":
-        const testimonials = Array.isArray(element.content?.testimonials)
-          ? element.content.testimonials
-          : [
-              { quote: "This is an amazing product!", author: "John Doe", company: "ABC Corp" },
-              { quote: "Highly recommended!", author: "Jane Smith", company: "XYZ Inc" },
-            ]
-
-        return (
-          <div style={styleCopy} className="py-12">
-            {element.content?.heading && (
-              <h2 className="text-3xl font-bold text-center mb-12">{element.content.heading}</h2>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {testimonials.map((testimonial, index) => (
-                <div key={index} className="bg-white p-6 rounded-lg shadow-md">
-                  <p className="text-lg italic mb-4">"{testimonial.quote}"</p>
-                  <div className="flex items-center">
-                    {testimonial.src && (
-                      <img
-                        src={testimonial.src || "/placeholder.svg"}
-                        alt={testimonial.author}
-                        className="w-12 h-12 rounded-full mr-4"
-                      />
-                    )}
-                    <div>
-                      <p className="font-semibold">{testimonial.author}</p>
-                      {testimonial.company && <p className="text-gray-600 text-sm">{testimonial.company}</p>}
+                      <p>{element.content?.title || "Video placeholder"}</p>
                     </div>
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
-          </div>
-        )
+          )
 
-      case "footer":
-        const socialLinks = Array.isArray(element.content?.socialLinks) ? element.content.socialLinks : []
+        case "icon":
+          const IconComponent = getIconComponent(element.content?.iconName || "facebook")
+          return (
+            <div style={styleCopy} className="flex justify-center">
+              <IconComponent className="h-8 w-8" />
+            </div>
+          )
 
-        return (
-          <footer
-            style={
-              {
-                ...styleCopy,
-                backgroundColor: element.style?.backgroundColor || "#333333",
-                color: element.style?.textColor || "#ffffff",
-                padding: element.style?.padding || "40px 20px",
-              } as CSSProperties
-            }
-          >
-            <div className="container mx-auto">
-              <div className="flex flex-col md:flex-row justify-between items-center">
-                <div className="mb-6 md:mb-0">
-                  <p>{element.content?.copyright || `© ${new Date().getFullYear()} All rights reserved.`}</p>
-                  {element.content?.address && <p className="mt-2">{element.content.address}</p>}
-                  {element.content?.phone && <p className="mt-1">{element.content.phone}</p>}
-                  {element.content?.email && <p className="mt-1">{element.content.email}</p>}
+        case "hero":
+          return (
+            <div
+              style={
+                {
+                  ...styleCopy,
+                  backgroundColor: element.style?.backgroundColor || "#f5f5f5",
+                  color: element.style?.textColor || "#333333",
+                  height: element.style?.height || "500px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: element.style?.alignment || "center",
+                  padding: "2rem",
+                  position: "relative",
+                  overflow: "hidden",
+                } as CSSProperties
+              }
+              className="rounded-lg"
+            >
+              {element.content?.src && (
+                <div className="absolute inset-0 z-0">
+                  <img
+                    src={element.content.src || "/placeholder.svg"}
+                    alt={element.content?.alt || ""}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black opacity-40"></div>
                 </div>
-                {element.content?.showSocial && socialLinks.length > 0 && (
-                  <div className="flex space-x-4">
-                    {socialLinks.map((link, index) => {
-                      const SocialIcon = getIconComponent(link.platform || "facebook")
-                      return (
-                        <a
-                          key={index}
-                          href={isEditing ? "#" : link.link || "#"}
-                          className="text-white hover:text-gray-300 transition-colors"
-                        >
-                          <SocialIcon className="h-6 w-6" />
-                        </a>
-                      )
-                    })}
+              )}
+              <div className="relative z-10 text-center max-w-3xl mx-auto">
+                <h1 className="text-4xl font-bold mb-4">{element.content?.heading || "Hero Heading"}</h1>
+                <p className="text-xl mb-6">{element.content?.subheading || "Hero subheading text goes here"}</p>
+                {element.content?.buttonText && (
+                  <a
+                    href={isEditing ? "#" : element.content?.buttonLink || "#"}
+                    className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {element.content.buttonText}
+                  </a>
+                )}
+              </div>
+            </div>
+          )
+
+        case "hero-form":
+          return (
+            <div style={styleCopy} className="hero-form">
+              <input
+                type="email"
+                placeholder={element.content?.placeholder || "Enter your email..."}
+                className="hero-input"
+              />
+              <button className="hero-button">{element.content?.buttonText || "Subscribe"}</button>
+            </div>
+          )
+
+        case "hero-mockups":
+          return (
+            <div style={styleCopy} className="hero-mockups">
+              <img
+                src={element.content?.desktopSrc || "/placeholder.svg?height=400&width=600"}
+                alt="Desktop mockup"
+                className="desktop-mockup"
+              />
+              <img
+                src={element.content?.mobileSrc || "/placeholder.svg?height=500&width=250"}
+                alt="Mobile mockup"
+                className="mobile-mockup"
+              />
+            </div>
+          )
+
+        case "features":
+          const features = Array.isArray(element.content?.features)
+            ? element.content.features
+            : [
+                { title: "Feature 1", description: "Description of feature 1", icon: "zap" },
+                { title: "Feature 2", description: "Description of feature 2", icon: "shield" },
+                { title: "Feature 3", description: "Description of feature 3", icon: "globe" },
+              ]
+
+          return (
+            <div style={styleCopy} className="py-12">
+              {element.content?.heading && (
+                <h2 className="text-3xl font-bold text-center mb-12">{element.content.heading}</h2>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {features.map((feature, index) => {
+                  const FeatureIcon = getIconComponent(feature.icon || "zap")
+                  return (
+                    <div key={index} className="text-center p-6 rounded-lg">
+                      {feature.src ? (
+                        <img
+                          src={feature.src || "/placeholder.svg"}
+                          alt={feature.title}
+                          className="w-16 h-16 mx-auto mb-4"
+                        />
+                      ) : (
+                        <div className="flex justify-center mb-4">
+                          <FeatureIcon className="h-12 w-12 text-blue-500" />
+                        </div>
+                      )}
+                      <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                      <p className="text-gray-600">{feature.description}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+
+        case "testimonials":
+          const testimonials = Array.isArray(element.content?.testimonials)
+            ? element.content.testimonials
+            : [
+                { quote: "This is an amazing product!", author: "John Doe", company: "ABC Corp" },
+                { quote: "Highly recommended!", author: "Jane Smith", company: "XYZ Inc" },
+              ]
+
+          return (
+            <div style={styleCopy} className="py-12">
+              {element.content?.heading && (
+                <h2 className="text-3xl font-bold text-center mb-12">{element.content.heading}</h2>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {testimonials.map((testimonial, index) => (
+                  <div key={index} className="bg-white p-6 rounded-lg shadow-md">
+                    <p className="text-lg italic mb-4">"{testimonial.quote}"</p>
+                    <div className="flex items-center">
+                      {testimonial.src && (
+                        <img
+                          src={testimonial.src || "/placeholder.svg"}
+                          alt={testimonial.author}
+                          className="w-12 h-12 rounded-full mr-4"
+                        />
+                      )}
+                      <div>
+                        <p className="font-semibold">{testimonial.author}</p>
+                        {testimonial.company && <p className="text-gray-600 text-sm">{testimonial.company}</p>}
+                      </div>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             </div>
-          </footer>
-        )
+          )
 
-      case "header":
-        const navItems = Array.isArray(element.content?.navItems) ? element.content.navItems : []
+        case "footer":
+          const socialLinks = Array.isArray(element.content?.socialLinks) ? element.content.socialLinks : []
 
-        return (
-          <header
-            style={
-              {
-                ...styleCopy,
-                backgroundColor: element.style?.backgroundColor || "#ffffff",
-                color: element.style?.textColor || "#000000",
-                padding: element.style?.padding || "20px",
-              } as CSSProperties
-            }
-          >
-            <div className="container mx-auto">
-              <div className="flex flex-col md:flex-row justify-between items-center">
-                <div className="mb-4 md:mb-0">
-                  <h1 className="text-2xl font-bold">{element.content?.title || "Website Title"}</h1>
-                  {element.content?.subtitle && <p className="text-sm">{element.content.subtitle}</p>}
-                </div>
-                {element.content?.showNav && navItems.length > 0 && (
-                  <nav>
-                    <ul className="flex space-x-6">
-                      {navItems.map((item, index) => (
-                        <li key={index}>
-                          <a href={isEditing ? "#" : item.link || "#"} className="hover:underline">
-                            {item.label}
+          return (
+            <footer
+              style={
+                {
+                  ...styleCopy,
+                  backgroundColor: element.style?.backgroundColor || "#333333",
+                  color: element.style?.textColor || "#ffffff",
+                  padding: element.style?.padding || "40px 20px",
+                } as CSSProperties
+              }
+            >
+              <div className="container mx-auto">
+                <div className="flex flex-col md:flex-row justify-between items-center">
+                  <div className="mb-6 md:mb-0">
+                    <p>{element.content?.copyright || `© ${new Date().getFullYear()} All rights reserved.`}</p>
+                    {element.content?.address && <p className="mt-2">{element.content.address}</p>}
+                    {element.content?.phone && <p className="mt-1">{element.content.phone}</p>}
+                    {element.content?.email && <p className="mt-1">{element.content.email}</p>}
+                  </div>
+                  {element.content?.showSocial && socialLinks.length > 0 && (
+                    <div className="flex space-x-4">
+                      {socialLinks.map((link, index) => {
+                        const SocialIcon = getIconComponent(link.platform || "facebook")
+                        return (
+                          <a
+                            key={index}
+                            href={isEditing ? "#" : link.link || "#"}
+                            className="text-white hover:text-gray-300 transition-colors"
+                          >
+                            <SocialIcon className="h-6 w-6" />
                           </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
-                )}
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
+            </footer>
+          )
+
+        case "header":
+          const navItems = Array.isArray(element.content?.navItems) ? element.content.navItems : []
+
+          return (
+            <header
+              style={
+                {
+                  ...styleCopy,
+                  backgroundColor: element.style?.backgroundColor || "#ffffff",
+                  color: element.style?.textColor || "#000000",
+                  padding: element.style?.padding || "20px",
+                } as CSSProperties
+              }
+            >
+              <div className="container mx-auto">
+                <div className="flex flex-col md:flex-row justify-between items-center">
+                  <div className="mb-4 md:mb-0">
+                    <h1 className="text-2xl font-bold">{element.content?.title || "Website Title"}</h1>
+                    {element.content?.subtitle && <p className="text-sm">{element.content.subtitle}</p>}
+                  </div>
+                  {element.content?.showNav && navItems.length > 0 && (
+                    <nav>
+                      <ul className="flex space-x-6">
+                        {navItems.map((item, index) => (
+                          <li key={index}>
+                            <a href={isEditing ? "#" : item.link || "#"} className="hover:underline">
+                              {item.label}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </nav>
+                  )}
+                </div>
+              </div>
+            </header>
+          )
+
+        // NEW ELEMENT TYPES
+        case "badge":
+          return renderBadge()
+
+        case "feature-card":
+          return renderFeatureCard()
+
+        case "testimonial-card":
+          return renderTestimonialCard()
+
+        case "pricing-cards":
+          return renderPricingCards()
+
+        case "accordion":
+          return renderAccordion()
+
+        case "navbar":
+          return renderNavbar()
+
+        case "modern-button":
+          return renderModernButton()
+
+        default:
+          console.error(`Unknown element type: ${element.type} (baseType: ${baseType}, designId: ${designId})`)
+          return (
+            <div className="p-4 border border-red-500 text-red-500">
+              Unknown element type: {String(element.type)}
+              <pre className="mt-2 text-xs bg-gray-100 p-2 rounded">
+                {JSON.stringify({ baseType, designId, content: element.content }, null, 2)}
+              </pre>
             </div>
-          </header>
-        )
-
-      // NEW ELEMENT TYPES
-      case "badge":
-        return renderBadge()
-
-      case "feature-card":
-        return renderFeatureCard()
-
-      case "testimonial-card":
-        return renderTestimonialCard()
-
-      case "pricing-cards":
-        return renderPricingCards()
-
-      case "accordion":
-        return renderAccordion()
-
-      case "navbar":
-        return renderNavbar()
-
-      case "modern-button":
-        return renderModernButton()
-
-      default:
-        console.error(`Unknown element type: ${element.type} (baseType: ${baseType}, designId: ${designId})`)
-        return (
-          <div className="p-4 border border-red-500 text-red-500">
-            Unknown element type: {element.type}
-            <pre className="mt-2 text-xs bg-gray-100 p-2 rounded">
-              {JSON.stringify({ baseType, designId, content: element.content }, null, 2)}
-            </pre>
-          </div>
-        )
+          )
+      }
     }
+
+    // If baseType is not a string or is undefined, return a fallback
+    return (
+      <div className="p-4 border border-red-500 text-red-500">
+        Invalid element type: {String(element.type)}
+      </div>
+    );
   }
 
   // NEW ELEMENT RENDERERS
@@ -1698,7 +1745,7 @@ export function ElementRenderer({
           <div className="bg-gray-900 gap-1 p-1 border border-purple-500 grid grid-cols-2 grid-rows-2">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-purple-900/50 p-2 text-purple-300 text-xs">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1708,7 +1755,7 @@ export function ElementRenderer({
           <div className="bg-black gap-2 p-2 border border-green-500 grid grid-cols-2 grid-rows-2">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-green-900/30 p-2 text-green-500 text-xs font-mono">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1718,7 +1765,7 @@ export function ElementRenderer({
           <div className="bg-gray-800 gap-3 p-2 border-t-2 border-blue-400 grid grid-cols-2 grid-rows-2">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-gray-700 p-2 text-blue-400 text-xs">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1728,7 +1775,7 @@ export function ElementRenderer({
           <div className="bg-blue-900/50 gap-1 p-1 border border-cyan-400 grid grid-cols-2 grid-rows-2 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-cyan-900/30 p-2 text-cyan-300 text-xs">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1738,7 +1785,7 @@ export function ElementRenderer({
           <div className="bg-green-900/20 gap-2 p-1 border border-green-400 grid grid-cols-2 grid-rows-2">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-green-900/30 p-1 text-green-400 text-xs">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1748,7 +1795,7 @@ export function ElementRenderer({
           <div className="bg-gray-900 gap-1 p-1 border-b-2 border-purple-400 grid grid-cols-2 grid-rows-2">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-gray-800 p-2 text-purple-300 text-xs">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1758,7 +1805,7 @@ export function ElementRenderer({
           <div className="bg-purple-900/30 gap-2 p-2 border border-purple-500 grid grid-cols-2 grid-rows-2">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-purple-800/50 p-2 text-purple-300 text-xs rounded-full">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1768,7 +1815,7 @@ export function ElementRenderer({
           <div className="bg-black gap-1 p-1 border border-blue-500 grid grid-cols-2 grid-rows-2 shadow-[0_0_10px_rgba(59,130,246,0.5)]">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-blue-900/30 p-2 text-blue-400 text-xs">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1778,7 +1825,7 @@ export function ElementRenderer({
           <div className="bg-gray-800 gap-3 p-2 border-l-2 border-cyan-500 grid grid-cols-2 grid-rows-2">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-gray-700 p-2 text-cyan-400 text-xs border-l border-cyan-500">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1788,7 +1835,7 @@ export function ElementRenderer({
           <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 gap-2 p-2 border border-white/30 grid grid-cols-2 grid-rows-2 shadow-[0_0_15px_rgba(255,255,255,0.2)]">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-white/10 backdrop-blur-sm p-2 text-white text-xs">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>
@@ -1798,7 +1845,7 @@ export function ElementRenderer({
           <div className="bg-gray-900 gap-2 p-2 border border-purple-500 grid grid-cols-2 grid-rows-2">
             {gridItems.map((item, index) => (
               <div key={index} className="bg-gray-800 p-2 text-purple-300 text-xs">
-                {item}
+                {String(item)}
               </div>
             ))}
           </div>

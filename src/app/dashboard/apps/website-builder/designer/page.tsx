@@ -2,6 +2,7 @@ import { createClient } from "../../../../../../supabase/server"
 import { redirect } from "next/navigation"
 import DashboardNavbar from "@/components/dashboard-navbar"
 import WebsiteGrid from "./components/website-grid"
+import "./styles/button.css"
 
 export default async function WebsiteBuilderDesignerPage() {
   const supabase = createClient()
@@ -46,7 +47,7 @@ export default async function WebsiteBuilderDesignerPage() {
   const username = profile?.username || user.email?.split("@")[0] || "User"
 
   return (
-    <div className="w-full min-h-screen bg-white dark:bg-background text-gray-900 dark:text-gray-100">
+    <div className="w-full min-h-screen bg-background text-gray-900 dark:text-gray-100">
       <DashboardNavbar hasProfile={hasProfile} />
 
       <main className="w-full pt-6">

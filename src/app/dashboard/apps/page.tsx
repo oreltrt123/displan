@@ -25,14 +25,13 @@ export default async function AppsPage() {
   const hasProfile = !!profile
 
   return (
-    <div className="w-full min-h-screen text-white bg-black relative">
+    <div className="w-full min-h-screen text-white bg-background relative">
       <DashboardNavbar hasProfile={hasProfile} />
       <main className="w-full">
         <div className="container mx-auto px-4 py-8 flex flex-col gap-8">
           {/* Header Section */}
           <header className="flex flex-col gap-4">
             <h1 className="text-3xl font-bold tracking-tighter">Apps</h1>
-            <p className="text-white/70">Discover powerful tools to enhance your productivity and creativity</p>
           </header>
 
           {/* Apps Grid */}

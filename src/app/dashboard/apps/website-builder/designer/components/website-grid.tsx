@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import WebsiteSearch from "./website-search"
 import DeleteProjectModal from "./delete-project-modal"
+import "../styles/button.css"
 
 interface Website {
   id: string
@@ -126,17 +127,17 @@ export default function WebsiteGrid({ websites = [], username, isPremiumUser }: 
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{username}'s Workspace</h1>
           {!isPremiumUser && (
             <Link href="/dashboard/apps/website-builder/designer/subscription">
-              <button className="text-blue-600 dark:text-blue-400 text-sm bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors">
+              <button className=" text-sm bg_button px-3 py-1 rounded-md transition-colors">
                 Starter Workspace
               </button>
             </Link>
           )}
         </div>
         <Link href="/dashboard/apps/website-builder/designer/new">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            New site
-          </button>
+        <button className="new_site_button">
+        <Plus className="icon" />
+         New site
+        </button>
         </Link>
       </div>
 
@@ -146,23 +147,17 @@ export default function WebsiteGrid({ websites = [], username, isPremiumUser }: 
         <div className="flex items-center gap-2">
           <div className="relative" ref={sortDropdownRef}>
             <button
-              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="button_edit_project_r222"
               onClick={() => setShowSortDropdown(!showSortDropdown)}
             >
-              <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
               <span className="text-sm">Date created</span>
-              <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
             </button>
 
             {showSortDropdown && (
-              <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-10">
+              <div className="menu_container">
                 <div className="py-1">
                   <button
-                    className={`w-full text-left px-4 py-2 text-sm ${
-                      sortOrder === "newest"
-                        ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    }`}
+                    className="menu_item"
                     onClick={() => {
                       setSortOrder("newest")
                       setShowSortDropdown(false)
@@ -171,11 +166,7 @@ export default function WebsiteGrid({ websites = [], username, isPremiumUser }: 
                     Newest first
                   </button>
                   <button
-                    className={`w-full text-left px-4 py-2 text-sm ${
-                      sortOrder === "oldest"
-                        ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    }`}
+                    className="menu_item"
                     onClick={() => {
                       setSortOrder("oldest")
                       setShowSortDropdown(false)
@@ -187,28 +178,24 @@ export default function WebsiteGrid({ websites = [], username, isPremiumUser }: 
               </div>
             )}
           </div>
-          <div className="flex border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
-            <button
-              className={`p-2 transition-colors ${
-                viewMode === "grid"
-                  ? "bg-gray-100 dark:bg-gray-700"
-                  : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-              }`}
-              onClick={() => setViewMode("grid")}
-            >
-              <Grid className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-            </button>
-            <button
-              className={`p-2 transition-colors ${
-                viewMode === "list"
-                  ? "bg-gray-100 dark:bg-gray-700"
-                  : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-              }`}
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-            </button>
-          </div>
+      <div className="toggle-button-container">
+      <button
+        className={`toggle-button ${viewMode === "grid" ? "active" : "inactive"}`}
+        style={{ borderRadius: "8px 0 0 8px" }}
+        onClick={() => setViewMode("grid")}
+      >
+        <Grid className="icon" />
+        Grid
+      </button>
+      <button
+        className={`toggle-button ${viewMode === "list" ? "active" : "inactive"}`}
+        style={{ borderRadius: "0 8px 8px 0" }}
+        onClick={() => setViewMode("list")}
+      >
+        <List className="icon" />
+        List
+      </button>
+     </div>
         </div>
       </div>
 
@@ -249,9 +236,9 @@ export default function WebsiteGrid({ websites = [], username, isPremiumUser }: 
                     href={`/dashboard/apps/website-builder/designer/edit/${website.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                    className="view_site"
                   >
-                    View site
+                    <span className="view_site_rr2">View site</span>
                   </a>
                 </div>
               </div>

@@ -139,7 +139,7 @@ body {
 .app-detail-open-button {
   display: block;
   width: 100%;
-  background-color: rgb(6, 108, 231);
+  background-color: rgb(0, 153, 255);
   color: white;
   font-weight: 700;
   font-size: 16px;
@@ -303,7 +303,7 @@ body {
 }
 
 .languages-done-button {
-  background-color: rgb(6, 108, 231);
+  background-color: rgb(0, 153, 255);
   color: white;
   font-weight: 600;
   font-size: 14px;
