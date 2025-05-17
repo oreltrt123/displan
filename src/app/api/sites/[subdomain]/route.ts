@@ -6,10 +6,11 @@ export async function GET(request: Request, { params }: { params: { subdomain: s
     const subdomain = params.subdomain
 
     if (!subdomain) {
+      console.error("No subdomain provided in params")
       return NextResponse.json({ message: "Subdomain not provided" }, { status: 400 })
     }
 
-    console.log(`Serving site for subdomain: ${subdomain}`)
+    console.log(`API: Serving site for subdomain: ${subdomain}`)
 
     const supabase = createClient()
 
@@ -21,14 +22,17 @@ export async function GET(request: Request, { params }: { params: { subdomain: s
       .single()
 
     if (error) {
-      console.error("Error fetching site:", error)
+      console.error(`Error fetching site for subdomain ${subdomain}:`, error)
       return NextResponse.json({ message: "Site not found" }, { status: 404 })
     }
 
     if (!site || !site.html_content) {
+      console.error(`No content found for subdomain ${subdomain}`)
       return NextResponse.json({ message: "Site content not found" }, { status: 404 })
     }
 
+    console.log(`Successfully retrieved content for ${subdomain}, returning HTML response`)
+    
     // Return the HTML content with the correct content type
     return new NextResponse(site.html_content, {
       headers: {
