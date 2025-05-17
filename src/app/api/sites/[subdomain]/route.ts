@@ -9,6 +9,8 @@ export async function GET(request: Request, { params }: { params: { subdomain: s
       return NextResponse.json({ message: "Subdomain not provided" }, { status: 400 })
     }
 
+    console.log(`Serving site for subdomain: ${subdomain}`)
+
     const supabase = createClient()
 
     // Get the published site from the database
@@ -23,14 +25,14 @@ export async function GET(request: Request, { params }: { params: { subdomain: s
       return NextResponse.json({ message: "Site not found" }, { status: 404 })
     }
 
-    if (!site) {
-      return NextResponse.json({ message: "Site not found" }, { status: 404 })
+    if (!site || !site.html_content) {
+      return NextResponse.json({ message: "Site content not found" }, { status: 404 })
     }
 
     // Return the HTML content with the correct content type
     return new NextResponse(site.html_content, {
       headers: {
-        "Content-Type": "text/html",
+        "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
       },
     })
