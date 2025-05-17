@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import type React from "react"
+
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Save, Eye, Plus, Layout, Trash } from 'lucide-react'
+import { ArrowLeft, Plus, Layout, Trash } from "lucide-react"
 import { createClient } from "../../../../../../../../supabase/client"
 import type { PostgrestError } from "@supabase/supabase-js"
 import "../../styles/button.css"
@@ -17,13 +19,17 @@ import { ImagesPanel } from "../../components/images-panel"
 import { AIDesignAssistant } from "../../components/ai-assistant-panel"
 import { SettingsPanel } from "../../components/settings-panel"
 import { ElementProperties } from "../../components/element-properties"
-import { PreviewToolbar } from "../../components/preview-toolbar"
-import { ElementRenderer } from "../../components/element-renderer"
+import { PreviewRenderer } from "../../components/preview-renderer"
+import { WebsiteNavbar } from "../../components/website-navbar"
 import { DragDropProvider } from "../../components/drag-drop-context"
 import { DroppableSection } from "../../components/droppable-section"
 import { StripeCheckoutModal } from "../../components/stripe-checkout-modal"
 import { SimplePanel } from "../../components/simple-panel"
 import { PublishButton } from "../../components/publish-button"
+import { CanvasContextMenu } from "../../components/canvas-context-menu"
+import html2canvas from "html2canvas"
+import { ResponsiveControls } from "../../components/responsive-controls"
+import { CanvasResizeHandle } from "../../components/canvas-resize-handle"
 
 // Import utilities
 import { createNewElement } from "../../utils/element-factory"
@@ -31,6 +37,7 @@ import { deepClone } from "../../utils/deep-clone"
 
 // Import styles
 import "../../styles/designer.css"
+import "../../styles/animations.css"
 
 export default function DesignerEditorPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -41,6 +48,8 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
   const [selectedSection, setSelectedSection] = useState<string | null>(null)
   const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop")
+  const [canvasWidth, setCanvasWidth] = useState<number>(1200)
+  const [canvasHeight, setCanvasHeight] = useState<number>(800)
   const [showPreview, setShowPreview] = useState(false)
   const [saving, setSaving] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -58,6 +67,12 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
   const [publishingStatus, setPublishingStatus] = useState<"idle" | "publishing" | "success" | "error">("idle")
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
   const [selectedPage, setSelectedPage] = useState<string | null>(null)
+  const [showPagesPanel, setShowPagesPanel] = useState(false)
+  const [showSectionsPanel, setShowSectionsPanel] = useState(false)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [canvasBackground, setCanvasBackground] = useState<string>("#ffffff")
+  const [canvasLocked, setCanvasLocked] = useState<boolean>(false)
+  const canvasRef = useRef<HTMLDivElement>(null)
 
   // Fetch project data and user subscription status
   useEffect(() => {
@@ -167,6 +182,20 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
         const initializedProject = initializeProjectStructure(project)
         setProject(initializedProject)
 
+        // Set canvas settings from project data
+        if (initializedProject.content?.canvasSettings) {
+          setCanvasBackground(initializedProject.content.canvasSettings.background || "#ffffff")
+          setShowGrid(
+            initializedProject.content.canvasSettings.showGrid !== undefined
+              ? initializedProject.content.canvasSettings.showGrid
+              : true,
+          )
+          setGridSize(initializedProject.content.canvasSettings.gridSize || 8)
+          setCanvasLocked(initializedProject.content.canvasSettings.locked || false)
+          setCanvasWidth(initializedProject.content.canvasSettings.width || 1200)
+          setCanvasHeight(initializedProject.content.canvasSettings.height || 800)
+        }
+
         // Select the first page by default
         if (initializedProject.content?.pages && initializedProject.content.pages.length > 0) {
           setSelectedPage(initializedProject.content.pages[0].id)
@@ -228,6 +257,14 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
             fontFamily: "Arial, sans-serif",
           },
         },
+        canvasSettings: {
+          background: "#ffffff",
+          showGrid: true,
+          gridSize: 8,
+          locked: false,
+          width: 1200,
+          height: 800,
+        },
       }
     }
 
@@ -252,6 +289,17 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
           secondaryColor: "#f5f5f5",
           fontFamily: "Arial, sans-serif",
         },
+      }
+    }
+
+    if (!project.content.canvasSettings) {
+      project.content.canvasSettings = {
+        background: "#ffffff",
+        showGrid: true,
+        gridSize: 8,
+        locked: false,
+        width: 1200,
+        height: 800,
       }
     }
 
@@ -519,6 +567,13 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     // Determine if this is a content or style property
     if (["text", "src", "alt", "href", "buttonText", "level", "height"].includes(property)) {
       updatedProject.content.sections[sectionIndex].elements[elementIndex].content[property] = value
+    } else if (property === "animation") {
+      // Handle animation property
+      if (!updatedProject.content.sections[sectionIndex].elements[elementIndex].transitions) {
+        updatedProject.content.sections[sectionIndex].elements[elementIndex].transitions = { type: value }
+      } else {
+        updatedProject.content.sections[sectionIndex].elements[elementIndex].transitions.type = value
+      }
     } else {
       updatedProject.content.sections[sectionIndex].elements[elementIndex].style[property] = value
     }
@@ -821,6 +876,38 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     .mobile { width: 375px; margin: 0 auto; border: 12px solid #374151; border-radius: 12px; height: 667px; overflow-y: auto; }
     .relative { position: relative; }
     .absolute { position: absolute; }
+    
+    /* Animation classes */
+    .fade-in { animation: fadeIn 1s ease-in-out; }
+    .slide-in { animation: slideIn 1s ease-in-out; }
+    .bounce { animation: bounce 1s infinite; }
+    .pulse { animation: pulse 2s infinite; }
+    .spin { animation: spin 2s linear infinite; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -870,6 +957,15 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
       document.getElementById('mobile-btn').classList.remove('active');
       document.getElementById(mode + '-btn').classList.add('active');
     }
+    
+    // Initialize animations
+    document.addEventListener('DOMContentLoaded', function() {
+      const animatedElements = document.querySelectorAll('[data-animation]');
+      animatedElements.forEach(element => {
+        const animationType = element.getAttribute('data-animation');
+        element.classList.add(animationType);
+      });
+    });
   </script>
 </body>
 </html>`
@@ -878,13 +974,135 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
   }
 
   // Change preview device mode
-  const changePreviewMode = (mode: "desktop" | "tablet" | "mobile") => {
+  const handleChangePreviewMode = (mode: "desktop" | "tablet" | "mobile") => {
     setPreviewMode(mode)
+
+    // Set default dimensions for the selected mode
+    let newWidth, newHeight
+    if (mode === "desktop") {
+      newWidth = 1200
+      newHeight = 800
+    } else if (mode === "tablet") {
+      newWidth = 768
+      newHeight = 1024
+    } else {
+      newWidth = 375
+      newHeight = 667
+    }
+
+    setCanvasWidth(newWidth)
+    setCanvasHeight(newHeight)
+
+    // Update canvas dimensions in project settings
+    if (project) {
+      const updatedProject = deepClone(project)
+      if (!updatedProject.content.canvasSettings) {
+        updatedProject.content.canvasSettings = {
+          background: canvasBackground,
+          showGrid,
+          gridSize,
+          locked: canvasLocked,
+          width: newWidth,
+          height: newHeight,
+        }
+      } else {
+        updatedProject.content.canvasSettings.width = newWidth
+        updatedProject.content.canvasSettings.height = newHeight
+      }
+
+      setProject(updatedProject)
+      setUnsavedChanges(true)
+
+      // Save changes immediately
+      saveCanvasSettings(updatedProject)
+    }
 
     // If preview window is open, update its view
     if (previewWindow && !previewWindow.closed) {
       previewWindow.changeView(mode)
     }
+  }
+
+  // Handle canvas width change
+  const handleCanvasWidthChange = (width: number) => {
+    setCanvasWidth(width)
+
+    // Update canvas width in project settings
+    if (project) {
+      const updatedProject = deepClone(project)
+      if (!updatedProject.content.canvasSettings) {
+        updatedProject.content.canvasSettings = {
+          background: canvasBackground,
+          showGrid,
+          gridSize,
+          locked: canvasLocked,
+          width,
+          height: canvasHeight,
+        }
+      } else {
+        updatedProject.content.canvasSettings.width = width
+      }
+
+      setProject(updatedProject)
+      setUnsavedChanges(true)
+
+      // Don't save immediately on drag to avoid too many requests
+      // We'll save when the drag ends
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer)
+      }
+
+      setAutoSaveTimer(
+        setTimeout(() => {
+          saveCanvasSettings(updatedProject)
+        }, 500),
+      )
+    }
+  }
+
+  // Handle canvas height change
+  const handleCanvasHeightChange = (height: number) => {
+    setCanvasHeight(height)
+
+    // Update canvas height in project settings
+    if (project) {
+      const updatedProject = deepClone(project)
+      if (!updatedProject.content.canvasSettings) {
+        updatedProject.content.canvasSettings = {
+          background: canvasBackground,
+          showGrid,
+          gridSize,
+          locked: canvasLocked,
+          width: canvasWidth,
+          height,
+        }
+      } else {
+        updatedProject.content.canvasSettings.height = height
+      }
+
+      setProject(updatedProject)
+      setUnsavedChanges(true)
+
+      // Don't save immediately on drag to avoid too many requests
+      // We'll save when the drag ends
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer)
+      }
+
+      setAutoSaveTimer(
+        setTimeout(() => {
+          saveCanvasSettings(updatedProject)
+        }, 500),
+      )
+    }
+  }
+
+  // Handle resize from resize handles
+  const handleResizeFromHandle = (delta: number) => {
+    const newWidth = canvasWidth + delta
+    // Enforce min/max constraints
+    const constrainedWidth = Math.max(320, Math.min(newWidth, 1920))
+    handleCanvasWidthChange(constrainedWidth)
   }
 
   // Generate element HTML
@@ -907,22 +1125,26 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     // Combined inline style
     const inlineStyle = positionStyle || sizeStyle ? ` style="${positionStyle} ${sizeStyle}"` : ""
 
+    // Animation data attribute
+    const animationAttr =
+      element.transitions && element.transitions.type ? ` data-animation="${element.transitions.type}"` : ""
+
     switch (element.type) {
       case "heading":
         const HeadingTag = `h${element.content?.level || 2}`
-        code += `${indent}<${HeadingTag} class="${getStyleClasses(element.style, true)}"${inlineStyle}>${element.content?.text || "Heading"}</${HeadingTag}>\n`
+        code += `${indent}<${HeadingTag} class="${getStyleClasses(element.style, true)}"${inlineStyle}${animationAttr}>${element.content?.text || "Heading"}</${HeadingTag}>\n`
         break
       case "paragraph":
-        code += `${indent}<p class="${getStyleClasses(element.style, true)}"${inlineStyle}>${element.content?.text || "Paragraph text"}</p>\n`
+        code += `${indent}<p class="${getStyleClasses(element.style, true)}"${inlineStyle}${animationAttr}>${element.content?.text || "Paragraph text"}</p>\n`
         break
       case "image":
-        code += `${indent}<img src="${element.content?.src || "/placeholder.svg"}" alt="${element.content?.alt || ""}" class="${getStyleClasses(element.style, true)}"${inlineStyle} />\n`
+        code += `${indent}<img src="${element.content?.src || "/placeholder.svg"}" alt="${element.content?.alt || ""}" class="${getStyleClasses(element.style, true)}"${inlineStyle}${animationAttr} />\n`
         break
       case "button":
-        code += `${indent}<button class="${getStyleClasses(element.style, true)}"${inlineStyle}>${element.content?.buttonText || "Button"}</button>\n`
+        code += `${indent}<button class="${getStyleClasses(element.style, true)}"${inlineStyle}${animationAttr}>${element.content?.buttonText || "Button"}</button>\n`
         break
       case "container":
-        code += `${indent}<div class="${getStyleClasses(element.style, true)}"${inlineStyle}>\n`
+        code += `${indent}<div class="${getStyleClasses(element.style, true)}"${inlineStyle}${animationAttr}>\n`
         if (element.children && element.children.length) {
           element.children.forEach((child: any) => {
             code += generateElementHtml(child, indentLevel + 2)
@@ -931,7 +1153,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
         code += `${indent}</div>\n`
         break
       default:
-        code += `${indent}<div class="${getStyleClasses(element.style, true)}"${inlineStyle}>${element.content?.text || ""}</div>\n`
+        code += `${indent}<div class="${getStyleClasses(element.style, true)}"${inlineStyle}${animationAttr}>${element.content?.text || ""}</div>\n`
     }
 
     return code
@@ -1064,6 +1286,39 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     code += `  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n`
     code += `  <title>${project.name}</title>\n`
     code += `  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">\n`
+    code += `  <style>\n`
+    code += `    /* Animation classes */\n`
+    code += `    .fade-in { animation: fadeIn 1s ease-in-out; }\n`
+    code += `    .slide-in { animation: slideIn 1s ease-in-out; }\n`
+    code += `    .bounce { animation: bounce 1s infinite; }\n`
+    code += `    .pulse { animation: pulse 2s infinite; }\n`
+    code += `    .spin { animation: spin 2s linear infinite; }\n`
+    code += `    \n`
+    code += `    @keyframes fadeIn {\n`
+    code += `      from { opacity: 0; }\n`
+    code += `      to { opacity: 1; }\n`
+    code += `    }\n`
+    code += `    \n`
+    code += `    @keyframes slideIn {\n`
+    code += `      from { transform: translateY(20px); opacity: 0; }\n`
+    code += `      to { transform: translateY(0); opacity: 1; }\n`
+    code += `    }\n`
+    code += `    \n`
+    code += `    @keyframes bounce {\n`
+    code += `      0%, 100% { transform: translateY(0); }\n`
+    code += `      50% { transform: translateY(-10px); }\n`
+    code += `    }\n`
+    code += `    \n`
+    code += `    @keyframes pulse {\n`
+    code += `      0%, 100% { opacity: 1; }\n`
+    code += `      50% { opacity: 0.5; }\n`
+    code += `    }\n`
+    code += `    \n`
+    code += `    @keyframes spin {\n`
+    code += `      from { transform: rotate(0deg); }\n`
+    code += `      to { transform: rotate(360deg); }\n`
+    code += `    }\n`
+    code += `  </style>\n`
     code += `</head>\n`
     code += `<body>\n`
     code += `  <div class="container mx-auto">\n`
@@ -1086,6 +1341,16 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     }
 
     code += `  </div>\n`
+    code += `  <script>\n`
+    code += `    // Initialize animations\n`
+    code += `    document.addEventListener('DOMContentLoaded', function() {\n`
+    code += `      const animatedElements = document.querySelectorAll('[data-animation]');\n`
+    code += `      animatedElements.forEach(element => {\n`
+    code += `        const animationType = element.getAttribute('data-animation');\n`
+    code += `        element.classList.add(animationType);\n`
+    code += `      });\n`
+    code += `    });\n`
+    code += `  </script>\n`
     code += `</body>\n`
     code += `</html>`
 
@@ -1097,22 +1362,26 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     const indent = " ".repeat(indentLevel)
     let code = ""
 
+    // Animation props
+    const animationProps =
+      element.transitions && element.transitions.type ? ` data-animation="${element.transitions.type}"` : ""
+
     switch (element.type) {
       case "heading":
         const HeadingTag = `h${element.content?.level || 2}`
-        code += `${indent}<${HeadingTag} className="${getStyleClasses(element.style)}">${element.content?.text || "Heading"}</${HeadingTag}>\n`
+        code += `${indent}<${HeadingTag} className="${getStyleClasses(element.style)}"${animationProps}>${element.content?.text || "Heading"}</${HeadingTag}>\n`
         break
       case "paragraph":
-        code += `${indent}<p className="${getStyleClasses(element.style)}">${element.content?.text || "Paragraph text"}</p>\n`
+        code += `${indent}<p className="${getStyleClasses(element.style)}"${animationProps}>${element.content?.text || "Paragraph text"}</p>\n`
         break
       case "image":
-        code += `${indent}<img src="${element.content?.src || "/placeholder.svg"}" alt="${element.content?.alt || ""}" className="${getStyleClasses(element.style)}" />\n`
+        code += `${indent}<img src="${element.content?.src || "/placeholder.svg"}" alt="${element.content?.alt || ""}" className="${getStyleClasses(element.style)}"${animationProps} />\n`
         break
       case "button":
-        code += `${indent}<button className="${getStyleClasses(element.style)}">${element.content?.buttonText || "Button"}</button>\n`
+        code += `${indent}<button className="${getStyleClasses(element.style)}"${animationProps}>${element.content?.buttonText || "Button"}</button>\n`
         break
       case "container":
-        code += `${indent}<div className="${getStyleClasses(element.style)}">\n`
+        code += `${indent}<div className="${getStyleClasses(element.style)}"${animationProps}>\n`
         if (element.children && element.children.length) {
           element.children.forEach((child: any) => {
             code += generateElementCode(child, indentLevel + 2)
@@ -1121,7 +1390,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
         code += `${indent}</div>\n`
         break
       default:
-        code += `${indent}<div className="${getStyleClasses(element.style)}">${element.content?.text || ""}</div>\n`
+        code += `${indent}<div className="${getStyleClasses(element.style)}"${animationProps}>${element.content?.text || ""}</div>\n`
     }
 
     return code
@@ -1389,10 +1658,281 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
     })
   }
 
+  // Handle right-click on canvas
+  const handleCanvasContextMenu = (e: React.MouseEvent) => {
+    // Only allow right-click on the canvas, not on elements
+    if ((e.target as HTMLElement).closest(".element-wrapper")) {
+      return
+    }
+
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY })
+  }
+
+  // Change canvas background color
+  const handleChangeBackground = (color: string) => {
+    if (!project) return
+
+    setCanvasBackground(color)
+
+    // Update project data
+    const updatedProject = deepClone(project)
+    if (!updatedProject.content.canvasSettings) {
+      updatedProject.content.canvasSettings = {
+        background: color,
+        showGrid,
+        gridSize,
+        locked: canvasLocked,
+        width: canvasWidth,
+        height: canvasHeight,
+      }
+    } else {
+      updatedProject.content.canvasSettings.background = color
+    }
+
+    setProject(updatedProject)
+    setUnsavedChanges(true)
+    setContextMenu(null)
+
+    // Save changes immediately
+    saveCanvasSettings(updatedProject)
+  }
+
+  // Toggle grid visibility
+  const handleToggleGrid = () => {
+    if (!project) return
+
+    const newShowGrid = !showGrid
+    setShowGrid(newShowGrid)
+
+    // Update project data
+    const updatedProject = deepClone(project)
+    if (!updatedProject.content.canvasSettings) {
+      updatedProject.content.canvasSettings = {
+        background: canvasBackground,
+        showGrid: newShowGrid,
+        gridSize,
+        locked: canvasLocked,
+        width: canvasWidth,
+        height: canvasHeight,
+      }
+    } else {
+      updatedProject.content.canvasSettings.showGrid = newShowGrid
+    }
+
+    setProject(updatedProject)
+    setUnsavedChanges(true)
+    setContextMenu(null)
+
+    // Save changes immediately
+    saveCanvasSettings(updatedProject)
+  }
+
+  // Toggle lock handler:
+  const handleToggleLock = () => {
+    if (!project) return
+
+    const newLocked = !canvasLocked
+    setCanvasLocked(newLocked)
+
+    // Update project data
+    const updatedProject = deepClone(project)
+    if (!updatedProject.content.canvasSettings) {
+      updatedProject.content.canvasSettings = {
+        background: canvasBackground,
+        showGrid,
+        gridSize,
+        locked: newLocked,
+        width: canvasWidth,
+        height: canvasHeight,
+      }
+    } else {
+      updatedProject.content.canvasSettings.locked = newLocked
+    }
+
+    setProject(updatedProject)
+    setUnsavedChanges(true)
+    setContextMenu(null)
+
+    // Save changes immediately
+    saveCanvasSettings(updatedProject)
+  }
+
+  // Add a helper function to save canvas settings:
+  const saveCanvasSettings = async (projectToSave: Project) => {
+    try {
+      setSaving(true)
+      setSaveStatus("saving")
+
+      const { error } = await supabase
+        .from("website_projects")
+        .update({ content: projectToSave.content })
+        .eq("id", projectToSave.id)
+
+      if (error) throw error
+
+      setUnsavedChanges(false)
+      setSaveStatus("saved")
+
+      // Reset save status after 3 seconds
+      setTimeout(() => {
+        setSaveStatus("idle")
+      }, 3000)
+    } catch (err) {
+      console.error("Error saving canvas settings:", err)
+      setSaveStatus("error")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Duplicate Canvas
+  const handleDuplicateCanvas = async () => {
+    if (!project || !selectedPage) return
+
+    try {
+      setSaving(true)
+      setSaveStatus("saving")
+
+      // Get the currently selected page
+      const currentPage = project.content.pages.find((p) => p.id === selectedPage)
+      if (!currentPage) throw new Error("Selected page not found")
+
+      // Create a deep clone of the current page
+      const duplicatedPage = deepClone(currentPage)
+
+      // Generate a new ID for the duplicated page
+      duplicatedPage.id = `page-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+      duplicatedPage.name = `${duplicatedPage.name} Copy`
+      duplicatedPage.path = `${duplicatedPage.path}-copy`
+
+      // Create a deep clone of the project
+      const updatedProject = deepClone(project)
+
+      // Add the duplicated page to the project
+      updatedProject.content.pages.push(duplicatedPage)
+
+      // Update the project in the database
+      const { error } = await supabase
+        .from("website_projects")
+        .update({ content: updatedProject.content })
+        .eq("id", project.id)
+
+      if (error) throw error
+
+      setProject(updatedProject)
+      setSelectedPage(duplicatedPage.id)
+      setUnsavedChanges(true)
+      setSaveStatus("saved")
+
+      // Reset save status after 3 seconds
+      setTimeout(() => {
+        setSaveStatus("idle")
+      }, 3000)
+    } catch (err) {
+      console.error("Error duplicating canvas:", err)
+      setSaveStatus("error")
+      alert("Failed to duplicate canvas")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Clear Canvas
+  const handleClearCanvas = async () => {
+    if (!project || !selectedSection) return
+
+    if (!confirm("Are you sure you want to clear this section? This action cannot be undone.")) return
+
+    try {
+      setSaving(true)
+      setSaveStatus("saving")
+
+      // Create a deep clone of the project
+      const updatedProject = deepClone(project)
+
+      // Find the selected section
+      const sectionIndex = updatedProject.content.sections.findIndex((s) => s.id === selectedSection)
+      if (sectionIndex === -1) throw new Error("Selected section not found")
+
+      // Clear the elements in the section
+      updatedProject.content.sections[sectionIndex].elements = []
+
+      // Update the project in the database
+      const { error } = await supabase
+        .from("website_projects")
+        .update({ content: updatedProject.content })
+        .eq("id", project.id)
+
+      if (error) throw error
+
+      setProject(updatedProject)
+      setUnsavedChanges(true)
+      setSaveStatus("saved")
+
+      // Reset save status after 3 seconds
+      setTimeout(() => {
+        setSaveStatus("idle")
+      }, 3000)
+    } catch (err) {
+      console.error("Error clearing canvas:", err)
+      setSaveStatus("error")
+      alert("Failed to clear canvas")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Export Canvas as Image
+  const handleExportCanvas = async () => {
+    if (!canvasRef.current) return
+
+    try {
+      setExporting(true)
+
+      // Use html2canvas to capture the content of the canvas
+      const canvas = await html2canvas(canvasRef.current, { useCORS: true })
+
+      // Convert the canvas to a data URL
+      const dataURL = canvas.toDataURL("image/png")
+
+      // Create a temporary link element
+      const link = document.createElement("a")
+      link.href = dataURL
+      link.download = `${project?.name || "canvas"}.png`
+
+      // Programmatically click the link to trigger the download
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (err) {
+      console.error("Error exporting canvas:", err)
+      alert("Failed to export canvas")
+    } finally {
+      setExporting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
+        <h1 className="text-2xl font-bold text-destructive mb-4">Error</h1>
+        <p className="text-foreground mb-6">{error}</p>
+        <Link
+          href="/dashboard/apps/website-builder/designer"
+          className="flex items-center text-primary hover:underline"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Projects
+        </Link>
       </div>
     )
   }
@@ -1428,17 +1968,93 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
             <h1 className="text-xl font-semibold text-foreground">{project?.name || "Website Designer"}</h1>
           </div>
           <div className="flex items-center space-x-3">
-            <button
-              onClick={saveProject}
-              disabled={!unsavedChanges || saving}
-              className="button_edit_project_r22"
-            >
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowPagesPanel(!showPagesPanel)
+                  if (showSectionsPanel) setShowSectionsPanel(false)
+                }}
+                className="button_edit_project_r22 flex items-center"
+              >
+                Pages{" "}
+                <Plus
+                  className="h-8 w-8"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    addNewPage()
+                  }}
+                />
+              </button>
+
+              {showPagesPanel && (
+                <div className="menu_container">
+                  {project?.content?.pages?.map((page) => (
+                    <div key={page.id} onClick={() => handlePageSelect(page.id)} className="menu_item">
+                      <Layout className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="flex-1 truncate text-sm text-foreground">{page.name}</span>
+                      {selectedPage === page.id && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deletePage(page.id)
+                          }}
+                          className="p-1 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setShowSectionsPanel(!showSectionsPanel)
+                  if (showPagesPanel) setShowPagesPanel(false)
+                }}
+                className="button_edit_project_r22 flex items-center"
+                disabled={!selectedPage}
+              >
+                Sections{" "}
+                <Plus
+                  className="h-8 w-8"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (selectedPage) addNewSection()
+                  }}
+                />
+              </button>
+
+              {showSectionsPanel && (
+                <div className="menu_container">
+                  {getPageSections().map((section) => (
+                    <div key={section.id} onClick={() => handleSectionSelect(section.id)} className="menu_item">
+                      <Layout className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="flex-1 truncate text-sm text-foreground">{section.name}</span>
+                      {selectedSection === section.id && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteSection(section.id)
+                          }}
+                          className="p-1 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button onClick={saveProject} disabled={!unsavedChanges || saving} className="button_edit_project_r22">
               {saving ? "Saving..." : saveStatus === "saved" ? "Saved!" : "Save"}
             </button>
-            <button
-              onClick={togglePreview}
-              className="button_edit_project_r22"
-            >
+            <button onClick={togglePreview} className="button_edit_project_r22">
               {showPreview ? "Edit" : "Preview"}
             </button>
             <PublishButton project={project} />
@@ -1485,87 +2101,6 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
                 />
               )}
 
-              {/* Pages Panel */}
-              <div className="w-64 bg-card border-r border-border flex flex-col">
-                <div className="p-4 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-medium text-foreground">Pages</h2>
-                    <button
-                      onClick={addNewPage}
-                      className="p-1 text-muted-foreground hover:text-foreground hover:bg-secondary rounded"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex-1 overflow-y-auto p-2">
-                  {project?.content?.pages?.map((page) => (
-                    <div
-                      key={page.id}
-                      onClick={() => handlePageSelect(page.id)}
-                      className={`flex items-center p-2 rounded cursor-pointer ${
-                        selectedPage === page.id ? "bg-secondary" : "hover:bg-secondary/50"
-                      }`}
-                    >
-                      <Layout className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="flex-1 truncate text-sm text-foreground">{page.name}</span>
-                      {selectedPage === page.id && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            deletePage(page.id)
-                          }}
-                          className="p-1 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sections Panel */}
-              <div className="w-64 bg-card border-r border-border flex flex-col">
-                <div className="p-4 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-medium text-foreground">Sections</h2>
-                    <button
-                      onClick={addNewSection}
-                      className="p-1 text-muted-foreground hover:text-foreground hover:bg-secondary rounded"
-                      disabled={!selectedPage}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex-1 overflow-y-auto p-2">
-                  {getPageSections().map((section) => (
-                    <div
-                      key={section.id}
-                      onClick={() => handleSectionSelect(section.id)}
-                      className={`flex items-center p-2 rounded cursor-pointer ${
-                        selectedSection === section.id ? "bg-secondary" : "hover:bg-secondary/50"
-                      }`}
-                    >
-                      <Layout className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="flex-1 truncate text-sm text-foreground">{section.name}</span>
-                      {selectedSection === section.id && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            deleteSection(section.id)
-                          }}
-                          className="p-1 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Properties Panel */}
               {selectedElement && getSelectedElement() && (
                 <div className="w-72 bg-card border-r border-border flex flex-col">
@@ -1582,39 +2117,49 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
           <div className="flex-1 flex flex-col">
             {showPreview ? (
               <div className="flex-1 flex flex-col">
-                <PreviewToolbar previewMode={previewMode} onChangePreviewMode={changePreviewMode} />
+                {/* Website Navbar in Preview Mode */}
+                {/* <WebsiteNavbar
+                  siteName={project?.content?.settings?.siteName || project?.name || "Website"}
+                  pages={project?.content?.pages?.map((p) => ({ name: p.name, path: p.path })) || []}
+                  activePage={project?.content?.pages?.find((p) => p.id === selectedPage)?.name}
+                /> */}
+
+                {/* Preview Toolbar */}
+                <div className="flex justify-center py-2 bg-background border-b border-border">
+                  <ResponsiveControls
+                    previewMode={previewMode}
+                    onChangePreviewMode={handleChangePreviewMode}
+                    canvasWidth={canvasWidth}
+                    canvasHeight={canvasHeight}
+                    onCanvasWidthChange={handleCanvasWidthChange}
+                    onCanvasHeightChange={handleCanvasHeightChange}
+                  />
+                </div>
+
+                {/* Preview Content */}
                 <div className="flex-1 bg-secondary/50 flex items-center justify-center p-4 overflow-auto">
                   <div
-                    className={`bg-background shadow-lg ${
-                      previewMode === "desktop"
-                        ? "w-full h-full"
-                        : previewMode === "tablet"
-                          ? "w-[768px] h-[1024px]"
-                          : "w-[375px] h-[667px]"
-                    } overflow-auto`}
+                    className="relative shadow-lg overflow-hidden"
+                    style={{
+                      width: `${canvasWidth}px`,
+                      height: `${canvasHeight}px`,
+                      maxHeight: "100%",
+                    }}
                   >
-                    <div className="p-4">
-                      {getPageSections().map((section) => (
-                        <div key={section.id} className="mb-8">
-                          {/* <h2 className="text-lg font-semibold mb-4 text-muted-foreground border-b border-border pb-2">
-                            {section.name}
-                          </h2> */}
-                          <div>
-                            {section.elements.map((element) => (
-                              <div key={element.id}>
-                                <ElementRenderer element={element} isEditing={false} isSelected={false} />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <CanvasResizeHandle position="left" onResize={(delta) => handleResizeFromHandle(-delta)} />
+                    <CanvasResizeHandle position="right" onResize={(delta) => handleResizeFromHandle(delta)} />
+                    <PreviewRenderer sections={getPageSections()} canvasBackground={canvasBackground} />
                   </div>
                 </div>
               </div>
             ) : (
               <div className="flex-1 bg-secondary/50 flex items-center justify-center p-4 overflow-auto">
-                <div className="bg-background shadow-lg w-full h-full overflow-auto">
+                <div
+                  className="w-full h-full overflow-auto"
+                  style={{ backgroundColor: canvasBackground }}
+                  onContextMenu={handleCanvasContextMenu}
+                  ref={canvasRef}
+                >
                   <div className="p-4">
                     {selectedSection ? (
                       <div>
@@ -1630,6 +2175,7 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
                               onElementResize={handleElementResize}
                               onDeleteElement={deleteElement}
                               onUpdateElement={handleUpdateElement}
+                              disabled={canvasLocked}
                             />
                           ))}
                       </div>
@@ -1641,8 +2187,36 @@ export default function DesignerEditorPage({ params }: { params: { id: string } 
                         <p>Select a section to edit or create a new one</p>
                       </div>
                     )}
+
+                    {showGrid && (
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          backgroundImage:
+                            "linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px)",
+                          backgroundSize: `${gridSize}px ${gridSize}px`,
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
+
+                {contextMenu && (
+                  <CanvasContextMenu
+                    x={contextMenu.x}
+                    y={contextMenu.y}
+                    onClose={() => setContextMenu(null)}
+                    onChangeBackground={handleChangeBackground}
+                    onDuplicateCanvas={handleDuplicateCanvas}
+                    onClearCanvas={handleClearCanvas}
+                    onToggleGrid={handleToggleGrid}
+                    onExportCanvas={handleExportCanvas}
+                    onToggleLock={handleToggleLock}
+                    isLocked={canvasLocked}
+                    currentBackground={canvasBackground}
+                    showGrid={showGrid}
+                  />
+                )}
               </div>
             )}
           </div>

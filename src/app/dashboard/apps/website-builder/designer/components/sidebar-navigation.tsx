@@ -161,10 +161,10 @@ export function SidebarNavigation({
       <div className="flex flex-col items-center space-y-4">
         <button
           onClick={() => onSelectPanel("elements")}
-          className={`p-3 rounded-lg ${
-            activePanel === "elements"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-secondary"
+                    className={`p-3 rounded-lg ${
+          activePanel === "elements"
+    ? "bg-[rgb(43,43,43)] text-white"
+    : "text-muted-foreground hover:bg-[rgb(63,63,63)]"
           }`}
           title="Elements"
         >
@@ -174,7 +174,9 @@ export function SidebarNavigation({
         <button
           onClick={() => onSelectPanel("images")}
           className={`p-3 rounded-lg ${
-            activePanel === "images" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+          activePanel === "images"
+    ? "bg-[rgb(43,43,43)] text-white"
+    : "text-muted-foreground hover:bg-[rgb(63,63,63)]"
           }`}
           title="Images"
         >
@@ -184,7 +186,9 @@ export function SidebarNavigation({
         <button
           onClick={() => onSelectPanel("simple")}
           className={`p-3 rounded-lg ${
-            activePanel === "simple" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+          activePanel === "simple"
+    ? "bg-[rgb(43,43,43)] text-white"
+    : "text-muted-foreground hover:bg-[rgb(63,63,63)]"
           }`}
           title="Simple Designs"
         >
@@ -194,9 +198,11 @@ export function SidebarNavigation({
         {localIsPremium ? (
           <button
             onClick={() => onSelectPanel("ai")}
-            className={`p-3 rounded-lg ${
-              activePanel === "ai" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
-            }`}
+           className={`p-3 rounded-lg ${
+          activePanel === "ai"
+    ? "bg-[rgb(43,43,43)] text-white"
+    : "text-muted-foreground hover:bg-[rgb(63,63,63)]"
+          }`}
             title="AI Assistant"
           >
             <Bot className="h-6 w-6" />
@@ -217,9 +223,9 @@ export function SidebarNavigation({
         <button
           onClick={() => onSelectPanel("settings")}
           className={`p-3 rounded-lg ${
-            activePanel === "settings"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-secondary"
+          activePanel === "settings"
+    ? "bg-[rgb(43,43,43)] text-white"
+    : "text-muted-foreground hover:bg-[rgb(63,63,63)]"
           }`}
           title="Settings"
         >

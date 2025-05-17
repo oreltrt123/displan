@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Search } from "lucide-react"
 import "../styles/button.css"
+
 interface Website {
   id: string
   name: string
@@ -36,7 +37,7 @@ export default function WebsiteSearch({ websites, onFilteredWebsitesChange }: We
         placeholder="Search sites..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="input_field "
+        className="input_field"
         />
     </div>
   )

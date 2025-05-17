@@ -1,27 +1,16 @@
+
 "use client"
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { Upload, Trash2, Search, RefreshCw } from "lucide-react"
+import { Upload, Trash2, Search, RefreshCw, PlayCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface ImagesPanelProps {
-  onSelectImage: (imageUrl: string) => void
+  onSelectImage: (mediaUrl: string) => void
   projectId: string
-}
-
-interface UnsplashImage {
-  id: string
-  urls: {
-    small: string
-    regular: string
-  }
-  alt_description: string
-  user: {
-    name: string
-  }
 }
 
 interface LocalImage {
@@ -31,19 +20,39 @@ interface LocalImage {
   date: string
 }
 
-// Replace with your actual Unsplash API key
-const UNSPLASH_API_KEY = "EBTWWPIV51JxhsJYOGbjH35O6oVyC-gzP-Qf08wlM-o"
+interface PixabayImage {
+  id: number
+  previewURL: string
+  largeImageURL: string
+  user: string
+}
+
+interface PixabayVideo {
+  id: number
+  videos: {
+    medium: {
+      url: string
+    }
+    tiny: {
+      url: string
+    }
+  }
+  user: string
+  picture_id: string
+}
+
+const PIXABAY_API_KEY = "50348326-3d4d1d6df60a1610115741956"
 
 export function ImagesPanel({ onSelectImage, projectId }: ImagesPanelProps) {
   const [uploading, setUploading] = useState(false)
   const [localImages, setLocalImages] = useState<LocalImage[]>([])
-  const [unsplashImages, setUnsplashImages] = useState<UnsplashImage[]>([])
+  const [pixabayImages, setPixabayImages] = useState<PixabayImage[]>([])
+  const [pixabayVideos, setPixabayVideos] = useState<PixabayVideo[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Load images from local storage when component mounts
   useEffect(() => {
     const savedImages = localStorage.getItem(`project_images_${projectId}`)
     if (savedImages) {
@@ -54,73 +63,46 @@ export function ImagesPanel({ onSelectImage, projectId }: ImagesPanelProps) {
       }
     }
 
-    // Load initial Unsplash images
-    fetchUnsplashImages()
+    fetchPixabayMedia()
   }, [projectId])
 
-  // Save images to local storage when they change
   useEffect(() => {
     localStorage.setItem(`project_images_${projectId}`, JSON.stringify(localImages))
   }, [localImages, projectId])
 
-  const fetchUnsplashImages = async (query?: string) => {
+  const fetchPixabayMedia = async (query: string = "nature") => {
+    setIsSearching(true)
+    setError(null)
+
     try {
-      setIsSearching(true)
-      setError(null)
+      const imageRes = await fetch(
+        `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&image_type=photo`
+      )
+      const videoRes = await fetch(
+        `https://pixabay.com/api/videos/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}`
+      )
 
-      const endpoint = query
-        ? `https://api.unsplash.com/search/photos?query=${query}&per_page=30`
-        : "https://api.unsplash.com/photos/random?count=30"
+      const imageData = await imageRes.json()
+      const videoData = await videoRes.json()
 
-      const response = await fetch(endpoint, {
-        headers: {
-          Authorization: `Client-ID ${UNSPLASH_API_KEY}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch images")
-      }
-
-      const data = await response.json()
-
-      // Handle different response formats
-      const images = query ? data.results : data
-
-      setUnsplashImages(images)
+      setPixabayImages(imageData.hits || [])
+      setPixabayVideos(videoData.hits || [])
+    } catch (err) {
+      console.error("Pixabay fetch error:", err)
+      setError("Failed to load media from Pixabay")
+    } finally {
       setIsSearching(false)
-    } catch (error) {
-      console.error("Error fetching Unsplash images:", error)
-      setError("Failed to load stock images")
-      setIsSearching(false)
-
-      // Fallback to placeholder images for demo purposes
-      const mockImages: UnsplashImage[] = Array.from({ length: 12 }).map((_, i) => ({
-        id: `unsplash-${i}`,
-        urls: {
-          small: `/placeholder.svg?height=200&width=300&text=${query || "Photo " + (i + 1)}`,
-          regular: `/placeholder.svg?height=800&width=1200&text=${query || "Photo " + (i + 1)}`,
-        },
-        alt_description: query ? `${query} image` : `Sample image ${i + 1}`,
-        user: {
-          name: "Photographer Name",
-        },
-      }))
-
-      setUnsplashImages(mockImages)
     }
   }
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      fetchUnsplashImages(searchQuery.trim())
+      fetchPixabayMedia(searchQuery.trim())
     }
   }
 
   const handleUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
-    }
+    fileInputRef.current?.click()
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,12 +111,11 @@ export function ImagesPanel({ onSelectImage, projectId }: ImagesPanelProps) {
 
     setUploading(true)
 
-    // Process each file
     Array.from(files).forEach((file) => {
       const reader = new FileReader()
 
       reader.onload = (event) => {
-        if (event.target && typeof event.target.result === "string") {
+        if (typeof event.target?.result === "string") {
           const newImage: LocalImage = {
             id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             url: event.target.result,
@@ -150,11 +131,7 @@ export function ImagesPanel({ onSelectImage, projectId }: ImagesPanelProps) {
     })
 
     setUploading(false)
-
-    // Reset the input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
   const handleDeleteLocalImage = (id: string) => {
@@ -164,26 +141,67 @@ export function ImagesPanel({ onSelectImage, projectId }: ImagesPanelProps) {
   return (
     <div className="w-72 bg-card border-r border-border flex flex-col h-full">
       <div className="p-4 border-b border-border">
-        <h2 className="font-medium text-foreground mb-4">Images</h2>
+        <h2 className="font-medium text-foreground mb-4">Media</h2>
 
         <div className="flex mb-4">
-          <Input
+          <input
             type="text"
-            placeholder="Search images..."
+            placeholder="Search images/videos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 mr-2"
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            className="input_field22323"
           />
-          <Button onClick={handleSearch} size="sm" variant="outline" disabled={isSearching}>
+          <button onClick={handleSearch} disabled={isSearching} className="input_field22">
             {isSearching ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-          </Button>
+          </button>
         </div>
+      </div>
 
-        <Button onClick={handleUploadClick} className="w-full flex items-center justify-center" disabled={uploading}>
+      <Tabs defaultValue="images" className="flex-1 flex flex-col">
+        <TabsList className="grid grid-cols-2 mx-4 mt-2">
+          <TabsTrigger value="images">Images</TabsTrigger>
+          <TabsTrigger value="uploaded">Uploaded</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="images" className="flex-1 overflow-y-auto p-4">
+          {error && <div className="text-destructive text-sm mb-4 p-2 bg-destructive/10 rounded">{error}</div>}
+          {isSearching ? (
+            <div className="flex justify-center items-center h-40">
+              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {pixabayImages.map((image) => (
+                <div
+                  key={image.id}
+                  className="relative group cursor-pointer rounded overflow-hidden"
+                  onClick={() => onSelectImage(image.largeImageURL)}
+                >
+                  <img
+                    src={image.previewURL}
+                    alt={`Pixabay by ${image.user}`}
+                    className="w-full h-24 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                    <div className="text-white opacity-0 group-hover:opacity-100 text-xs text-center p-1">
+                      {image.user}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+        <TabsContent value="uploaded" className="flex-1 overflow-y-auto p-4">
+          {localImages.length === 0 ? (
+            <div className="text-center text-muted-foreground py-10">
+              <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No uploaded images yet</p>
+        <button onClick={handleUploadClick} className="button_edit_project_r22E" disabled={uploading}>
           <Upload className="h-4 w-4 mr-2" />
           {uploading ? "Uploading..." : "Upload Image"}
-        </Button>
+        </button>
 
         <input
           type="file"
@@ -193,52 +211,13 @@ export function ImagesPanel({ onSelectImage, projectId }: ImagesPanelProps) {
           multiple
           className="hidden"
         />
-      </div>
-
-      <Tabs defaultValue="stock" className="flex-1 flex flex-col">
-        <TabsList className="grid grid-cols-2 mx-4 mt-2">
-          <TabsTrigger value="stock">Stock Images</TabsTrigger>
-          <TabsTrigger value="uploaded">Uploaded</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="stock" className="flex-1 overflow-y-auto p-4">
-          {error && <div className="text-destructive text-sm mb-4 p-2 bg-destructive/10 rounded">{error}</div>}
-
-          {isSearching ? (
-            <div className="flex justify-center items-center h-40">
-              <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
-              {unsplashImages.map((image) => (
-                <div
-                  key={image.id}
-                  className="relative group cursor-pointer rounded overflow-hidden"
-                  onClick={() => onSelectImage(image.urls.regular)}
-                >
-                  <img
-                    src={image.urls.small || "/placeholder.svg"}
-                    alt={image.alt_description || "Unsplash image"}
-                    className="w-full h-24 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
-                    <div className="text-white opacity-0 group-hover:opacity-100 text-xs text-center p-1">
-                      {image.user.name}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="uploaded" className="flex-1 overflow-y-auto p-4">
-          {localImages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-10">
-              <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No uploaded images yet</p>
-            </div>
-          ) : (
+                 <div>
+                     <button onClick={handleUploadClick} className="button_edit_project_r22E" disabled={uploading}>
+          <Upload className="h-4 w-4 mr-2" />
+          {uploading ? "Uploading..." : "Upload Image"}
+        </button>
             <div className="grid grid-cols-2 gap-2">
               {localImages.map((image) => (
                 <div key={image.id} className="relative group cursor-pointer rounded overflow-hidden">
@@ -260,6 +239,7 @@ export function ImagesPanel({ onSelectImage, projectId }: ImagesPanelProps) {
                 </div>
               ))}
             </div>
+                 </div>
           )}
         </TabsContent>
       </Tabs>
@@ -267,5 +247,4 @@ export function ImagesPanel({ onSelectImage, projectId }: ImagesPanelProps) {
   )
 }
 
-// Export as both default and named export to support both import styles
 export default ImagesPanel
