@@ -1,7 +1,7 @@
 import { createClient } from "../../../supabase/server"
 import { redirect } from "next/navigation"
 import { UserCircle } from "lucide-react"
-import DashboardNavbar from "@/components/dashboard-navbar"
+import DashboardNavbar from "@/components/dashboard-navbar1"
 import DashboardSidebar from "@/components/dashboard-sidebar"
 import Link from "next/link"
 
@@ -53,15 +53,12 @@ export default async function Dashboard() {
 
         <div className="container mx-auto px-6 py-8">
           {/* User Profile Section */}
-          <section className="bg-white dark:bg-background rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm mb-8">
+          <section className="bg-white dark:bg-background border rounded-xl p-6 shadow-sm mb-8">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                 <UserCircle size={32} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h2 className="font-semibold text-xl" data-i18n="userProfile">
-                  User Profile
-                </h2>
                 <p className="text-gray-500 dark:text-gray-400">{user.email}</p>
                 {profile && (
                   <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -73,15 +70,15 @@ export default async function Dashboard() {
                 {!hasProfile && (
                   <Link
                     href="/dashboard/profile/create"
-                    className="px-4 py-2 text-sm font-medium rounded-full bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                  >
+                    className="new_site_button"
+                      >
                     Create Profile
                   </Link>
                 )}
                 {hasProfile && (
                   <Link
                     href={`/dashboard/profile/${user.id}`}
-                    className="px-4 py-2 text-sm font-medium rounded-full bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                    className="new_site_button"
                   >
                     View Profile
                   </Link>

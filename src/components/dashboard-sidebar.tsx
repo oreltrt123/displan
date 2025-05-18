@@ -36,15 +36,26 @@ export default function DashboardSidebar({ projects, userEmail, profile, userId 
   }, [searchTerm, projects])
 
   return (
-    <aside className="w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-background flex flex-col">
+    <aside className="w-64 border-r bg-white dark:bg-background flex flex-col">
       {/* Search */}
-      <div className="p-4 border-b">
+              <Link href="/dashboard" className="text-2xl font-bold tracking-tight text-white link_button dsafafwf2">
+              <img 
+    src="/logo_light_mode.png" 
+    alt="Logo" 
+    className="dark:hidden" 
+  />
+  <img 
+    src="/logo_dark_mode.png" 
+    alt="Logo" 
+    className="hidden dark:block" 
+  />
+          </Link>
+      <div className="p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
             placeholder="Search projects..."
-            className="w-full pl-10 pr-4 py-2 text-sm rounded-md bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600"
+            className="input_field22323A"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -108,7 +119,7 @@ export default function DashboardSidebar({ projects, userEmail, profile, userId 
       </div>
 
       {/* User Section */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="p-4 border-t">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
             <UserCircle className="h-6 w-6 text-gray-500 dark:text-gray-400" />

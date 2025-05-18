@@ -122,12 +122,12 @@ export default function BlogPage() {
   return (
     <div>
       <Navbar />
-      <div className="w-full min-h-screen text-white bg-background relative">
+      <div className="w-full min-h-screen bg-background text-foreground relative">
         <main className="flex flex-col pt-24 pb-20">
           <div className="px-4 sm:px-6 mx-auto max-w-7xl w-full">
             <div className="flex flex-col items-center text-center mb-10">
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">DisPlan Blog</h1>
-              <p className="text-lg text-white/70 max-w-3xl">
+              <p className="text-lg text-muted-foreground max-w-3xl">
                 Explore the latest DisPlan blogs featuring the most exciting news and updates.
               </p>
             </div>
@@ -138,11 +138,11 @@ export default function BlogPage() {
                 <input
                   type="text"
                   placeholder="Search articles..."
-                  className="w-full px-5 py-3 bg-white/5 border border-white/20 rounded-full text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-12"
+                  className="w-full px-5 py-3 bg-input border border-input rounded-full text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pr-12"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <Search className="absolute right-4 top-3 text-white/40" size={20} />
+                <Search className="absolute right-4 top-3 text-muted-foreground" size={20} />
               </div>
             </div>
 
@@ -158,8 +158,8 @@ export default function BlogPage() {
                         onClick={() => setSelectedCategory(category.slug)}
                         className={`w-full text-left px-4 py-2 rounded-lg transition-all ${
                           selectedCategory === category.slug
-                            ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white font-medium"
-                            : "text-white/80 hover:bg-white/5"
+                            ? "bg-primary text-primary-foreground font-medium"
+                            : "text-muted-foreground hover:bg-accent"
                         }`}
                       >
                         {category.name}
@@ -176,7 +176,7 @@ export default function BlogPage() {
                     filteredPosts.map((post) => (
                       <article
                         key={post.id}
-                        className="group bg-gradient-to-b from-white/5 to-transparent rounded-xl overflow-hidden hover:from-white/10 transition-all duration-300"
+                        className="group bg-gradient-to-b from-card to-transparent rounded-xl overflow-hidden hover:from-card/80 transition-all duration-300"
                       >
                         <Link href={`/blog/${post.id}`} className="block h-56 overflow-hidden relative">
                           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10" />
@@ -190,22 +190,22 @@ export default function BlogPage() {
                             />
                           </div>
                           <div className="absolute top-3 left-3 z-20">
-                            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-600/80 backdrop-blur-sm text-white">
+                            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary/80 backdrop-blur-sm text-primary-foreground">
                               {post.category}
                             </span>
                           </div>
                         </Link>
                         <div className="p-6 flex flex-col flex-grow">
                           <h2 className="text-xl font-bold mb-3 line-clamp-2">
-                            <Link href={`/blog/${post.id}`} className="hover:text-blue-400 transition-colors">
+                            <Link href={`/blog/${post.id}`} className="hover:text-primary transition-colors">
                               {post.title}
                             </Link>
                           </h2>
 
-                          <p className="text-white/70 mb-4 line-clamp-3">{post.excerpt}</p>
+                          <p className="text-muted-foreground mb-4 line-clamp-3">{post.excerpt}</p>
 
-                          <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/10">
-                            <div className="flex items-center text-sm text-white/60">
+                          <div className="flex items-center justify-between mt-auto pt-4 border-t border-border">
+                            <div className="flex items-center text-sm text-muted-foreground">
                               <User className="h-4 w-4 mr-1" />
                               <span className="truncate max-w-[120px]">{post.author}</span>
                               <span className="mx-2">•</span>
@@ -215,7 +215,7 @@ export default function BlogPage() {
 
                             <Link
                               href={`/blog/${post.id}`}
-                              className="text-blue-400 hover:text-blue-300 font-medium inline-flex items-center text-sm group-hover:underline"
+                              className="text-primary hover:text-primary/80 font-medium inline-flex items-center text-sm group-hover:underline"
                             >
                               Read more
                               <ArrowRight className="ml-1 h-4 w-4" />
@@ -227,7 +227,7 @@ export default function BlogPage() {
                   ) : (
                     <div className="col-span-full text-center py-16">
                       <h3 className="text-2xl font-semibold mb-2">No articles found</h3>
-                      <p className="text-white/60">
+                      <p className="text-muted-foreground">
                         Try adjusting your search or category filter to find what you're looking for.
                       </p>
                     </div>

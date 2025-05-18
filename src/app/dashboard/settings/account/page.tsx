@@ -9,8 +9,8 @@ import { User, MapPin, Briefcase, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card_account"
+import "../../apps/website-builder/designer/styles/button.css"
 interface ProfileData {
   name: string
   location: string
@@ -140,27 +140,20 @@ export default function AccountPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-            <CardDescription>This information will be displayed publicly so be careful what you share.</CardDescription>
-          </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">
-                Full Name
+                Full Name 
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User size={16} className="text-muted-foreground" />
-                </div>
-                <Input
+                <input
                   id="name"
                   name="name"
                   type="text"
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-1 input_field22323A"
                   placeholder="Your full name"
                 />
               </div>
@@ -171,16 +164,13 @@ export default function AccountPage() {
                 Location
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MapPin size={16} className="text-muted-foreground" />
-                </div>
-                <Input
+                <input
                   id="location"
                   name="location"
                   type="text"
                   value={formData.location}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-10 input_field22323A"
                   placeholder="City, Country"
                 />
               </div>
@@ -191,16 +181,13 @@ export default function AccountPage() {
                 Occupation
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Briefcase size={16} className="text-muted-foreground" />
-                </div>
-                <Input
+                <input
                   id="occupation"
                   name="occupation"
                   type="text"
                   value={formData.occupation}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-10 input_field22323A"
                   placeholder="Your occupation"
                 />
               </div>
@@ -211,16 +198,13 @@ export default function AccountPage() {
                 Interests
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Heart size={16} className="text-muted-foreground" />
-                </div>
-                <Input
+                <input
                   id="interests"
                   name="interests"
                   type="text"
                   value={formData.interests}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-10 input_field22323A"
                   placeholder="Programming, Design, Music, etc."
                 />
               </div>
@@ -230,27 +214,21 @@ export default function AccountPage() {
               <label htmlFor="bio" className="text-sm font-medium">
                 Bio
               </label>
-              <Textarea
+              <textarea
                 id="bio"
                 name="bio"
                 rows={4}
                 value={formData.bio}
+                className="simple_box"
                 onChange={handleChange}
                 placeholder="Tell us about yourself..."
               />
             </div>
           </CardContent>
-        </Card>
-
-        <div className="flex gap-4">
-          <Button type="submit" disabled={isSaving}>
+          <button type="submit" className="button_edit_project_r2" disabled={isSaving}>
             {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-
-          <Button type="button" variant="outline" onClick={() => router.push("/dashboard")}>
-            Cancel
-          </Button>
-        </div>
+          </button>
+        </Card>
       </form>
     </div>
   )

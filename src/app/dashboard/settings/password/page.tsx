@@ -4,10 +4,11 @@ import type React from "react"
 
 import { useState } from "react"
 import { createClient } from "../../../../../supabase/client"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card_account"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Eye, EyeOff, Lock } from "lucide-react"
+import "../../apps/website-builder/designer/styles/button.css"
 
 export default function PasswordPage() {
   const supabase = createClient()
@@ -109,17 +110,14 @@ export default function PasswordPage() {
                 Current Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock size={16} className="text-muted-foreground" />
-                </div>
-                <Input
+                <input
                   id="currentPassword"
                   name="currentPassword"
                   type={showCurrentPassword ? "text" : "password"}
                   required
                   value={formData.currentPassword}
                   onChange={handleChange}
-                  className="pl-10 pr-10"
+                  className="pl-10 pr-10 input_field22323A"
                   placeholder="Your current password"
                 />
                 <button
@@ -141,17 +139,14 @@ export default function PasswordPage() {
                 New Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock size={16} className="text-muted-foreground" />
-                </div>
-                <Input
+                <input
                   id="newPassword"
                   name="newPassword"
                   type={showNewPassword ? "text" : "password"}
                   required
                   value={formData.newPassword}
                   onChange={handleChange}
-                  className="pl-10 pr-10"
+                  className="pl-10 pr-10 input_field22323A"
                   placeholder="Your new password"
                 />
                 <button
@@ -173,17 +168,14 @@ export default function PasswordPage() {
                 Confirm New Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock size={16} className="text-muted-foreground" />
-                </div>
-                <Input
+                <input
                   id="confirmPassword"
                   name="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="pl-10 pr-10"
+                  className="pl-10 pr-10 input_field22323A"
                   placeholder="Confirm your new password"
                 />
                 <button
@@ -203,9 +195,9 @@ export default function PasswordPage() {
         </Card>
 
         <div className="mt-6">
-          <Button type="submit" disabled={isLoading}>
+          <button type="submit" disabled={isLoading} className="button_edit_project_r21">
             {isLoading ? "Updating..." : "Update Password"}
-          </Button>
+          </button>
         </div>
       </form>
     </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card_account"
 import { createClient } from "../../../../../supabase/client"
 import { Check, Monitor, Moon, Sun } from "lucide-react"
 
@@ -71,15 +71,7 @@ export default function AppearancePage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Theme Mode</CardTitle>
-          <CardDescription>
-            Choose how DisPlan looks to you. Select a single theme, or sync with your system and automatically switch
-            between day and night themes.
-          </CardDescription>
-        </CardHeader>
         <CardContent>
-          <div className="flex flex-col space-y-4">
             <div className="flex items-center space-x-4">
               <Button
                 variant="outline"
@@ -113,71 +105,6 @@ export default function AppearancePage() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 pt-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Light theme</div>
-                <div className="bg-background border rounded-lg p-4 shadow-sm">
-                  <div className="space-y-2">
-                    <div className="h-2 w-[80%] rounded bg-muted"></div>
-                    <div className="h-2 w-[60%] rounded bg-muted"></div>
-                    <div className="h-2 w-[70%] rounded bg-muted"></div>
-                  </div>
-                  <div className="mt-4 flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full bg-primary"></div>
-                    <div className="h-2 w-[50%] rounded bg-muted"></div>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  This theme will be active when your system is set to "light mode".
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Dark theme</div>
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 shadow-sm">
-                  <div className="space-y-2">
-                    <div className="h-2 w-[80%] rounded bg-slate-800"></div>
-                    <div className="h-2 w-[60%] rounded bg-slate-800"></div>
-                    <div className="h-2 w-[70%] rounded bg-slate-800"></div>
-                  </div>
-                  <div className="mt-4 flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full bg-primary"></div>
-                    <div className="h-2 w-[50%] rounded bg-slate-800"></div>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  This theme will be active when your system is set to "dark mode".
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Theme Colors</CardTitle>
-          <CardDescription>Choose a color theme for your interface.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-2">
-            {themeColors.map((color) => (
-              <button
-                key={color.value}
-                className={`relative flex h-10 w-10 items-center justify-center rounded-full border ${
-                  themeColor === color.value ? "border-primary" : "border-muted"
-                } ${color.light ? "bg-white" : "bg-slate-950"}`}
-                onClick={() => {
-                  setThemeColor(color.value)
-                  saveThemeColor(color.value)
-                }}
-              >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary">
-                  {themeColor === color.value && <Check size={12} className="text-primary-foreground" />}
-                </span>
-              </button>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>
