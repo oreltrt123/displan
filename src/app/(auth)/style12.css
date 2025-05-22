@@ -1,0 +1,54 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --primary-green: #3a5b22;
+    --primary-blue-light: #0f3cde;
+    --primary-blue-dark: #0c2991;
+
+    /* Text Colors */
+    --text-primary: #000000;
+    --text-secondary: #d9d9d9;
+
+    /* Border Colors */
+    --border-primary: #d9d9d9;
+    --border-secondary: #000000;
+
+    /* Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+  }
+
+  body {
+    font-family: "Poppins", sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+  }
+}
+
+@layer utilities {
+  .bg-primary-green {
+    background-color: var(--primary-green);
+  }
+
+  .text-primary-blue-light {
+    color: var(--primary-blue-light);
+  }
+
+  .text-primary-blue-dark {
+    color: var(--primary-blue-dark);
+  }
+
+  .border-primary {
+    border-color: var(--border-primary);
+  }
+
+  .rounded-custom {
+    border-radius: 45px 0px 45px 0px;
+  }
+}

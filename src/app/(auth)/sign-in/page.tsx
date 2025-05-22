@@ -1,96 +1,114 @@
-import { signInAction } from "@/app/actions";
-import Navbar from "@/components/navbar";
-import Link from "next/link";
+import { signInAction } from "@/app/actions"
+import Navbar from "@/components/navbar"
+import Link from "next/link"
+import SocialLoginButtons from "@/components/auth/social-login-buttons"
+import "../style12.css"
 
 interface SignInPageProps {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: { [key: string]: string | string[] | undefined }
 }
 
 export default function SignInPage({ searchParams }: SignInPageProps) {
-  const error = searchParams.error ? String(searchParams.error) : null;
-  const message = searchParams.message ? String(searchParams.message) : null;
+  const error = searchParams.error ? String(searchParams.error) : null
+  const message = searchParams.message ? String(searchParams.message) : null
 
   return (
     <>
-      <Navbar />
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-8">
-        <div className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-sm">
-          <form action={signInAction} className="flex flex-col space-y-6">
-            <div className="space-y-2 text-center">
-              <h1 className="text-3xl font-semibold tracking-tight" data-i18n="signIn">
-                Sign in
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                <span data-i18n="dontHaveAccount">Don't have an account?</span>{" "}
-                <Link
-                  className="text-primary font-medium hover:underline transition-all"
-                  href="/sign-up"
-                  data-i18n="signUp"
-                >
-                  Sign up
-                </Link>
-              </p>
-            </div>
+      <div className="flex min-h-screen">
+        {/* Left side - Login form */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md mx-auto w-full">
+            <h1 className="text-[32px] font-medium text-black leading-[48px] mb-1">Welcome back!</h1>
+            <p className="text-[16px] font-medium text-black leading-[24px] mb-10">
+              Enter your Credentials to access your account
+            </p>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium" data-i18n="email">
-                  Email
+            <form action={signInAction} className="w-full">
+              <div className="mb-5">
+                <label className="text-[14px] font-medium text-black leading-[21px]" htmlFor="email">
+                  Email address
                 </label>
                 <input
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="Enter your email"
                   required
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 h-[32px] text-[10px] placeholder:text-[#d9d9d9] border border-[#d9d9d9] rounded-[10px] focus:outline-none focus:ring-1 focus:ring-[#3a5b22]"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="mb-5 relative">
                 <div className="flex justify-between items-center">
-                  <label htmlFor="password" className="text-sm font-medium" data-i18n="password">
+                  <label className="text-[14px] font-medium text-black leading-[21px]" htmlFor="password">
                     Password
                   </label>
-                  <Link
-                    className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-all"
-                    href="/forgot-password"
-                    data-i18n="forgotPassword"
-                  >
-                    Forgot Password?
+                  <Link href="/forgot-password" className="text-[10px] font-medium text-[#0c2991] leading-[15px]">
+                    forgot password
                   </Link>
                 </div>
                 <input
                   id="password"
-                  type="password"
                   name="password"
+                  type="password"
                   placeholder="Your password"
                   required
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 h-[32px] text-[10px] placeholder:text-[#d9d9d9] border border-[#d9d9d9] rounded-[10px] focus:outline-none focus:ring-1 focus:ring-[#3a5b22]"
                 />
               </div>
-            </div>
 
-            <button
-              type="submit"
-              className="w-full px-5 py-3 text-base tracking-tight no-underline bg-white font-[560] rounded-[100px] text-black hover:bg-opacity-90 transition-opacity"
-              data-i18n="signIn"
-            >
-              Sign in
-            </button>
-
-            {(error || message) && (
-              <div
-                className={`p-3 text-sm rounded-md ${
-                  error ? "bg-red-500/20 text-red-200" : "bg-green-500/20 text-green-200"
-                }`}
-              >
-                {error || message}
+              <div className="mb-5 flex items-center">
+                <input
+                  type="checkbox"
+                  id="remember-me"
+                  name="remember"
+                  className="h-[9px] w-[9px] rounded-[2px] border border-black focus:ring-[#3a5b22] focus:ring-offset-0"
+                />
+                <label htmlFor="remember-me" className="ml-2 text-[9px] font-medium text-black leading-[13px]">
+                  Remember for 30 days
+                </label>
               </div>
-            )}
-          </form>
+
+              <button
+                type="submit"
+                className="w-full h-[32px] text-[13px] font-bold bg-[#3a5b22] text-white border border-[#3a5b22] rounded-[10px] transition-colors duration-200 focus:outline-none"
+              >
+                Login
+              </button>
+
+              {(error || message) && (
+                <div
+                  className={`p-3 mt-4 text-sm rounded-md ${
+                    error ? "bg-red-500/20 text-red-200" : "bg-green-500/20 text-green-200"
+                  }`}
+                >
+                  {error || message}
+                </div>
+              )}
+
+              <SocialLoginButtons />
+
+              <div className="mt-8 text-center">
+                <p className="text-[14px] font-medium text-black">
+                  Don't have an account?{" "}
+                  <Link href="/sign-up" className="text-[#0f3cde]">
+                    Sign Up
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Right side - Image */}
+        <div className="hidden lg:block lg:w-1/2 relative">
+          <img
+            src="/images/img_chrislee70l1tdai6rmunsplash_2.png"
+            alt="Monstera plant"
+            className="absolute inset-0 h-full w-full object-cover rounded-tl-[45px] rounded-br-[45px]"
+          />
         </div>
       </div>
     </>
-  );
+  )
 }
