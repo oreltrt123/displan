@@ -1,55 +1,44 @@
-"use client"
+"use client";
 
-import React from "react"
-import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import React from "react";
+import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 const SocialLoginButtons: React.FC = () => {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const router = useRouter();
+  const supabase = createClientComponentClient();
 
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (error) console.error("Google login error:", error.message)
-  }
+  const handleOAuthLogin = async (provider: "google" | "github" | "discord") => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-  const handleGithubLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (error) console.error("GitHub login error:", error.message)
-  }
-
-  const handleDiscordLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "discord",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (error) console.error("Discord login error:", error.message)
-  }
+      if (error) {
+        console.error(`${provider} login error:`, error.message);
+        alert(`Login failed with ${provider}. Please try again.`);
+      }
+    } catch (err) {
+      console.error(`Unexpected error during ${provider} login:`, err);
+      alert(`An unexpected error occurred with ${provider}.`);
+    }
+  };
 
   return (
     <div className="w-full">
       <div className="relative flex items-center my-8">
-        <div className="flex-grow border-t border-[#f5f5f5]"></div>
+        <div className="flex-grow border-t border-[#f5f5f5]" />
         <span className="flex-shrink px-2 text-[9px] font-medium text-black">Or</span>
-        <div className="flex-grow border-t border-[#f5f5f5]"></div>
+        <div className="flex-grow border-t border-[#f5f5f5]" />
       </div>
 
       <div className="flex flex-col gap-[10px]">
         {/* Google Login */}
         <button
-          onClick={handleGoogleLogin}
+          onClick={() => handleOAuthLogin("google")}
           className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none"
         >
           <img src="/images/img_icons8google_1.svg" alt="Google icon" className="w-6 h-6 mr-2" />
@@ -58,7 +47,7 @@ const SocialLoginButtons: React.FC = () => {
 
         {/* Discord Login */}
         <button
-          onClick={handleDiscordLogin}
+          onClick={() => handleOAuthLogin("discord")}
           className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none"
         >
           <img src="/images/discord-icon-svgrepo-com.svg" alt="Discord icon" className="w-6 h-6 mr-2" />
@@ -67,7 +56,7 @@ const SocialLoginButtons: React.FC = () => {
 
         {/* GitHub Login */}
         <button
-          onClick={handleGithubLogin}
+          onClick={() => handleOAuthLogin("github")}
           className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none"
         >
           <img src="/images/github-142-svgrepo-com.svg" alt="GitHub icon" className="w-6 h-6 mr-2" />
@@ -75,7 +64,7 @@ const SocialLoginButtons: React.FC = () => {
         </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SocialLoginButtons
+export default SocialLoginButtons;
