@@ -58,7 +58,7 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
         </div>
 
         <div className="flex items-center gap-4 relative">
-          <Link href="/dashboard/apps" className="new_site_button_r2">
+          {/* <Link href="/dashboard/apps" className="new_site_button_r2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="18"
@@ -77,7 +77,7 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
                 <rect width="7" height="7" x="3" y="14" rx="1" />
               </svg>
               <span>Apps</span>
-          </Link>
+          </Link> */}
           <button
             ref={avatarRef}
             onClick={toggleDropdown}
@@ -92,6 +92,29 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
               ref={dropdownRef}
               className="menu_container_t3"
             >
+                <Link
+                    href="/dashboard/apps"
+                    className="menu_item"
+                  >
+                    <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-layout-grid icon"
+              >
+                <rect width="7" height="7" x="3" y="3" rx="1" />
+                <rect width="7" height="7" x="14" y="3" rx="1" />
+                <rect width="7" height="7" x="14" y="14" rx="1" />
+                <rect width="7" height="7" x="3" y="14" rx="1" />
+              </svg>
+                    Apps
+                  </Link>
               <div className="py-1">
                 {hasProfile ? (
                   <Link

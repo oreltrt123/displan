@@ -195,7 +195,7 @@ export default function PasswordPage() {
         </Card>
 
         <div className="mt-6">
-          <button type="submit" disabled={isLoading} className="button_edit_project_r21">
+          <button type="submit" disabled={isLoading} className="button_edit_project_r2 w-full">
             {isLoading ? "Updating..." : "Update Password"}
           </button>
         </div>
