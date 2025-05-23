@@ -38,7 +38,7 @@ export default function DashboardSidebar({ projects, userEmail, profile, userId 
   return (
     <aside className="w-64 border-r bg-white dark:bg-background flex flex-col">
       {/* Search */}
-              <Link href="/dashboard" className="text-2xl font-bold tracking-tight text-white link_button dsafafwf2">
+              {/* <Link href="/dashboard" className="text-2xl font-bold tracking-tight text-white link_button dsafafwf2">
               <img 
     src="/logo_light_mode.png" 
     alt="Logo" 
@@ -49,13 +49,13 @@ export default function DashboardSidebar({ projects, userEmail, profile, userId 
     alt="Logo" 
     className="hidden dark:block" 
   />
-          </Link>
+          </Link> */}
       <div className="p-4">
         <div className="relative">
           <input
             type="text"
             placeholder="Search projects..."
-            className="input_field22323A"
+            className="input_field22323A123"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -68,7 +68,7 @@ export default function DashboardSidebar({ projects, userEmail, profile, userId 
             <h2 className="font-medium text-sm text-gray-500 dark:text-gray-400">PROJECTS</h2>
             <Link
               href="/dashboard/project/create"
-              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
+              className="p-1 rounded-md project_button_r23_css text-gray-500 dark:text-gray-400"
               title="New Project"
             >
               <Plus size={16} />
@@ -81,7 +81,7 @@ export default function DashboardSidebar({ projects, userEmail, profile, userId 
                 <Link
                   key={project.id}
                   href={`/dashboard/project/${project.id}`}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 group"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md project_button_r23_css group"
                 >
                   <div className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400"></div>
                   <span className="text-sm truncate flex-1">{project.name}</span>
@@ -119,7 +119,7 @@ export default function DashboardSidebar({ projects, userEmail, profile, userId 
       </div>
 
       {/* User Section */}
-      <div className="p-4 border-t">
+      {/* <div className="p-4 border-t">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
             <UserCircle className="h-6 w-6 text-gray-500 dark:text-gray-400" />
@@ -132,7 +132,7 @@ export default function DashboardSidebar({ projects, userEmail, profile, userId 
             <LogOut size={16} />
           </button>
         </div>
-      </div>
+      </div> */}
     </aside>
   )
 }

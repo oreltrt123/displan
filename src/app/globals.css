@@ -180,3 +180,7 @@
     transform: scale(1);
   }
 }
+.addCasse {
+  position: relative;
+  top: 20px;
+}

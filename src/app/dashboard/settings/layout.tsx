@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Bell, ChevronLeft, Key, Palette, User } from "lucide-react"
@@ -18,25 +17,21 @@ export default function SettingsLayout({
       name: "Account",
       href: "/dashboard/settings/account",
       icon: User,
-      active: pathname === "/dashboard/settings/account",
     },
     {
       name: "Appearance",
       href: "/dashboard/settings/appearance",
       icon: Palette,
-      active: pathname === "/dashboard/settings/appearance",
     },
     {
       name: "Notifications",
       href: "/dashboard/settings/notifications",
       icon: Bell,
-      active: pathname === "/dashboard/settings/notifications",
     },
     {
       name: "Password",
       href: "/dashboard/settings/password",
       icon: Key,
-      active: pathname === "/dashboard/settings/password",
     },
   ]
 
@@ -59,27 +54,53 @@ export default function SettingsLayout({
         </div>
       </header>
 
+      {/* Mobile Top Nav */}
+      <nav className="md:hidden overflow-x-auto border-b bg-background whitespace-nowrap flex gap-1 px-4 py-2">
+        {navItems.map((item) => {
+          const active = pathname === item.href
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shrink-0 ${
+                active
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
+            >
+              <item.icon size={16} />
+              <span>{item.name}</span>
+            </Link>
+          )
+        })}
+      </nav>
+
       <div className="container grid flex-1 gap-12 md:grid-cols-[200px_1fr] lg:grid-cols-[250px_1fr] xl:grid-cols-[300px_1fr]">
-        <aside className="hidden border-r md:block">
+        {/* Sidebar for desktop */}
+        <aside className="hidden md:block border-r">
           <div className="sticky top-16 overflow-y-auto py-6 pr-6">
             <nav className="flex flex-col space-y-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
-                    item.active
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                >
-                  <item.icon size={16} />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                const active = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
+                      active
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    }`}
+                  >
+                    <item.icon size={16} />
+                    <span>{item.name}</span>
+                  </Link>
+                )
+              })}
             </nav>
           </div>
         </aside>
+
         <main className="flex w-full flex-col overflow-hidden py-6">{children}</main>
       </div>
     </div>

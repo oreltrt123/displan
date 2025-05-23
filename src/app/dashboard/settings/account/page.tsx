@@ -1,16 +1,21 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "../../../../../supabase/client"
-import { User, MapPin, Briefcase, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card_account"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card_account"
 import "../../apps/website-builder/designer/styles/button.css"
+
 interface ProfileData {
   name: string
   location: string
@@ -48,7 +53,11 @@ export default function AccountPage() {
           return
         }
 
-        const { data, error } = await supabase.from("profiles").select("*").eq("user_id", user.id).single()
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single()
 
         if (error && error.code !== "PGRST116") {
           throw error
@@ -74,7 +83,9 @@ export default function AccountPage() {
     loadProfile()
   }, [router, supabase])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
@@ -130,12 +141,15 @@ export default function AccountPage() {
       <div>
         <h3 className="text-lg font-medium">Account</h3>
         <p className="text-sm text-muted-foreground">
-          Update your account information and how others see you on the platform.
+          Update your account information and how others see you on the
+          platform.
         </p>
       </div>
 
       {error && (
-        <div className="bg-destructive/20 border border-destructive/50 text-destructive p-4 rounded-lg">{error}</div>
+        <div className="bg-destructive/20 border border-destructive/50 text-destructive p-4 rounded-lg">
+          {error}
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -143,71 +157,63 @@ export default function AccountPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">
-                Full Name 
+                Full Name
               </label>
-              <div className="relative">
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="pl-1 input_field22323A"
-                  placeholder="Your full name"
-                />
-              </div>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                className="pl-1 input_field22323A w-full"
+                placeholder="Your full name"
+              />
             </div>
 
             <div className="space-y-2">
               <label htmlFor="location" className="text-sm font-medium">
                 Location
               </label>
-              <div className="relative">
-                <input
-                  id="location"
-                  name="location"
-                  type="text"
-                  value={formData.location}
-                  onChange={handleChange}
-                  className="pl-10 input_field22323A"
-                  placeholder="City, Country"
-                />
-              </div>
+              <input
+                id="location"
+                name="location"
+                type="text"
+                value={formData.location}
+                onChange={handleChange}
+                className="pl-10 input_field22323A w-full"
+                placeholder="City, Country"
+              />
             </div>
 
             <div className="space-y-2">
               <label htmlFor="occupation" className="text-sm font-medium">
                 Occupation
               </label>
-              <div className="relative">
-                <input
-                  id="occupation"
-                  name="occupation"
-                  type="text"
-                  value={formData.occupation}
-                  onChange={handleChange}
-                  className="pl-10 input_field22323A"
-                  placeholder="Your occupation"
-                />
-              </div>
+              <input
+                id="occupation"
+                name="occupation"
+                type="text"
+                value={formData.occupation}
+                onChange={handleChange}
+                className="pl-10 input_field22323A w-full"
+                placeholder="Your occupation"
+              />
             </div>
 
             <div className="space-y-2">
               <label htmlFor="interests" className="text-sm font-medium">
                 Interests
               </label>
-              <div className="relative">
-                <input
-                  id="interests"
-                  name="interests"
-                  type="text"
-                  value={formData.interests}
-                  onChange={handleChange}
-                  className="pl-10 input_field22323A"
-                  placeholder="Programming, Design, Music, etc."
-                />
-              </div>
+              <input
+                id="interests"
+                name="interests"
+                type="text"
+                value={formData.interests}
+                onChange={handleChange}
+                className="pl-10 input_field22323A w-full"
+                placeholder="Programming, Design, Music, etc."
+              />
             </div>
 
             <div className="space-y-2">
@@ -219,15 +225,22 @@ export default function AccountPage() {
                 name="bio"
                 rows={4}
                 value={formData.bio}
-                className="simple_box"
                 onChange={handleChange}
+                className="simple_box w-full"
                 placeholder="Tell us about yourself..."
               />
             </div>
           </CardContent>
-          <button type="submit" className="button_edit_project_r2" disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save Changes"}
-          </button>
+
+          <div className="p-4">
+            <button
+              type="submit"
+              className="button_edit_project_r2 w-full"
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
         </Card>
       </form>
     </div>
