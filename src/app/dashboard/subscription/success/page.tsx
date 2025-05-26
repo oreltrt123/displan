@@ -3,8 +3,18 @@
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { CheckCircle, ArrowRight, Loader2, XCircle } from "lucide-react"
-import { createClient } from "../../../../../supabase/client"
+import { CheckCircle, ArrowRight, Loader2, XCircle } from 'lucide-react'
+
+// Lazy import Supabase client to avoid build-time errors
+const createSupabaseClient = async () => {
+  try {
+    const { createClient } = await import("../../../../../supabase/client")
+    return createClient()
+  } catch (error) {
+    console.error("Failed to create Supabase client:", error)
+    throw new Error("Database connection unavailable")
+  }
+}
 
 export default function SubscriptionSuccessPage() {
   const router = useRouter()
@@ -23,12 +33,34 @@ export default function SubscriptionSuccessPage() {
       }
 
       try {
-        const supabase = createClient()
+        // Check if we're in a browser environment
+        if (typeof window === "undefined") {
+          setError("This page requires client-side rendering")
+          setVerifying(false)
+          return
+        }
+
+        // Check for required environment variables
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+          setError("Service configuration error. Please try again later.")
+          setVerifying(false)
+          return
+        }
+
+        const supabase = await createSupabaseClient()
 
         // Get current user
         const {
           data: { user },
+          error: authError
         } = await supabase.auth.getUser()
+
+        if (authError) {
+          console.error("Auth error:", authError)
+          setError("Authentication error. Please sign in again.")
+          setVerifying(false)
+          return
+        }
 
         if (!user) {
           router.push("/sign-in")
@@ -49,7 +81,7 @@ export default function SubscriptionSuccessPage() {
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await response.json().catch(() => ({ error: "Network error" }))
           throw new Error(errorData.error || "Failed to verify subscription")
         }
 
@@ -70,7 +102,13 @@ export default function SubscriptionSuccessPage() {
       }
     }
 
-    verifySubscription()
+    // Only run verification in browser environment
+    if (typeof window !== "undefined") {
+      verifySubscription()
+    } else {
+      setVerifying(false)
+      setError("This page requires client-side rendering")
+    }
   }, [sessionId, router])
 
   return (
@@ -89,7 +127,7 @@ export default function SubscriptionSuccessPage() {
             <p className="text-red-600 mb-6">{error}</p>
             <button
               onClick={() => router.push("/dashboard/apps/website-builder/designer")}
-              className="px-4 py-2 bg-primary text-white rounded-md"
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
             >
               Return to Dashboard
             </button>
@@ -114,7 +152,7 @@ export default function SubscriptionSuccessPage() {
 
             <Link
               href="/dashboard/apps/website-builder/designer"
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
             >
               Start Using AI Assistant <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
