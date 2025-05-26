@@ -83,6 +83,23 @@ export default async function AppsPage() {
               </div>
             </div>
 
+          <div className="app-card">
+              <div className="app-card-content">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
+                  <Layout size={24} className="text-blue-400" />
+                </div>
+                <h2 className="app-title">DisPlan Bord</h2>
+                <p className="app-description">
+                  The place where you can think about your designs
+                </p>
+                <div className="app-actions">
+                  <Link href="/dashboard/apps/board" className="app-open-button">
+                    Open
+                  </Link>
+                </div>
+              </div>
+            </div>
+
             {/* Website SassCanvas */}
             <div className="app-card">
               <div className="app-card-content">

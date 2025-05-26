@@ -184,3 +184,18 @@
   position: relative;
   top: 20px;
 }
+/* Hide all scrollbars in the board editor */
+.board-editor,
+.board-editor * {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.board-editor::-webkit-scrollbar,
+.board-editor *::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+/* Specific overrides for the canvas area */
+.canvas-container {
+  overflow: hidden !important;
+}
