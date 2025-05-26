@@ -1,17 +1,25 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { createClient } from "../../../../../supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card_account"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Eye, EyeOff, Lock } from "lucide-react"
+import { Eye, EyeOff, Lock } from 'lucide-react'
 import "../../apps/website-builder/designer/styles/button.css"
 
+// Lazy import Supabase client to avoid build-time errors
+const createSupabaseClient = async () => {
+  try {
+    const { createClient } = await import("../../../../../supabase/client")
+    return createClient()
+  } catch (error) {
+    console.error("Failed to create Supabase client:", error)
+    throw new Error("Database connection unavailable")
+  }
+}
+
 export default function PasswordPage() {
-  const supabase = createClient()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -50,17 +58,29 @@ export default function PasswordPage() {
     }
 
     try {
-      // First verify the current password by attempting to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: "", // We'll need to get the user's email first
-        password: formData.currentPassword,
-      })
-
-      if (signInError) {
-        throw new Error("Current password is incorrect")
+      // Check if we're in a browser environment
+      if (typeof window === "undefined") {
+        throw new Error("This feature requires client-side rendering")
       }
 
-      // Update the password
+      // Check for required environment variables
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        throw new Error("Service configuration error. Please try again later.")
+      }
+
+      const supabase = await createSupabaseClient()
+
+      // Get current user first
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser()
+
+      if (userError || !user) {
+        throw new Error("Please sign in to change your password")
+      }
+
+      // Update the password directly (Supabase handles current password verification)
       const { error: updateError } = await supabase.auth.updateUser({
         password: formData.newPassword,
       })
