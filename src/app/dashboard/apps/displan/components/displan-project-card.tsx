@@ -41,8 +41,16 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject }: Displan
 
   return (
     <div className="rounded-lg bg-background p-4 hover:shadow-md transition-shadow" onClick={handleOpenProject}>
-      <div className="thumbnailContainerDark ">
-      </div>
+       {project.social_preview_url ? (
+          <img
+            src={project.social_preview_url || "/placeholder.svg"}
+            alt="Project preview"
+            className="thumbnailContainerDark"
+          />
+        ) : (
+          <div className="thumbnailContainerDark">
+          </div>
+        )}
       <div className="space-y-2 _dddddd1_project">
         <div className="badge_b1arctdq clickable_csx2rjz plans_p10t7dc2 freeSite"><span className="badge_b1arctdq_free_span_text">Free</span></div>
         <h3 className="text-sm Text_css_project_simple">{project.name}</h3>

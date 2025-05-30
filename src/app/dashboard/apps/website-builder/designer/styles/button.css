@@ -428,6 +428,16 @@ align-items: center;
     color: var(--input-placeholder-dark);
   }
 }
+@media (prefers-color-scheme: dark) {
+  .input_field_re223232 {
+    color: #888888;
+    border: 1px solid var(--input-border);
+  }
+
+  .input_field_re223232::placeholder {
+    color: var(--input-placeholder-dark);
+  }
+}
 .simple_box_Description_site_r233 {
   appearance: auto;
   background-color: #8888881A;
@@ -1794,6 +1804,17 @@ align-items: center;
   font-size: 12px;
   position: relative;
   top: -3px;
+  color: #888888;
+}
+.Text_css_project_simple1 {
+  margin-top: 10px;
+  position: relative;
+  top: -5px;
+}
+.Text_css_project_simple_p1 {
+  font-size: 12px;
+  position: relative;
+  top: -15px;
   color: #888888;
 }
 .badge_b1arctdq {

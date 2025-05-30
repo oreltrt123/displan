@@ -36,6 +36,7 @@ interface CanvasProps {
   onZoomChange: (zoom: number) => void
   projectId: string
   isPreviewMode?: boolean
+  customCode?: string
 }
 
 export function Canvas({
@@ -54,6 +55,7 @@ export function Canvas({
   onZoomChange,
   projectId,
   isPreviewMode = false,
+  customCode = "",
 }: CanvasProps) {
   const [showCommentInput, setShowCommentInput] = useState(false)
   const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 })
@@ -81,6 +83,25 @@ export function Canvas({
       return () => clearTimeout(timer)
     }
   }, [newCommentId])
+
+  // Inject custom code into the canvas
+  useEffect(() => {
+    if (customCode && canvasRef.current) {
+      const customCodeContainer = canvasRef.current.querySelector("#custom-code-container")
+      if (customCodeContainer) {
+        customCodeContainer.innerHTML = customCode
+
+        // Execute any script tags in the custom code
+        const scripts = customCodeContainer.querySelectorAll("script")
+        scripts.forEach((script) => {
+          const newScript = document.createElement("script")
+          newScript.textContent = script.textContent
+          document.head.appendChild(newScript)
+          document.head.removeChild(newScript)
+        })
+      }
+    }
+  }, [customCode])
 
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent) => {
@@ -281,11 +302,7 @@ export function Canvas({
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,var(--color-indigo-100),white)] opacity-20"></div>
             <div className="absolute inset-y-0 right-1/2 -z-10 mr-16 w-[200%] origin-bottom-left skew-x-[-30deg] bg-white shadow-xl ring-1 shadow-indigo-600/10 ring-indigo-50 sm:mr-28 lg:mr-0 xl:mr-16 xl:origin-center"></div>
             <div className="mx-auto max-w-2xl lg:max-w-4xl">
-              <img
-                className="mx-auto h-12"
-                src="/logo_light_mode.png"
-                alt=""
-              />
+              <img className="mx-auto h-12" src="/logo_light_mode.png" alt="" />
               <figure className="mt-10">
                 <blockquote className="text-center text-xl/8 font-semibold text-gray-900 sm:text-2xl/9">
                   <p>
@@ -618,66 +635,66 @@ export function Canvas({
         )
 
       case "empty-6":
-         return (
+        return (
           <div>
             <UserSearch />
           </div>
-         )
-         
+        )
+
       case "empty-7":
         return (
           <div>
             <ClickSelect />
           </div>
-         )
+        )
       case "empty-8":
         return (
           <div>
             <ImageCarousel />
           </div>
-         )
+        )
       case "empty-9":
         return (
           <div>
             <View />
           </div>
-         )
+        )
       case "empty-10":
         return (
           <div>
             <AnimatedValue />
           </div>
-         )
+        )
       case "empty-11":
         return (
           <div>
             <Cursor />
           </div>
-         )
-        case "empty-12":
+        )
+      case "empty-12":
         return (
           <div>
             <Feedback />
           </div>
-         )
+        )
       case "empty-13":
         return (
           <div>
             <Uploader />
           </div>
-         )
+        )
       case "empty-14":
         return (
           <div>
             <InputShotcut />
           </div>
-         )
-     case "empty-15":
+        )
+      case "empty-15":
         return (
           <div>
             <Plan />
           </div>
-         )
+        )
       default:
         return (
           <div className="w-full h-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded flex items-center justify-center">
@@ -807,6 +824,9 @@ export function Canvas({
             transformOrigin: "center center",
           }}
         >
+          {/* Custom Code Container */}
+          <div id="custom-code-container" className="w-full"></div>
+
           {/* Render menu templates as stacked full-width sections */}
           <div className="w-full">{menuElements.map(renderElement)}</div>
 

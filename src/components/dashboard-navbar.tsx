@@ -129,11 +129,11 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
               <div className="py-1">
                 {hasProfile ? (
                   <Link
-                    href="/dashboard/profile/edit"
+                    href="/dashboard/settings"
                     className="menu_item"
                   >
-                    <User size={16} />
-                    Edit Profile
+                   <Settings size={16} />
+                    Settings
                   </Link>
                 ) : (
                   <Link
@@ -144,14 +144,6 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
                     Create Profile
                   </Link>
                 )}
-                <Link
-                  href="/dashboard/settings"
-                  className="menu_item"
-                >
-                  <Settings size={16} />
-                  Settings
-                </Link>
-
                 <button
                   onClick={handleSignOut}
                   className="menu_item"

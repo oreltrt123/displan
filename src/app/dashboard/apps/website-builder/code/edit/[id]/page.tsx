@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Code, Save, Play, Download, Plus, Trash, Eye, Smartphone, Tablet, Monitor } from "lucide-react"
 import { createClient } from "../../../../../../../../supabase/client"
+import "../../../../website-builder/designer/styles/button.css"
 
 interface FileType {
   name: string
@@ -376,13 +377,13 @@ export default function CodeEditorPage({ params }: { params: { id: string } }) {
             <Link href="/dashboard/apps/website-builder/code" className="mr-4 text-gray-500 hover:text-gray-700">
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="text-xl font-semibold">{project?.name || "Code Editor"}</h1>
+            <h1 className="text-xl font-semibold input_field_re223232">{project?.name || "Code Editor"}</h1>
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={saveCurrentFile}
               disabled={!unsavedChanges || saving}
-              className={`flex items-center px-3 py-2 rounded text-sm ${unsavedChanges ? "bg-primary text-white" : "bg-gray-200 text-gray-500"}`}
+              className={`input_field_re223232 flex items-center px-3 py-2 rounded text-sm ${unsavedChanges ? "bg-primary text-white" : "bg-gray-200 text-gray-500"}`}
             >
               <Save className="h-4 w-4 mr-1" />
               {saving ? "Saving..." : "Save"}
@@ -425,7 +426,7 @@ export default function CodeEditorPage({ params }: { params: { id: string } }) {
                 className={`flex items-center p-2 rounded cursor-pointer ${selectedFile === file.name ? "bg-gray-100" : "hover:bg-gray-50"}`}
               >
                 <Code className="h-4 w-4 mr-2 text-gray-500" />
-                <span className="flex-1 truncate text-sm">{file.name}</span>
+                <span className="input_field_re223232 flex-1 truncate text-sm">{file.name}</span>
                 {selectedFile === file.name && (
                   <button
                     onClick={(e) => {
@@ -498,7 +499,7 @@ export default function CodeEditorPage({ params }: { params: { id: string } }) {
                 <textarea
                   value={fileContent}
                   onChange={handleContentChange}
-                  className="w-full h-full p-4 font-mono text-sm focus:outline-none resize-none"
+                  className="w-full h-full p-4 font-mono text-sm focus:outline-none resize-none input_field_re223232"
                   placeholder="Select a file to edit"
                   disabled={!selectedFile}
                 ></textarea>

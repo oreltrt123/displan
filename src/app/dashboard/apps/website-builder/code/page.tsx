@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Code, Play, Plus, Trash2 } from "lucide-react"
 import DashboardNavbar from "@/components/dashboard-navbar"
+import "../../website-builder/designer/styles/button.css"
 
 export default async function WebsiteBuilderCodePage() {
   const supabase = createClient()
@@ -35,7 +36,26 @@ export default async function WebsiteBuilderCodePage() {
 
   return (
     <div className="w-full min-h-screen text-white bg-background relative">
-      <DashboardNavbar hasProfile={hasProfile} />
+            <header className="bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+          <Link href="/" className="text-2xl font-bold tracking-tight text-black dark:text-white link_button dsafafwf">
+            <img src="/logo_light_mode.png" alt="Logo" className="dark:hidden" />
+            <img src="/logo_dark_mode.png" alt="Logo" className="hidden dark:block" />
+          </Link>
+
+            {/* Create Project Button */}
+            <Link href="/dashboard/apps/website-builder/code/new">
+            <button
+              className="button_edit_project_r222SDS"
+              >
+             Create Project
+            </button>
+            </Link>
+          </div>
+        </div>
+      </header>
       <main className="w-full">
         <div className="container mx-auto px-4 py-8 flex flex-col gap-8">
           {/* Header Section */}
@@ -44,54 +64,25 @@ export default async function WebsiteBuilderCodePage() {
               <p className="text-white/70">Build your website with code</p>
             </header>
 
-          {/* Create New Project Button */}
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Your Projects</h2>
-            <Link
-              href="/dashboard/apps/website-builder/code/new"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-            >
-              <Plus size={18} />
-              New Project
-            </Link>
-          </div>
-
           {/* Projects List */}
-          <section className="grid grid-cols-1 gap-4">
+          <section className="rounded-lg bg-background p-4 hover:shadow-md transition-shadow">
             {websites && websites.length > 0 ? (
               websites.map((website) => (
                 <div
                   key={website.id}
-                  className="bg-white/5 hover:bg-white/10 transition-colors rounded-lg p-4 border border-white/10 flex justify-between items-center"
+                  className="space-y-2 _dddddd1_project"
                 >
-                  <div>
-                    <h3 className="font-medium text-lg">{website.name}</h3>
-                    <p className="text-white/70 text-sm">
-                      Last edited: {new Date(website.updated_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Link
+                                      <Link
                       href={`/dashboard/apps/website-builder/code/edit/${website.id}`}
-                      className="p-2 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 transition-colors"
                       title="Edit"
                     >
-                      <Code size={18} />
-                    </Link>
-                    <Link
-                      href={`/dashboard/apps/website-builder/code/preview/${website.id}`}
-                      className="p-2 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 transition-colors"
-                      title="Preview"
-                    >
-                      <Play size={18} />
-                    </Link>
-                    <button
-                      className="p-2 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+                        <div className="thumbnailContainerDark ">
+                      </div>
+                      </Link>
+                    <h3 className="text-sm Text_css_project_simple1">{website.name}</h3>
+                    <p className="Text_css_project_simple_p1">
+                      Last edited: {new Date(website.updated_at).toLocaleDateString()}
+                    </p>
                 </div>
               ))
             ) : (

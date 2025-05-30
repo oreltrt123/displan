@@ -18,7 +18,9 @@ export async function displan_project_designer_css_get_project_settings(projectI
 
     const { data, error } = await supabase
       .from("displan_project_designer_css_projects")
-      .select("id, name, description, custom_url, favicon_url, social_preview_url, created_at, updated_at")
+      .select(
+        "id, name, description, custom_url, favicon_url, favicon_light_url, favicon_dark_url, social_preview_url, password_protection, custom_code, subdomain, is_published, created_at, updated_at",
+      )
       .eq("id", projectId)
       .eq("owner_id", user.id)
       .single()
@@ -42,7 +44,12 @@ export async function displan_project_designer_css_update_project_settings(
     description?: string
     custom_url?: string
     favicon_url?: string
+    favicon_light_url?: string
+    favicon_dark_url?: string
     social_preview_url?: string
+    password_protection?: string
+    custom_code?: string
+    subdomain?: string
   },
 ) {
   try {
@@ -57,13 +64,18 @@ export async function displan_project_designer_css_update_project_settings(
       return { success: false, error: "User not authenticated", data: null }
     }
 
-    // Only update fields that are provided and not empty
+    // Only update fields that are provided and not undefined
     const updateData: any = {}
     if (settings.name !== undefined) updateData.name = settings.name
     if (settings.description !== undefined) updateData.description = settings.description
     if (settings.custom_url !== undefined) updateData.custom_url = settings.custom_url
     if (settings.favicon_url !== undefined) updateData.favicon_url = settings.favicon_url
+    if (settings.favicon_light_url !== undefined) updateData.favicon_light_url = settings.favicon_light_url
+    if (settings.favicon_dark_url !== undefined) updateData.favicon_dark_url = settings.favicon_dark_url
     if (settings.social_preview_url !== undefined) updateData.social_preview_url = settings.social_preview_url
+    if (settings.password_protection !== undefined) updateData.password_protection = settings.password_protection
+    if (settings.custom_code !== undefined) updateData.custom_code = settings.custom_code
+    if (settings.subdomain !== undefined) updateData.subdomain = settings.subdomain
 
     console.log("Updating project with data:", updateData)
 
@@ -72,7 +84,9 @@ export async function displan_project_designer_css_update_project_settings(
       .update(updateData)
       .eq("id", projectId)
       .eq("owner_id", user.id)
-      .select("id, name, description, custom_url, favicon_url, social_preview_url")
+      .select(
+        "id, name, description, custom_url, favicon_url, favicon_light_url, favicon_dark_url, social_preview_url, password_protection, custom_code, subdomain, is_published",
+      )
       .single()
 
     if (error) {
@@ -85,10 +99,105 @@ export async function displan_project_designer_css_update_project_settings(
     // Revalidate the cache
     revalidatePath(`/editor/${projectId}/settings`)
     revalidatePath(`/editor/${projectId}`)
+    revalidatePath(`/dashboard/apps/displan/editor/${projectId}/settings`)
+    revalidatePath(`/dashboard/apps/displan/editor/${projectId}`)
 
     return { success: true, data, error: null }
   } catch (error) {
     console.error("Server error:", error)
     return { success: false, error: "Failed to update project settings", data: null }
+  }
+}
+
+// Helper function to check if a project has password protection
+export async function displan_project_designer_css_check_password_protection(projectId: string) {
+  try {
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+      .from("displan_project_designer_css_projects")
+      .select("password_protection")
+      .eq("id", projectId)
+      .single()
+
+    if (error) {
+      console.error("Error checking password protection:", error)
+      return { success: false, error: error.message, isProtected: false, data: null }
+    }
+
+    const isProtected = !!data?.password_protection
+
+    return {
+      success: true,
+      error: null,
+      isProtected,
+      data: {
+        isProtected,
+        projectId,
+      },
+    }
+  } catch (error) {
+    console.error("Server error:", error)
+    return { success: false, error: "Failed to check password protection", isProtected: false, data: null }
+  }
+}
+
+// Function to verify a password for a protected project
+export async function displan_project_designer_css_verify_password(projectId: string, password: string) {
+  try {
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+      .from("displan_project_designer_css_projects")
+      .select("password_protection")
+      .eq("id", projectId)
+      .single()
+
+    if (error) {
+      console.error("Error verifying password:", error)
+      return { success: false, error: error.message, isValid: false }
+    }
+
+    // Simple password comparison - in production you'd want to use a hashed password
+    const isValid = data?.password_protection === password
+
+    return {
+      success: true,
+      error: null,
+      isValid,
+    }
+  } catch (error) {
+    console.error("Server error:", error)
+    return { success: false, error: "Failed to verify password", isValid: false }
+  }
+}
+
+// Function to get custom code for a project
+export async function displan_project_designer_css_get_custom_code(projectId: string) {
+  try {
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+      .from("displan_project_designer_css_projects")
+      .select("custom_code")
+      .eq("id", projectId)
+      .single()
+
+    if (error) {
+      console.error("Error fetching custom code:", error)
+      return { success: false, error: error.message, data: null }
+    }
+
+    return {
+      success: true,
+      error: null,
+      data: {
+        customCode: data?.custom_code || "",
+        projectId,
+      },
+    }
+  } catch (error) {
+    console.error("Server error:", error)
+    return { success: false, error: "Failed to fetch custom code", data: null }
   }
 }

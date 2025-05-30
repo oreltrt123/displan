@@ -5,21 +5,36 @@ import { createServerClient } from "@supabase/ssr"
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const hostname = req.headers.get("host") || ""
-  
+
   // Skip subdomain handling for API routes
-  if (req.nextUrl.pathname.startsWith('/api/')) {
+  if (req.nextUrl.pathname.startsWith("/api/")) {
     return res
   }
-  
+
+  // Check if this is a subdomain request
+  const isSubdomain =
+    hostname !== "displan.design" && hostname !== "www.displan.design" && hostname.endsWith(".displan.design")
+
+  if (isSubdomain) {
+    // Extract subdomain name
+    const subdomain = hostname.replace(".displan.design", "")
+
+    // Rewrite to the published site route
+    const url = req.nextUrl.clone()
+    url.pathname = `/published/${subdomain}${req.nextUrl.pathname}`
+
+    return NextResponse.rewrite(url)
+  }
+
   // Handle authentication for protected routes on main domain
   if (hostname === "displan.design" || hostname === "www.displan.design") {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
+
     if (!supabaseUrl || !supabaseKey) {
       return res
     }
-    
+
     try {
       const supabase = createServerClient(supabaseUrl, supabaseKey, {
         cookies: {
@@ -52,18 +67,18 @@ export async function middleware(req: NextRequest) {
           },
         },
       })
-      
+
       await supabase.auth.getSession()
-      
+
       const path = req.nextUrl.pathname
       const protectedPaths = ["/dashboard", "/profile", "/project"]
       const isProtectedPath = protectedPaths.some((prefix) => path.startsWith(prefix))
-      
+
       if (isProtectedPath) {
         const {
           data: { session },
         } = await supabase.auth.getSession()
-        
+
         if (!session) {
           const redirectUrl = new URL("/sign-in", req.url)
           redirectUrl.searchParams.set("message", "Please sign in to access this page")
@@ -74,12 +89,10 @@ export async function middleware(req: NextRequest) {
       console.error("Middleware error:", e)
     }
   }
-  
+
   return res
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|public).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
 }
