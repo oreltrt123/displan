@@ -4,30 +4,20 @@ import { createServerClient } from "@supabase/ssr"
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
+  const url = req.nextUrl
   const hostname = req.headers.get("host") || ""
 
-  // Skip subdomain handling for API routes
-  if (req.nextUrl.pathname.startsWith("/api/")) {
+  // Skip API routes
+  if (url.pathname.startsWith("/api/")) {
     return res
   }
 
-  // Check if this is a subdomain request
-  const isSubdomain =
-    hostname !== "displan.design" && hostname !== "www.displan.design" && hostname.endsWith(".displan.design")
+  // Check if this is a custom domain or a subdomain
+  const currentHost = hostname.replace(`.displan.design`, "")
 
-  if (isSubdomain) {
-    // Extract subdomain name
-    const subdomain = hostname.replace(".displan.design", "")
-
-    // Rewrite to the published site route
-    const url = req.nextUrl.clone()
-    url.pathname = `/published/${subdomain}${req.nextUrl.pathname}`
-
-    return NextResponse.rewrite(url)
-  }
-
-  // Handle authentication for protected routes on main domain
+  // Skip for main domain
   if (hostname === "displan.design" || hostname === "www.displan.design") {
+    // Handle authentication for protected routes on main domain
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -54,14 +44,12 @@ export async function middleware(req: NextRequest) {
             })
           },
           remove(name, options) {
-            req.cookies.set({
+            req.cookies.delete({
               name,
-              value: "",
               ...options,
             })
-            res.cookies.set({
+            res.cookies.delete({
               name,
-              value: "",
               ...options,
             })
           },
@@ -88,9 +76,13 @@ export async function middleware(req: NextRequest) {
     } catch (e) {
       console.error("Middleware error:", e)
     }
+
+    return res
   }
 
-  return res
+  // For subdomains, rewrite to the [domain] route
+  const newUrl = new URL(`/${currentHost}${url.pathname}`, req.url)
+  return NextResponse.rewrite(newUrl)
 }
 
 export const config = {
