@@ -169,3 +169,195 @@ export async function saveCanvasData(boardId: string, canvasData: any) {
 export async function updateBoardCanvasData(boardId: string, canvasData: any) {
   return saveCanvasData(boardId, canvasData)
 }
+
+
+
+export async function getStarredBoards() {
+  const supabase = await createClient()
+
+  try {
+    const { data: boards, error } = await supabase
+      .from("working_boards")
+      .select("*")
+      .eq("starred", true)
+      .eq("archived", false)
+      .order("updated_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching starred boards:", error)
+      return { data: [], error: error.message }
+    }
+
+    return { data: boards || [], error: null }
+  } catch (error) {
+    console.error("Error in getStarredBoards:", error)
+    return { data: [], error: "Failed to fetch starred boards" }
+  }
+}
+
+export async function toggleStarBoard(boardId: string) {
+  const supabase = await createClient()
+
+  try {
+    // First get the current starred status
+    const { data: board, error: fetchError } = await supabase
+      .from("working_boards")
+      .select("starred")
+      .eq("id", boardId)
+      .single()
+
+    if (fetchError) {
+      return { success: false, error: fetchError.message }
+    }
+
+    // Toggle the starred status
+    const { error: updateError } = await supabase
+      .from("working_boards")
+      .update({
+        starred: !board.starred,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", boardId)
+
+    if (updateError) {
+      return { success: false, error: updateError.message }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true, starred: !board.starred }
+  } catch (error) {
+    console.error("Error toggling star:", error)
+    return { success: false, error: "Failed to toggle star" }
+  }
+}
+
+export async function deleteBoard(boardId: string) {
+  const supabase = await createClient()
+
+  try {
+    const { error } = await supabase.from("working_boards").delete().eq("id", boardId)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting board:", error)
+    return { success: false, error: "Failed to delete board" }
+  }
+}
+
+export async function duplicateBoard(boardId: string) {
+  const supabase = await createClient()
+
+  try {
+    // Get the original board
+    const { data: originalBoard, error: fetchError } = await supabase
+      .from("working_boards")
+      .select("*")
+      .eq("id", boardId)
+      .single()
+
+    if (fetchError) {
+      return { success: false, error: fetchError.message }
+    }
+
+    // Create a duplicate
+    const { data: newBoard, error: createError } = await supabase
+      .from("working_boards")
+      .insert({
+        board_name: `${originalBoard.board_name} (Copy)`,
+        board_description: originalBoard.board_description,
+        thumbnail_url: originalBoard.thumbnail_url,
+        user_id: originalBoard.user_id,
+        starred: false,
+        archived: false,
+      })
+      .select()
+      .single()
+
+    if (createError) {
+      return { success: false, error: createError.message }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true, board: newBoard }
+  } catch (error) {
+    console.error("Error duplicating board:", error)
+    return { success: false, error: "Failed to duplicate board" }
+  }
+}
+
+export async function renameBoard(boardId: string, newName: string) {
+  const supabase = await createClient()
+
+  try {
+    const { error } = await supabase
+      .from("working_boards")
+      .update({
+        board_name: newName,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", boardId)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (error) {
+    console.error("Error renaming board:", error)
+    return { success: false, error: "Failed to rename board" }
+  }
+}
+
+export async function updateBoardDescription(boardId: string, description: string) {
+  const supabase = await createClient()
+
+  try {
+    const { error } = await supabase
+      .from("working_boards")
+      .update({
+        board_description: description,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", boardId)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (error) {
+    console.error("Error updating description:", error)
+    return { success: false, error: "Failed to update description" }
+  }
+}
+
+export async function archiveBoard(boardId: string) {
+  const supabase = await createClient()
+
+  try {
+    const { error } = await supabase
+      .from("working_boards")
+      .update({
+        archived: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", boardId)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (error) {
+    console.error("Error archiving board:", error)
+    return { success: false, error: "Failed to archive board" }
+  }
+}

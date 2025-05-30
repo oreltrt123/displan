@@ -141,13 +141,13 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
                   <Settings size={16} />
                   Settings
                 </Link>
-                <Link
+                {/* <Link
                   href="/dashboard/messages"
                   className="menu_item"
                 >
                   <Settings size={16} />
                   Messages
-                </Link>
+                </Link> */}
                 <button
                   onClick={handleSignOut}
                   className="menu_item"

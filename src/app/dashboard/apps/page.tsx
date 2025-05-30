@@ -42,7 +42,7 @@ export default async function AppsPage() {
           {/* Apps Grid */}
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Website Builder Design */}
-            <div className="app-card">
+            {/* <div className="app-card">
               <div className="app-card-content">
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
                   <Layout size={24} className="text-blue-400" />
@@ -60,8 +60,24 @@ export default async function AppsPage() {
                   </Link>
                 </div>
               </div>
+            </div> */}
+          <div className="app-card">
+              <div className="app-card-content">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
+                  <Layout size={24} className="text-blue-400" />
+                </div>
+                <h2 className="app-title">DisPlan Editor</h2>
+                <p className="app-description">
+                  Create beautiful websites with our intuitive builder. Choose between code or visual design.
+                </p>
+                <div className="app-actions">
+                  <Link href="/dashboard/apps/displan" className="app-learn-more">
+                    Get started <ArrowRight size={16} className="ml-1" />
+                  </Link>
+                </div>
+              </div>
             </div>
-
+            
             {/* Website Builder Code */}
             <div className="app-card">
               <div className="app-card-content">
@@ -76,9 +92,9 @@ export default async function AppsPage() {
                   <Link href="/dashboard/apps/website-builder/code" className="app-learn-more">
                     Get started <ArrowRight size={16} className="ml-1" />
                   </Link>
-                  <Link href="/dashboard/apps/builder" className="app-open-button">
+                  {/* <Link href="/dashboard/apps/builder" className="app-open-button">
                     Open
-                  </Link>
+                  </Link> */}
                 </div>
               </div>
             </div>
@@ -93,28 +109,9 @@ export default async function AppsPage() {
                   The place where you can think about your designs
                 </p>
                 <div className="app-actions">
-                  <Link href="/dashboard/apps/board" className="app-open-button">
-                    Open
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Website SassCanvas */}
-            <div className="app-card">
-              <div className="app-card-content">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
-                  <Layout size={24} className="text-blue-400" />
-                </div>
-                <h2 className="app-title">Website SassCanvas</h2>
-                <p className="app-description">
-                  Create stunning images with AI and many other templates.
-                </p>
-                <div className="app-actions">
-                  <Link href="/dashboard/apps/designa" className="app-learn-more">
+                  <Link href="/dashboard/apps/board" className="app-learn-more">
                     Get started <ArrowRight size={16} className="ml-1" />
                   </Link>
-                  {/* <Link href="/dashboard/apps/sasscanvas" className="app-open-button">Open</Link> */}
                 </div>
               </div>
             </div>

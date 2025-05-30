@@ -1,22 +1,57 @@
 "use client"
 
+import type React from "react"
+
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Star } from "lucide-react"
+import { Star } from "lucide-react"
 import Link from "next/link"
+import { toggleStarBoard } from "../actions/board-actions"
+import { BoardActionsDropdown } from "./board-actions-dropdown"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 import type { WorkingBoard } from "../actions/working-board-actions"
 
 interface WorkingBoardGridProps {
   boards: WorkingBoard[]
+  onUpdate?: () => void
 }
 
-export function WorkingBoardGrid({ boards }: WorkingBoardGridProps) {
+export function WorkingBoardGrid({ boards, onUpdate }: WorkingBoardGridProps) {
+  const [starringBoards, setStarringBoards] = useState<Set<string>>(new Set())
+
+  const handleStarToggle = async (e: React.MouseEvent, boardId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (starringBoards.has(boardId)) return
+
+    setStarringBoards((prev) => new Set(prev).add(boardId))
+
+    try {
+      const result = await toggleStarBoard(boardId)
+      if (result.success) {
+        toast.success(result.starred ? "Board starred!" : "Board unstarred!")
+        onUpdate?.()
+      } else {
+        toast.error(result.error || "Failed to toggle star")
+      }
+    } catch (error) {
+      toast.error("Failed to toggle star")
+    } finally {
+      setStarringBoards((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(boardId)
+        return newSet
+      })
+    }
+  }
+
   if (boards.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">
-          No boards yet. Create your first board to get started!
-        </p>
+        <p className="text-muted-foreground">No boards yet. Create your first board to get started!</p>
       </div>
     )
   }
@@ -44,19 +79,33 @@ export function WorkingBoardGrid({ boards }: WorkingBoardGridProps) {
                 {/* Hover overlay */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
-                      <Star className="h-4 w-4" />
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-8 w-8 p-0"
+                      onClick={(e) => handleStarToggle(e, board.id)}
+                      disabled={starringBoards.has(board.id)}
+                    >
+                      <Star
+                        className={cn(
+                          "h-4 w-4 transition-colors",
+                          board.starred ? "fill-orange-500 text-orange-500" : "text-gray-500",
+                        )}
+                      />
                     </Button>
-                    <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <div onClick={(e) => e.preventDefault()}>
+                      <BoardActionsDropdown board={board} onUpdate={onUpdate} />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Board info */}
               <div className="p-3">
-                <h3 className="font-medium text-sm truncate text-foreground">{board.board_name}</h3>
+                <div className="flex items-start justify-between">
+                  <h3 className="font-medium text-sm truncate text-foreground flex-1">{board.board_name}</h3>
+                  {board.starred && <Star className="h-3 w-3 fill-orange-500 text-orange-500 ml-2 flex-shrink-0" />}
+                </div>
                 {board.board_description && (
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{board.board_description}</p>
                 )}

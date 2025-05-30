@@ -34,24 +34,15 @@ export default async function WebsiteBuilderCodePage() {
     .limit(5)
 
   return (
-    <div className="w-full min-h-screen text-white bg-black relative">
+    <div className="w-full min-h-screen text-white bg-background relative">
       <DashboardNavbar hasProfile={hasProfile} />
       <main className="w-full">
         <div className="container mx-auto px-4 py-8 flex flex-col gap-8">
           {/* Header Section */}
-          <div>
-            <Link
-              href="/dashboard/apps/website-builder"
-              className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6"
-            >
-              <ArrowLeft size={16} />
-              Back to Website Builder
-            </Link>
             <header className="flex flex-col gap-4">
               <h1 className="text-3xl font-bold tracking-tighter">Code Editor</h1>
               <p className="text-white/70">Build your website with code</p>
             </header>
-          </div>
 
           {/* Create New Project Button */}
           <div className="flex justify-between items-center">
@@ -120,7 +111,7 @@ export default async function WebsiteBuilderCodePage() {
           </section>
 
           {/* Getting Started Section */}
-          <section className="bg-white/5 rounded-xl p-6 border border-white/10 mt-4">
+          {/* <section className="bg-white/5 rounded-xl p-6 border border-white/10 mt-4">
             <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white/5 p-4 rounded-lg">
@@ -149,7 +140,7 @@ export default async function WebsiteBuilderCodePage() {
                 </p>
               </div>
             </div>
-          </section>
+          </section> */}
         </div>
       </main>
     </div>
