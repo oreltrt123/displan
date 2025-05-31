@@ -3,12 +3,29 @@
 import { useEffect, useState } from "react"
 import type { PublishedSiteData } from "../lib/get-published-site"
 
+// Import all the canvas components
+import UserSearch from "../../dashboard/apps/displan/components/editor/canvas/user-search"
+import ClickSelect from "../../dashboard/apps/displan/components/editor/canvas/click-select"
+import ImageCarousel from "../../dashboard/apps/displan/components/editor/canvas/carousel"
+import Cursor from "../../dashboard/apps/displan/components/editor/canvas/cursor"
+import View from "../../dashboard/apps/displan/components/editor/canvas/view"
+import Feedback from "../../dashboard/apps/displan/components/editor/canvas/feedback"
+import Plan from "../../dashboard/apps/displan/components/editor/canvas/plan"
+import Uploader from "../../dashboard/apps/displan/components/editor/canvas/file-uploader"
+import AnimatedValue from "../../dashboard/apps/displan/components/editor/canvas/slider"
+import InputShotcut from "../../dashboard/apps/displan/components/editor/canvas/input-shotcut"
+
 interface PublishedSiteRendererProps {
   siteData: PublishedSiteData
 }
 
 export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) {
   const [isDarkMode, setIsDarkMode] = useState(false)
+
+  useEffect(() => {
+    // Set the page title to the project name
+    document.title = siteData.name || `${siteData.subdomain} - Built with DisPlan`
+  }, [siteData.name, siteData.subdomain])
 
   useEffect(() => {
     // Detect user's preferred color scheme
@@ -125,7 +142,69 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
           </section>
         )
 
-      // Add all other templates from your canvas file...
+      // Add all other templates...
+      case "empty-6":
+        return (
+          <div>
+            <UserSearch />
+          </div>
+        )
+
+      case "empty-7":
+        return (
+          <div>
+            <ClickSelect />
+          </div>
+        )
+      case "empty-8":
+        return (
+          <div>
+            <ImageCarousel />
+          </div>
+        )
+      case "empty-9":
+        return (
+          <div>
+            <View />
+          </div>
+        )
+      case "empty-10":
+        return (
+          <div>
+            <AnimatedValue />
+          </div>
+        )
+      case "empty-11":
+        return (
+          <div>
+            <Cursor />
+          </div>
+        )
+      case "empty-12":
+        return (
+          <div>
+            <Feedback />
+          </div>
+        )
+      case "empty-13":
+        return (
+          <div>
+            <Uploader />
+          </div>
+        )
+      case "empty-14":
+        return (
+          <div>
+            <InputShotcut />
+          </div>
+        )
+      case "empty-15":
+        return (
+          <div>
+            <Plan />
+          </div>
+        )
+
       default:
         return (
           <div className="w-full h-full bg-white border border-gray-200 rounded flex items-center justify-center">

@@ -15,11 +15,11 @@ import {
   displan_project_designer_css_create_page,
 } from "../../lib/actions/displan-editor-actions"
 import {
-  displan_project_designer_css_fetch_elements,
-  displan_project_designer_css_add_element,
-  displan_project_designer_css_update_element,
-  displan_project_designer_css_save_canvas,
-} from "../../lib/actions/displan-canvas-actions"
+  displan_project_designer_css_fetch_elements_new,
+  displan_project_designer_css_add_element_new,
+  displan_project_designer_css_update_element_new,
+  displan_project_designer_css_save_canvas_new,
+} from "../../lib/actions/displan-canvas-actions-new"
 import type {
   DisplanProjectDesignerCssComment,
   DisplanProjectDesignerCssPage,
@@ -71,7 +71,7 @@ export default function EditorPage() {
   }
 
   const loadElements = async () => {
-    const result = await displan_project_designer_css_fetch_elements(projectId, currentPage)
+    const result = await displan_project_designer_css_fetch_elements_new(projectId, currentPage)
     if (result.success) {
       setElements(result.data)
     }
@@ -101,7 +101,7 @@ export default function EditorPage() {
   const handleAddElement = async (elementType: string, x: number, y: number) => {
     console.log("Adding element to canvas:", elementType, x, y)
     try {
-      const result = await displan_project_designer_css_add_element(projectId, currentPage, elementType, x, y)
+      const result = await displan_project_designer_css_add_element_new(projectId, currentPage, elementType, x, y)
       console.log("Add element result:", result)
 
       if (result.success) {
@@ -117,16 +117,28 @@ export default function EditorPage() {
   }
 
   const handleUpdateElement = async (elementId: string, properties: any) => {
-    const result = await displan_project_designer_css_update_element(elementId, properties)
+    console.log("Updating element:", elementId, properties)
+    const result = await displan_project_designer_css_update_element_new(elementId, properties)
     if (result.success) {
-      loadElements()
+      // Update local state immediately for better UX
+      setElements((prevElements) => prevElements.map((el) => (el.id === elementId ? { ...el, ...properties } : el)))
+
+      // Update selected element if it's the one being updated
       if (selectedElement && selectedElement.id === elementId) {
-        setSelectedElement(result.data)
+        setSelectedElement({ ...selectedElement, ...properties })
       }
+
+      // Reload elements to get the latest data from server
+      setTimeout(() => {
+        loadElements()
+      }, 100)
+    } else {
+      console.error("Failed to update element:", result.error)
     }
   }
 
   const handleSelectElement = (element: DisplanCanvasElement | null) => {
+    console.log("Selecting element:", element?.id)
     setSelectedElement(element)
   }
 
@@ -138,7 +150,7 @@ export default function EditorPage() {
     console.log("Saving canvas...")
     setIsSaving(true)
     try {
-      const result = await displan_project_designer_css_save_canvas(projectId, currentPage)
+      const result = await displan_project_designer_css_save_canvas_new(projectId, currentPage)
       if (result.success) {
         console.log("Canvas saved successfully")
       } else {

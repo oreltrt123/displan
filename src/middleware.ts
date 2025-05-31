@@ -12,8 +12,17 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  // IMPORTANT: Skip middleware for localhost during development
-  if (hostname === "localhost:3000") {
+  // Handle localhost development (including subdomains)
+  if (hostname.includes("localhost")) {
+    // Check if it's a subdomain like mysite.localhost:3000
+    const parts = hostname.split(".")
+    if (parts.length > 1 && parts[0] !== "localhost") {
+      // This is a subdomain like mysite.localhost:3000
+      const subdomain = parts[0]
+      const newUrl = new URL(`/${subdomain}${url.pathname}`, req.url)
+      return NextResponse.rewrite(newUrl)
+    }
+    // Regular localhost - let it pass through normally
     return res
   }
 

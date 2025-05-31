@@ -1,7 +1,7 @@
 import { createClient } from "../../../../../supabase/server"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { MapPin, Briefcase, Heart, Calendar, ArrowLeft, Users, UserPlus, Camera } from 'lucide-react'
+import { MapPin, Briefcase, Heart, Calendar, ArrowLeft, Camera, Globe } from "lucide-react"
 import FollowButton from "@/components/follow-button"
 import Image from "next/image"
 import DashboardNavbar from "@/components/dashboard-navbar"
@@ -19,7 +19,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  
+
   const currentUser = session?.user
 
   // Get profile data
@@ -72,130 +72,130 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const hasProfile = !!profile
 
   return (
-    <div className="w-full min-h-screen text-white bg-black relative">
-        <DashboardNavbar hasProfile={hasProfile} />
+    <div className="w-full min-h-screen text-white bg-background relative">
+      <DashboardNavbar hasProfile={hasProfile} />
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
-          <Link href="/dashboard" className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6">
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </Link>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Profile Information */}
+            <div className="lg:col-span-1">
+              <div className="shadow-sm">
+                {/* Profile Avatar */}
+                <div className="mb-6">
+                  <div className="relative mb-4">
+                    {profile.avatar_url ? (
+                      <Image
+                        src={profile.avatar_url || "/placeholder.svg"}
+                        alt={profile.name}
+                        width={144}
+                        height={144}
+                        className="w-36 h-36 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-36 h-36 rounded-full bg-purple-500 flex items-center justify-center">
+                        <span className="text-5xl font-bold text-white">
+                          {profile.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+{/* 
+                    {isOwnProfile && (
+                      <Link
+                        href="/dashboard/profile/edit-avatar"
+                        className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 hover:bg-blue-600 transition-colors"
+                        title="Change profile picture"
+                      >
+                        <Camera size={16} />
+                      </Link>
+                    )} */}
+                  </div>
 
-          <div className="bg-white/5 rounded-xl p-6 border border-white/10 shadow-sm">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  {profile.avatar_url ? (
-                    <Image
-                      src={profile.avatar_url || "/placeholder.svg"}
-                      alt={profile.name}
-                      width={80}
-                      height={80}
-                      className="w-20 h-20 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-blue-400">{profile.name.charAt(0)}</span>
+                  {/* Profile Info - Left Aligned */}
+                  <div className="space-y-3">
+                    <div className="text-xl font-bold text-white">{profile.name}</div>
+
+                    <div className="text-white/70 text-sm">@{params.id}</div>
+
+                    {!isOwnProfile && (
+                      <div>
+                        <FollowButton userId={params.id} />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-4 text-sm text-white/80">
+                      <Link href={`/dashboard/profile/${params.id}/followers`} className="hover:text-white">
+                        <span className="font-medium">{followers?.length || 0}</span> followers
+                      </Link>
+                      <Link href={`/dashboard/profile/${params.id}/following`} className="hover:text-white">
+                        <span className="font-medium">{following?.length || 0}</span> following
+                      </Link>
                     </div>
-                  )}
-                  
-                  {isOwnProfile && (
-                    <Link 
-                      href="/dashboard/profile/edit-avatar" 
-                      className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1 hover:bg-blue-600 transition-colors"
-                      title="Change profile picture"
-                    >
-                      <Camera size={14} />
-                    </Link>
-                  )}
-                </div>
-
-                <div>
-                  <h1 className="text-2xl font-bold">{profile.name}</h1>
-                  {profile.occupation && (
-                    <p className="text-white/70 flex items-center gap-1 mt-1">
-                      <Briefcase size={14} />
-                      {profile.occupation}
-                    </p>
-                  )}
-                  {profile.location && (
-                    <p className="text-white/70 flex items-center gap-1 mt-1">
-                      <MapPin size={14} />
-                      {profile.location}
-                    </p>
-                  )}
-                  
-                  <div className="flex items-center gap-4 mt-2">
-                    <Link href={`/dashboard/profile/${params.id}/followers`} className="text-white/80 hover:text-white flex items-center gap-1">
-                      <Users size={14} />
-                      <span className="font-medium">{followers?.length || 0}</span> Followers
-                    </Link>
-                    <Link href={`/dashboard/profile/${params.id}/following`} className="text-white/80 hover:text-white flex items-center gap-1">
-                      <UserPlus size={14} />
-                      <span className="font-medium">{following?.length || 0}</span> Following
-                    </Link>
                   </div>
                 </div>
+
+                {/* Profile Details */}
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center gap-2 text-white/70">
+                    <Calendar size={14} />
+                    <span>Joined {joinedDate}</span>
+                  </div>
+
+                  {profile.location && (
+                    <div className="flex items-center gap-2 text-white/70">
+                      <MapPin size={14} />
+                      <span>{profile.location}</span>
+                    </div>
+                  )}
+
+                  {profile.occupation && (
+                    <div className="flex items-center gap-2 text-white/70">
+                      <Briefcase size={14} />
+                      <span>{profile.occupation}</span>
+                    </div>
+                  )}
+
+                  {profile.interests && (
+                    <div className="flex items-center gap-2 text-white/70">
+                      <Heart size={14} />
+                      <span>{profile.interests.split(",")[0]?.trim()}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-
-              {!isOwnProfile && <FollowButton userId={params.id} />}
-
-              {isOwnProfile && (
-                <Link
-                  href="/dashboard/profile/edit"
-                  className="px-4 py-2 text-sm tracking-tight no-underline bg-white/10 font-[560] rounded-[100px] text-white hover:bg-white/20 transition-opacity"
-                >
-                  Edit Profile
-                </Link>
-              )}
             </div>
 
-            {profile.bio && (
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2">About</h2>
-                <p className="text-white/80 whitespace-pre-line">{profile.bio}</p>
+            {/* Right Column - Sites and Additional Content */}
+            <div className="lg:col-span-2">
+              <div className="shadow-sm">
+                {/* Bio Section (if exists) */}
+                {profile.bio && (
+                  <div className="mt-8 pt-6 border-t border-white/10">
+                    <h3 className="text-lg font-semibold mb-3">About</h3>
+                    <p className="text-white/80 whitespace-pre-line">{profile.bio}</p>
+                  </div>
+                )}
+                {/* Projects Section (if exists) */}
+                {projects && projects.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-3">Public Projects</h3>
+                    <div className="grid gap-3">
+                      {projects.map((project) => (
+                        <Link
+                          key={project.id}
+                          href={`/dashboard/project/${project.id}`}
+                          className="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                        >
+                          <h4 className="font-medium">{project.name}</h4>
+                          {project.description && <p className="text-sm text-white/70 mt-1">{project.description}</p>}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-
-            {profile.interests && (
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-                  <Heart size={16} className="text-pink-400" />
-                  Interests
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {profile.interests.split(",").map((interest: string, index: number) => (
-                    <span key={index} className="px-3 py-1 bg-white/10 rounded-full text-sm">
-                      {interest.trim()}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {projects && projects.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2">Public Projects</h2>
-                <div className="grid gap-3">
-                  {projects.map((project) => (
-                    <Link 
-                      key={project.id} 
-                      href={`/dashboard/project/${project.id}`}
-                      className="p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
-                    >
-                      <h3 className="font-medium">{project.name}</h3>
-                      {project.description && (
-                        <p className="text-sm text-white/70 mt-1">{project.description}</p>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="text-sm text-white/50 flex items-center gap-1">
-              <Calendar size={14} />
-              Joined {joinedDate}
             </div>
           </div>
         </div>

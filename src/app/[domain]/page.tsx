@@ -46,11 +46,14 @@ export async function generateMetadata({ params }: DomainPageProps) {
     }
   }
 
+  // Use the project name as the title
+  const title = siteData.name || `${domain} - Built with DisPlan`
+
   return {
-    title: siteData.name || `${domain} - Built with DisPlan`,
+    title: title,
     description: siteData.description || `A website built with DisPlan`,
     openGraph: {
-      title: siteData.name || `${domain} - Built with DisPlan`,
+      title: title,
       description: siteData.description || `A website built with DisPlan`,
       images: siteData.social_preview_url ? [siteData.social_preview_url] : [],
     },
