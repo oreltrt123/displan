@@ -12,11 +12,16 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  // Check if this is a custom domain or a subdomain
-  const currentHost = hostname.replace(`.displan.design`, "")
+  // IMPORTANT: Skip middleware for localhost during development
+  if (hostname === "localhost:3000") {
+    return res
+  }
 
-  // Skip for main domain
-  if (hostname === "displan.design" || hostname === "www.displan.design") {
+  // Check if this is a custom domain or a subdomain
+  const isMainDomain = hostname === "displan.design" || hostname === "www.displan.design"
+
+  // Skip subdomain handling for main domain
+  if (isMainDomain) {
     // Handle authentication for protected routes on main domain
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -80,8 +85,9 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  // For subdomains, rewrite to the [domain] route
-  const newUrl = new URL(`/${currentHost}${url.pathname}`, req.url)
+  // For subdomains, extract the subdomain and rewrite to the [domain] route
+  const subdomain = hostname.split(".")[0]
+  const newUrl = new URL(`/${subdomain}${url.pathname}`, req.url)
   return NextResponse.rewrite(newUrl)
 }
 

@@ -19,7 +19,7 @@ export async function displan_project_designer_css_get_project_settings(projectI
     const { data, error } = await supabase
       .from("displan_project_designer_css_projects")
       .select(
-        "id, name, description, custom_url, favicon_url, favicon_light_url, favicon_dark_url, social_preview_url, password_protection, custom_code, subdomain, is_published, created_at, updated_at",
+        "id, name, description, custom_url, favicon_url, favicon_light_url, favicon_dark_url, social_preview_url, password_protection, custom_code, subdomain, published_url, is_published, created_at, updated_at",
       )
       .eq("id", projectId)
       .eq("owner_id", user.id)
@@ -50,6 +50,7 @@ export async function displan_project_designer_css_update_project_settings(
     password_protection?: string
     custom_code?: string
     subdomain?: string
+    published_url?: string
   },
 ) {
   try {
@@ -76,6 +77,7 @@ export async function displan_project_designer_css_update_project_settings(
     if (settings.password_protection !== undefined) updateData.password_protection = settings.password_protection
     if (settings.custom_code !== undefined) updateData.custom_code = settings.custom_code
     if (settings.subdomain !== undefined) updateData.subdomain = settings.subdomain
+    if (settings.published_url !== undefined) updateData.published_url = settings.published_url
 
     console.log("Updating project with data:", updateData)
 
@@ -85,7 +87,7 @@ export async function displan_project_designer_css_update_project_settings(
       .eq("id", projectId)
       .eq("owner_id", user.id)
       .select(
-        "id, name, description, custom_url, favicon_url, favicon_light_url, favicon_dark_url, social_preview_url, password_protection, custom_code, subdomain, is_published",
+        "id, name, description, custom_url, favicon_url, favicon_light_url, favicon_dark_url, social_preview_url, password_protection, custom_code, subdomain, published_url, is_published",
       )
       .single()
 

@@ -42,11 +42,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Subdomain is already taken" }, { status: 409 })
     }
 
-    // Update the project with subdomain and publish status
+    const deployedUrl = `https://${subdomain}.displan.design`
+
+    // Update the project with subdomain, published URL, and publish status
     const { data, error } = await supabase
       .from("displan_project_designer_css_projects")
       .update({
         subdomain: subdomain,
+        published_url: deployedUrl,
         is_published: true,
         updated_at: new Date().toISOString(),
       })
@@ -59,8 +62,6 @@ export async function POST(request: NextRequest) {
       console.error("Error deploying project:", error)
       return NextResponse.json({ error: "Failed to deploy project" }, { status: 500 })
     }
-
-    const deployedUrl = `https://${subdomain}.displan.design`
 
     return NextResponse.json({
       success: true,

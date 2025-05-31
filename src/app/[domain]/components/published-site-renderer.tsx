@@ -58,18 +58,100 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
     }
   }, [siteData.custom_code])
 
+  const renderMenuTemplate = (templateId: string) => {
+    switch (templateId) {
+      case "template-1":
+        return (
+          <div className="bg-white py-24 sm:py-32">
+            <div className="mx-auto grid max-w-7xl gap-20 px-6 lg:px-8 xl:grid-cols-3">
+              <div className="max-w-xl">
+                <h2 className="text-3xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-4xl">
+                  Meet our leadership
+                </h2>
+                <p className="mt-6 text-lg/8 text-gray-600">
+                  We're a dynamic group of individuals who are passionate about what we do and dedicated to delivering
+                  the best results for our clients.
+                </p>
+              </div>
+              <ul role="list" className="grid gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-16 xl:col-span-2">
+                <li>
+                  <div className="flex items-center gap-x-6">
+                    <img
+                      className="size-[35px] rounded-full"
+                      src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+                      alt=""
+                    />
+                    <div>
+                      <h3 className="text-base/7 font-semibold tracking-tight text-gray-900">Test Name</h3>
+                      <p className="text-sm/6 font-semibold text-indigo-600">Co-Founder / CEO</p>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        )
+
+      case "template-2":
+        return (
+          <section className="relative isolate overflow-hidden bg-white px-6 py-24 sm:py-32 lg:px-8">
+            <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,var(--color-indigo-100),white)] opacity-20"></div>
+            <div className="absolute inset-y-0 right-1/2 -z-10 mr-16 w-[200%] origin-bottom-left skew-x-[-30deg] bg-white shadow-xl ring-1 shadow-indigo-600/10 ring-indigo-50 sm:mr-28 lg:mr-0 xl:mr-16 xl:origin-center"></div>
+            <div className="mx-auto max-w-2xl lg:max-w-4xl">
+              <img className="mx-auto h-12" src="/logo_light_mode.png" alt="" />
+              <figure className="mt-10">
+                <blockquote className="text-center text-xl/8 font-semibold text-gray-900 sm:text-2xl/9">
+                  <p>
+                    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo expedita voluptas culpa sapiente
+                    alias molestiae. Numquam corrupti in laborum sed rerum et corporis."
+                  </p>
+                </blockquote>
+                <figcaption className="mt-10">
+                  <img
+                    className="mx-auto size-10 rounded-full"
+                    src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+                    alt=""
+                  />
+                  <div className="mt-4 flex items-center justify-center space-x-3 text-base">
+                    <div className="font-semibold text-gray-900">Test Name</div>
+                    <svg viewBox="0 0 2 2" width="3" height="3" aria-hidden="true" className="fill-gray-900">
+                      <circle cx="1" cy="1" r="1" />
+                    </svg>
+                    <div className="text-gray-600">CEO of Workcation</div>
+                  </div>
+                </figcaption>
+              </figure>
+            </div>
+          </section>
+        )
+
+      // Add all other templates from your canvas file...
+      default:
+        return (
+          <div className="w-full h-full bg-white border border-gray-200 rounded flex items-center justify-center">
+            <span className="text-sm text-gray-500">Template {templateId}</span>
+          </div>
+        )
+    }
+  }
+
   const renderElement = (element: any) => {
+    // For menu templates, render them as full-width sections
     if (element.element_type.startsWith("menu-")) {
-      return renderMenuTemplate(element.element_type.replace("menu-", ""))
+      const templateId = element.element_type.replace("menu-", "")
+      return (
+        <div key={element.id} className="w-full">
+          {renderMenuTemplate(templateId)}
+        </div>
+      )
     }
 
-    const baseClasses = "absolute"
-
+    // For other elements (text, buttons), use absolute positioning
     if (element.element_type.startsWith("text-")) {
       return (
         <div
           key={element.id}
-          className={baseClasses}
+          className="absolute"
           style={{
             left: element.x_position,
             top: element.y_position,
@@ -86,7 +168,7 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
       return (
         <div
           key={element.id}
-          className={baseClasses}
+          className="absolute"
           style={{
             left: element.x_position,
             top: element.y_position,
@@ -111,35 +193,6 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
     return null
   }
 
-  const renderMenuTemplate = (templateId: string) => {
-    // Include all your existing menu templates here
-    switch (templateId) {
-      case "template-1":
-        return (
-          <div className="bg-white py-24 sm:py-32">
-            <div className="mx-auto grid max-w-7xl gap-20 px-6 lg:px-8 xl:grid-cols-3">
-              <div className="max-w-xl">
-                <h2 className="text-3xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-4xl">
-                  Meet our leadership
-                </h2>
-                <p className="mt-6 text-lg/8 text-gray-600">
-                  We're a dynamic group of individuals who are passionate about what we do and dedicated to delivering
-                  the best results for our clients.
-                </p>
-              </div>
-            </div>
-          </div>
-        )
-      // Add all other templates...
-      default:
-        return (
-          <div className="w-full h-full bg-white border border-gray-200 rounded flex items-center justify-center">
-            <span className="text-sm text-gray-500">Template {templateId}</span>
-          </div>
-        )
-    }
-  }
-
   // Separate menu templates from other elements
   const menuElements = siteData.elements.filter((el: any) => el.element_type.startsWith("menu-"))
   const otherElements = siteData.elements.filter((el: any) => !el.element_type.startsWith("menu-"))
@@ -149,13 +202,13 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
       {/* Custom Code Container */}
       <div id="custom-code-container"></div>
 
-      {/* Site Content */}
+      {/* Site Content - Render exactly like the canvas */}
       <div className="relative">
         {/* Render menu templates as stacked full-width sections */}
         <div className="w-full">{menuElements.map(renderElement)}</div>
 
-        {/* Render other elements with absolute positioning */}
-        <div className="relative" style={{ minHeight: "800px" }}>
+        {/* Render other elements with absolute positioning in a container */}
+        <div className="relative bg-white" style={{ minHeight: "800px", width: "100%" }}>
           {otherElements.map(renderElement)}
         </div>
       </div>
