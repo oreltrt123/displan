@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import type { DisplanProjectDesignerCssProject } from "../lib/types/displan-types"
 import { formatDistanceToNow } from "date-fns"
 import { ExternalLink } from "lucide-react"
@@ -12,11 +10,10 @@ interface DisplanProjectCardProps {
   onOpenProject: (projectId: string) => void
 }
 
-export function DisplanProjectCard({ project, viewMode, onOpenProject }: DisplanProjectCardProps) {
+export function DisplanProjectCard({ project, viewMode, onOpenProject  }: DisplanProjectCardProps) {
   const handleOpenProject = () => {
     onOpenProject(project.id)
   }
-
   const handleOpenLivesite = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (project.published_url) {
@@ -28,23 +25,15 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject }: Displan
     return (
       <div className="flex items-center justify-between p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500 overflow-hidden">
-            {project.social_preview_url ? (
-              <img
-                src={project.social_preview_url || "/placeholder.svg"}
-                alt="Project preview"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              "preview"
-            )}
+          <div className="w-16 h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
+            preview
           </div>
           <div>
             <h3 className="font-medium text-gray-900">{project.name}</h3>
             <p className="text-sm text-gray-500">
               Last updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
             </p>
-            {project.published_url && (
+             {project.published_url && (
               <button
                 onClick={handleOpenLivesite}
                 className="text-sm text-blue-600 hover:text-blue-800 flex items-center mt-1"
@@ -68,28 +57,23 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject }: Displan
 
   return (
     <div className="rounded-lg bg-background p-4 hover:shadow-md transition-shadow" onClick={handleOpenProject}>
-      <div className="thumbnailContainerDark relative overflow-hidden rounded-lg bg-gray-100 aspect-video mb-4">
-        {project.social_preview_url ? (
+       {project.social_preview_url ? (
           <img
             src={project.social_preview_url || "/placeholder.svg"}
             alt="Project preview"
-            className="w-full h-full object-cover"
+            className="thumbnailContainerDark"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <span className="text-sm">No preview</span>
+          <div className="thumbnailContainerDark">
           </div>
         )}
-      </div>
       <div className="space-y-2 _dddddd1_project">
-        <div className="badge_b1arctdq clickable_csx2rjz plans_p10t7dc2 freeSite">
-          <span className="badge_b1arctdq_free_span_text">Free</span>
-        </div>
+        <div className="badge_b1arctdq clickable_csx2rjz plans_p10t7dc2 freeSite"><span className="badge_b1arctdq_free_span_text">Free</span></div>
         <h3 className="text-sm Text_css_project_simple">{project.name}</h3>
         <p className="Text_css_project_simple_p">
           Last updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
         </p>
-        {project.published_url && (
+          {project.published_url && (
           <button onClick={handleOpenLivesite} className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
             <ExternalLink className="w-3 h-3 mr-1" />
             {project.published_url}
