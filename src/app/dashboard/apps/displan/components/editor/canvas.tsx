@@ -29,6 +29,7 @@ interface CanvasProps {
   onSelectElement: (element: DisplanCanvasElement | null) => void
   onMoveElement: (elementId: string, x: number, y: number) => void
   onUpdateElement: (elementId: string, properties: any) => void
+  onAddElement?: (elementType: string, x: number, y: number, properties?: any) => void
   zoom: number
   onToolChange: (tool: Tool) => void
   isDarkMode: boolean
@@ -48,6 +49,7 @@ export function Canvas({
   onSelectElement,
   onMoveElement,
   onUpdateElement,
+  onAddElement,
   zoom,
   onToolChange,
   isDarkMode,
@@ -177,6 +179,44 @@ export function Canvas({
       }
     }
   }, [customCode])
+
+  // AI Element Addition Handler
+  const handleAIAddElement = useCallback(
+    (elementType: string, x: number, y: number, properties: any = {}) => {
+      console.log("Canvas: AI requesting to add element", { elementType, x, y, properties })
+
+      if (onAddElement) {
+        // Call the parent's onAddElement function
+        onAddElement(elementType, x, y, properties)
+      } else {
+        console.warn("Canvas: onAddElement prop not provided, cannot add AI-generated element")
+      }
+    },
+    [onAddElement],
+  )
+
+  // Expose the AI element addition function globally so the AI can access it
+  useEffect(() => {
+    // Store the function on the window object so AI can access it
+    if (typeof window !== "undefined") {
+      ;(window as any).addElementToCanvas = handleAIAddElement
+      // Also store canvas dimensions for AI positioning
+      ;(window as any).getCanvasDimensions = () => ({
+        width: 1200,
+        height: 800,
+        centerX: 600,
+        centerY: 400,
+      })
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (typeof window !== "undefined") {
+        delete (window as any).addElementToCanvas
+        delete (window as any).getCanvasDimensions
+      }
+    }
+  }, [handleAIAddElement])
 
   // Generate CSS styles for an element
   const generateElementStyles = (element: DisplanCanvasElement): React.CSSProperties => {
@@ -1276,6 +1316,23 @@ export function Canvas({
       )
     }
 
+    if (element.element_type.startsWith("container-")) {
+      return (
+        <div
+          key={element.id}
+          data-element={element.id}
+          className={baseClasses}
+          style={elementStyles}
+          onClick={handleClick}
+          onMouseDown={(e: React.MouseEvent) => handleElementMouseDown(element, e)}
+        >
+          <div className={`displan-${element.element_type} w-full h-full`}>
+            {element.content && <div className="p-4">{element.content}</div>}
+          </div>
+        </div>
+      )
+    }
+
     return null
   }
 
@@ -1296,7 +1353,7 @@ export function Canvas({
       >
         <div
           data-canvas="true"
-          className="bg-white shadow-lg relative overflow-y-auto"
+          className="bg-white thumbnailContainerDark12 relative overflow-y-auto"
           style={{
             width: "1200px",
             height: "800px",

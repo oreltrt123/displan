@@ -2,21 +2,21 @@
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { displan_project_designer_css_get_project_settings, displan_project_designer_css_update_project_settings } from "../../../lib/actions/displan-project-settings-actions"
+import { Code } from "lucide-react"
+import {
+  displan_project_designer_css_get_project_settings,
+  displan_project_designer_css_update_project_settings,
+} from "../../../../lib/actions/displan-project-settings-actions"
 
-export default function GeneralSettingsPage() {
+export default function CodeSettingsPage() {
   const params = useParams()
   const projectId = params.id as string
 
   const [settings, setSettings] = useState({
-    name: "",
-    description: "",
-    custom_url: "",
+    custom_code: "",
   })
   const [originalSettings, setOriginalSettings] = useState({
-    name: "",
-    description: "",
-    custom_url: "",
+    custom_code: "",
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -31,9 +31,7 @@ export default function GeneralSettingsPage() {
     const result = await displan_project_designer_css_get_project_settings(projectId)
     if (result.success && result.data) {
       const projectData = {
-        name: result.data.name || "",
-        description: result.data.description || "",
-        custom_url: result.data.custom_url || "",
+        custom_code: result.data.custom_code || "",
       }
       setSettings(projectData)
       setOriginalSettings(projectData)
@@ -53,7 +51,7 @@ export default function GeneralSettingsPage() {
 
       if (result.success) {
         setOriginalSettings(settings)
-        setSaveMessage("Settings saved successfully!")
+        setSaveMessage("Code settings saved successfully!")
         setTimeout(() => setSaveMessage(""), 3000)
       } else {
         console.error("Save failed:", result.error)
@@ -76,7 +74,7 @@ export default function GeneralSettingsPage() {
   if (isLoading) {
     return (
       <div className="bg-white dark:bg-black rounded-lg p-6">
-        <div className="text-gray-600 dark:text-gray-400">Loading project settings...</div>
+        <div className="text-gray-600 dark:text-gray-400">Loading code settings...</div>
       </div>
     )
   }
@@ -84,57 +82,55 @@ export default function GeneralSettingsPage() {
   return (
     <div className="bg-white dark:bg-black rounded-lg p-6">
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Website Settings</h1>
-        </div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-0 flex items-center">
+          <Code className="w-5 h-5 mr-2" />
+          Custom Code
+        </h2>
         <div className="flex items-center space-x-4">
           {saveMessage && (
             <span className={`text-sm ${saveMessage.includes("success") ? "text-green-600" : "text-red-600"}`}>
               {saveMessage}
             </span>
           )}
-          <button
-            onClick={handleSave}
-            disabled={isSaving || !hasChanges}
-            className="button_edit_project_r22232_Bu"
-          >
+          <button onClick={handleSave} disabled={isSaving || !hasChanges} className="button_edit_project_r22232_Bu">
             {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        Add custom HTML, CSS, or JavaScript code that will be injected into your website. This code will be added to the
+        canvas.
+      </p>
+
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Project Name</label>
-          <input
-            type="text"
-            value={settings.name}
-            onChange={(e) => handleInputChange("name", e.target.value)}
-            className="input_field_re223"
-            placeholder="Enter project name"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Custom Code</label>
           <textarea
-            id="bio"
-            name="bio"
-            rows={3}
-            value={settings.description}
-            onChange={(e) => handleInputChange("description", e.target.value)}
-            className="simple_box_Description_site_r233 w-full"
-            placeholder="Describe your project"
+            value={settings.custom_code}
+            onChange={(e) => handleInputChange("custom_code", e.target.value)}
+            className="simple_box_Description_site_r233 w-full font-mono text-sm"
+            rows={8}
+            placeholder={`<!-- Add your custom HTML, CSS, or JavaScript here -->
+<style>
+  .custom-element {
+    color: #333;
+    font-size: 16px;
+  }
+</style>
+
+<script>
+  console.log('Custom code loaded');
+</script>`}
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Custom URL</label>
-          <input
-            type="url"
-            value={settings.custom_url}
-            onChange={(e) => handleInputChange("custom_url", e.target.value)}
-            className="input_field_re223"
-            placeholder="https://your-domain.com"
-          />
-        </div>
+
+        {settings.custom_code && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              ✓ Custom code will be injected into your website canvas
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

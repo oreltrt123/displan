@@ -294,7 +294,7 @@ export function PropertiesPanel({
 
   if (!localElement) {
     return (
-      <div className="w-80 bg-white dark:bg-black border-l border-gray-200 dark:border-gray-800 h-full overflow-hidden">
+      <div className="w-80 bg-white dark:bg-black h-full overflow-hidden">
         <div className="p-4 h-full flex flex-col">
           <div className="text-center py-8">
             <Layout className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />

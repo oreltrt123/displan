@@ -1,50 +1,42 @@
 import { NextResponse } from "next/server"
-import { createClient } from "../../../../supabase/server"
-
-// Add this line to force dynamic rendering
-export const dynamic = "force-dynamic"
+import { createClient } from "@supabase/supabase-js"
+export const dynamic = 'force-dynamic'
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function GET(request: Request) {
   try {
-    // Get the current user
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    // Get user ID from session or request
+    // This is a placeholder - you would get the actual user ID from your auth system
+    const userId = request.headers.get("x-user-id") || "anonymous"
 
-    if (!user) {
-      return NextResponse.json({ isPremium: false, error: "Unauthorized" }, { status: 401 })
+    if (!userId || userId === "anonymous") {
+      return NextResponse.json({ hasActiveSubscription: false })
     }
 
-    // Check if user has premium subscription
-    const { data: subscription, error } = await supabase
-      .from("user_subscriptions")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("status", "active")
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Check subscription status in your database
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .select("status, current_period_end")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .single()
 
-    if (error && error.code !== "PGRST116") {
-      // PGRST116 is the error code for "no rows returned"
-      console.error("Error checking subscription:", error)
-      return NextResponse.json({ isPremium: false, error: "Failed to check subscription status" }, { status: 500 })
+    if (error || !data) {
+      return NextResponse.json({ hasActiveSubscription: false })
     }
 
     // Check if subscription is active and not expired
-    const isPremium =
-      !!subscription && subscription.current_period_end && new Date(subscription.current_period_end) > new Date()
+    const isActive = data.status === "active" && new Date(data.current_period_end) > new Date()
 
-    return NextResponse.json({
-      isPremium,
-      subscription: isPremium
-        ? {
-            plan: subscription.plan,
-            expiresAt: subscription.current_period_end,
-          }
-        : null,
-    })
+    return NextResponse.json({ hasActiveSubscription: isActive })
   } catch (error) {
     console.error("Error checking subscription:", error)
-    return NextResponse.json({ isPremium: false, error: "Failed to check subscription status" }, { status: 500 })
+    return NextResponse.json({ hasActiveSubscription: false })
   }
 }

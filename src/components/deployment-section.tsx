@@ -71,7 +71,7 @@ export function DeploymentSection({ projectId, currentSubdomain, isPublished }: 
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+    <div className="bg-white dark:bg-black rounded-lg p-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
         <Globe className="w-5 h-5 mr-2" />
         Deploy to Internet
@@ -88,19 +88,19 @@ export function DeploymentSection({ projectId, currentSubdomain, isPublished }: 
             Choose your subdomain
           </label>
           <div className="flex items-center space-x-2">
-            <div className="flex-1 flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-              <span className="px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm border-r border-gray-300 dark:border-gray-600">
+            <div className="flex-1 flex items-center overflow-hidden">
+              <span className="px-3 py-2 bg-gray-50 dark:bg-[#8888881A] text-gray-500 dark:text-gray-400 text-sm">
                 https://
               </span>
               <input
                 type="text"
                 value={subdomain}
                 onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none"
+                className="flex-1 px-3 py-1.5 bg-white dark:bg-[#8888881A] text-gray-900 dark:text-white focus:outline-none"
                 placeholder="mysite"
                 disabled={isDeploying}
               />
-              <span className="px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm border-l border-gray-300 dark:border-gray-600">
+              <span className="px-3 py-2 bg-gray-50 dark:bg-[#8888881A] text-gray-500 dark:text-gray-400 text-sm">
                 .displan.design
               </span>
             </div>
@@ -177,9 +177,9 @@ export function DeploymentSection({ projectId, currentSubdomain, isPublished }: 
         )}
 
         {/* Info Box */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div className="bg-blue-50 dark:bg-[#8888881A] rounded-lg p-4">
           <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">How it works:</h4>
-          <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+          <ul className="text-sm text-[#8888881A] dark:text-gray-300 space-y-1">
             <li>• Choose a unique subdomain for your website</li>
             <li>• Click Deploy to publish your site to the internet</li>
             <li>• Your site will be available at https://[subdomain].displan.design</li>

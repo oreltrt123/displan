@@ -1,8 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { Home, Plus, Folder, FileText } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Home, Plus, Folder, FileText, MessageSquare } from "lucide-react"
 import { ElementsPanel } from "./elements-panel"
+import { DisplanAI } from "./displan-ai"
+import { StripeSubscription } from "./stripe-subscription"
 
 interface DisplanProjectDesignerCssPage {
   id: string
@@ -20,12 +22,87 @@ interface LeftSidebarProps {
 }
 
 export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, onAddElement }: LeftSidebarProps) {
-  const [activeTab, setActiveTab] = useState<"pages" | "elements">("pages")
+  const [activeTab, setActiveTab] = useState<"pages" | "elements" | "ai">("pages")
   const [showPageMenu, setShowPageMenu] = useState(false)
   const [newPageName, setNewPageName] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [modalType, setModalType] = useState<"page" | "folder">("page")
   const [modalPageName, setModalPageName] = useState("")
+  const [hasSubscription, setHasSubscription] = useState(false)
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true)
+
+  // Check subscription status on component mount and when returning from Stripe
+  useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        // Check URL parameters for successful subscription
+        const urlParams = new URLSearchParams(window.location.search)
+        const subscriptionStatus = urlParams.get("subscription")
+        const sessionId = urlParams.get("session_id")
+
+        if (subscriptionStatus === "success" && sessionId) {
+          // Verify the subscription with the server
+          const verifyResponse = await fetch(`/api/verify-subscription?session_id=${sessionId}`)
+          const verifyData = await verifyResponse.json()
+
+          if (verifyData.success) {
+            setHasSubscription(true)
+            // Store subscription info in localStorage
+            localStorage.setItem(
+              "displan_ai_subscription",
+              JSON.stringify({
+                active: true,
+                expiresAt: new Date(verifyData.subscription.current_period_end * 1000).toISOString(),
+              }),
+            )
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname)
+            setIsCheckingSubscription(false)
+            return
+          }
+        }
+
+        // Check if subscription info exists in localStorage
+        const subscriptionData = localStorage.getItem("displan_ai_subscription")
+
+        if (subscriptionData) {
+          const { expiresAt } = JSON.parse(subscriptionData)
+          // Check if subscription is still valid
+          if (new Date(expiresAt) > new Date()) {
+            setHasSubscription(true)
+            setIsCheckingSubscription(false)
+            return
+          }
+        }
+
+        // If no valid subscription in localStorage, check with server
+        const response = await fetch("/api/check-subscription", {
+          headers: {
+            "x-user-id": "current_user_id", // Replace with actual user ID from your auth system
+          },
+        })
+        const data = await response.json()
+
+        if (data.hasActiveSubscription) {
+          // Store subscription info in localStorage
+          localStorage.setItem(
+            "displan_ai_subscription",
+            JSON.stringify({
+              active: true,
+              expiresAt: data.subscription.current_period_end,
+            }),
+          )
+          setHasSubscription(true)
+        }
+      } catch (error) {
+        console.error("Failed to check subscription status:", error)
+      } finally {
+        setIsCheckingSubscription(false)
+      }
+    }
+
+    checkSubscription()
+  }, [])
 
   const handleCreatePage = (isFolder: boolean) => {
     if (newPageName.trim()) {
@@ -54,6 +131,18 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
     setModalPageName("")
   }
 
+  const handleSubscriptionSuccess = () => {
+    setHasSubscription(true)
+    // Store subscription info in localStorage
+    localStorage.setItem(
+      "displan_ai_subscription",
+      JSON.stringify({
+        active: true,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+      }),
+    )
+  }
+
   return (
     <>
       <div className="w-64 bg-white dark:bg-black dark:border-gray-900 h-full overflow-hidden">
@@ -79,6 +168,17 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
                 }`}
               >
                 Elements
+              </button>
+              <button
+                onClick={() => setActiveTab("ai")}
+                className={`px-3 py-1 rounded text-sm flex items-center ${
+                  activeTab === "ai"
+                    ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                <MessageSquare className="w-3 h-3 mr-1" />
+                AI
               </button>
             </div>
           </div>
@@ -141,8 +241,21 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
                   ))}
                 </div>
               </>
-            ) : (
+            ) : activeTab === "elements" ? (
               <ElementsPanel onAddElement={onAddElement} />
+            ) : (
+              // AI Panel
+              <>
+                {isCheckingSubscription ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
+                  </div>
+                ) : hasSubscription ? (
+                  <DisplanAI />
+                ) : (
+                  <StripeSubscription onSubscriptionSuccess={handleSubscriptionSuccess} />
+                )}
+              </>
             )}
           </div>
         </div>

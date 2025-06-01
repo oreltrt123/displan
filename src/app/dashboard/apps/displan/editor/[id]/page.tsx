@@ -41,8 +41,15 @@ export default function EditorPage() {
   const [zoom, setZoom] = useState(100)
   const [isPreviewMode, setIsPreviewMode] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | undefined>(undefined)
 
   useEffect(() => {
+    // Try to get user email from localStorage or session
+    const email = localStorage.getItem("user_email") || sessionStorage.getItem("user_email")
+    if (email) {
+      setUserEmail(email)
+    }
+
     loadComments()
     loadPages()
     loadElements()
@@ -98,10 +105,17 @@ export default function EditorPage() {
     }
   }
 
-  const handleAddElement = async (elementType: string, x: number, y: number) => {
-    console.log("Adding element to canvas:", elementType, x, y)
+  const handleAddElement = async (elementType: string, x: number, y: number, properties?: any) => {
+    console.log("Adding element to canvas:", elementType, x, y, properties)
     try {
-      const result = await displan_project_designer_css_add_element_new(projectId, currentPage, elementType, x, y)
+      const result = await displan_project_designer_css_add_element_new(
+        projectId,
+        currentPage,
+        elementType,
+        x,
+        y,
+        properties,
+      )
       console.log("Add element result:", result)
 
       if (result.success) {
@@ -171,6 +185,11 @@ export default function EditorPage() {
     }
   }
 
+  // Handle AI-generated element requests
+  const handleAIAddElement = (elementType: string, x: number, y: number, properties: any) => {
+    handleAddElement(elementType, x, y, properties)
+  }
+
   return (
     <div className="h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col overflow-hidden">
       <TopBar
@@ -188,7 +207,9 @@ export default function EditorPage() {
               currentPage={currentPage}
               onPageChange={setCurrentPage}
               onCreatePage={handleCreatePage}
-              onAddElement={handleAddElement}
+              onAddElement={handleAIAddElement}
+              projectId={projectId}
+              userEmail={userEmail}
             />
           </div>
         )}
