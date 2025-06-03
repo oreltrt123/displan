@@ -84,6 +84,7 @@ export function SettingsSidebar() {
       <div className="settings-sidebar-content">
         <nav className="settings-nav">
           <ul className="settings-nav-list">
+            <h3 className="settings-nav-section-title">Site Settings</h3>
             {settingsNavItems.map((item) => (
               <li key={item.title} className="settings-nav-item">
                 <button
@@ -98,7 +99,7 @@ export function SettingsSidebar() {
           </ul>
 
           {/* Separator line */}
-          <div className="settings-nav-separator"></div>
+          <hr className="fsdfadsgesgdg"/>
 
           {/* Pages Section */}
           <div className="settings-nav-section">

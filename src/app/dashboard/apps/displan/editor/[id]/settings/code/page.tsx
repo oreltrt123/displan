@@ -108,7 +108,7 @@ export default function CodeSettingsPage() {
           <textarea
             value={settings.custom_code}
             onChange={(e) => handleInputChange("custom_code", e.target.value)}
-            className="simple_box_Description_site_r233 w-full font-mono text-sm"
+            className="simple_box_Description_site_r233123 w-full font-mono text-sm"
             rows={8}
             placeholder={`<!-- Add your custom HTML, CSS, or JavaScript here -->
 <style>

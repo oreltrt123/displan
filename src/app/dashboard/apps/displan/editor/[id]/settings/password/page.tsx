@@ -100,7 +100,7 @@ export default function PasswordSettingsPage() {
               value={settings.password_protection}
               onChange={(e) => handleInputChange("password_protection", e.target.value)}
               disabled={!isEditingPassword}
-              className={`input_field_re223 pr-10 ${!isEditingPassword ? "bg-gray-50 dark:bg-gray-700" : ""}`}
+              className={`input_field_re223 pr-10 ${!isEditingPassword ? "input_field_re223" : ""}`}
               placeholder={isEditingPassword ? "Enter password" : "No password set"}
             />
             <button

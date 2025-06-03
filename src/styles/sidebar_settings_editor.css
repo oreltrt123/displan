@@ -174,3 +174,13 @@
     min-width: 120px;
   }
 }
+.settings-nav-section-title {
+    min-width: 0;
+    font-size: var(--framer-fresco-base-font-size, 12px);
+    font-weight: var(--framer-fresco-heading-font-weight, 600);
+    margin-bottom: 15px;
+}
+.fsdfadsgesgdg {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
