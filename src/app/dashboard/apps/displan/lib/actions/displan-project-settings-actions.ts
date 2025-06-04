@@ -111,6 +111,60 @@ export async function displan_project_designer_css_update_project_settings(
   }
 }
 
+// New delete function using proper authentication
+export async function displan_project_designer_css_delete_project(projectId: string) {
+  try {
+    const supabase = createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      console.error("Authentication error:", authError)
+      return { success: false, error: "User not authenticated", data: null }
+    }
+
+    console.log("Deleting project:", { projectId, userId: user.id })
+
+    // First, verify the project exists and belongs to the user
+    const { data: projectData, error: fetchError } = await supabase
+      .from("displan_project_designer_css_projects")
+      .select("id, owner_id, name")
+      .eq("id", projectId)
+      .eq("owner_id", user.id)
+      .single()
+
+    if (fetchError || !projectData) {
+      console.error("Project not found or access denied:", fetchError)
+      return { success: false, error: "Project not found or access denied", data: null }
+    }
+
+    // Delete the project
+    const { error: deleteError } = await supabase
+      .from("displan_project_designer_css_projects")
+      .delete()
+      .eq("id", projectId)
+      .eq("owner_id", user.id)
+
+    if (deleteError) {
+      console.error("Error deleting project:", deleteError)
+      return { success: false, error: deleteError.message, data: null }
+    }
+
+    console.log("Project deleted successfully:", projectData.name)
+
+    // Revalidate relevant paths
+    revalidatePath("/dashboard/apps/displan")
+    revalidatePath(`/dashboard/apps/displan/editor/${projectId}`)
+
+    return { success: true, data: { deletedProject: projectData }, error: null }
+  } catch (error) {
+    console.error("Server error during deletion:", error)
+    return { success: false, error: "Failed to delete project", data: null }
+  }
+}
+
 // Helper function to check if a project has password protection
 export async function displan_project_designer_css_check_password_protection(projectId: string) {
   try {

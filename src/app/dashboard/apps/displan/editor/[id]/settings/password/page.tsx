@@ -7,6 +7,7 @@ import {
   displan_project_designer_css_get_project_settings,
   displan_project_designer_css_update_project_settings,
 } from "../../../../lib/actions/displan-project-settings-actions"
+import "../../../../../../../../styles/sidebar_settings_editor.css"
 
 export default function PasswordSettingsPage() {
   const params = useParams()
@@ -84,11 +85,10 @@ export default function PasswordSettingsPage() {
 
   return (
     <div className="bg-white dark:bg-black rounded-lg p-6">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-        <Lock className="w-5 h-5 mr-2" />
+      <h2 className="titl2_d2m1313">
         Password Protection
       </h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <p className="sadawdsdawdsd112">
         Secure your project with a password. Visitors will need to enter this password to view your site.
       </p>
 

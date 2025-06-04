@@ -110,8 +110,7 @@ export default function ImagesSettingsPage() {
   return (
     <div className="bg-white dark:bg-black rounded-lg p-6">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-0 flex items-center">
-          <ImageIcon className="w-5 h-5 mr-2" />
+        <h2 className="titl2_d2m1313">
           Website Images
         </h2>
         <div className="flex items-center space-x-4">

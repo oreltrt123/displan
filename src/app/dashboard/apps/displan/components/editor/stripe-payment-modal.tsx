@@ -13,6 +13,8 @@ import {
   useElements,
 } from "@stripe/react-stripe-js"
 import { X, CreditCard, Lock, Calendar, Shield, CheckCircle } from "lucide-react"
+import { subscriptionManager } from "../../../../../../utils/subscription-manager"
+import "../../../../../../styles/navbar.css"
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -31,16 +33,6 @@ function PaymentForm({ onSuccess, onCancel, userEmail, projectId }: PaymentFormP
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  // Helper function to get current user ID
-  const getCurrentUserId = () => {
-    let userId = localStorage.getItem("displan_user_id")
-    if (!userId) {
-      userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      localStorage.setItem("displan_user_id", userId)
-    }
-    return userId
-  }
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
@@ -53,14 +45,15 @@ function PaymentForm({ onSuccess, onCancel, userEmail, projectId }: PaymentFormP
     setError(null)
 
     try {
-      const userId = getCurrentUserId()
+      // Use subscription manager to get consistent user ID
+      const userId = subscriptionManager.getUserId()
       const cardNumberElement = elements.getElement(CardNumberElement)
 
       if (!cardNumberElement) {
         throw new Error("Payment form not ready. Please refresh and try again.")
       }
 
-      console.log("Creating payment method...")
+      console.log("Creating payment method for user:", userId)
 
       // Create payment method
       const { error: paymentMethodError, paymentMethod } = await stripe.createPaymentMethod({
@@ -109,30 +102,24 @@ function PaymentForm({ onSuccess, onCancel, userEmail, projectId }: PaymentFormP
         }
       }
 
-      // Success!
-      console.log("Payment successful!")
+      // Success! Store subscription using the manager
+      console.log("Payment successful! Storing subscription data...")
       setSuccess(true)
 
-      // Store subscription info in localStorage
       const subscriptionData = {
         active: true,
-        userId: userId,
         subscriptionId: result.subscriptionId || "sub_" + Date.now(),
         customerId: result.customerId || "cus_" + Date.now(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
         verifiedAt: new Date().toISOString(),
+        paymentMethod: "stripe",
+        plan: "pro",
       }
 
-      console.log("Saving subscription data to localStorage:", subscriptionData)
-      localStorage.setItem("displan_ai_subscription", JSON.stringify(subscriptionData))
+      // Use the subscription manager to store data consistently
+      subscriptionManager.setSubscription(subscriptionData)
 
-      // Force a refresh of all components that check subscription status
-      window.dispatchEvent(
-        new StorageEvent("storage", {
-          key: "displan_ai_subscription",
-          newValue: JSON.stringify(subscriptionData),
-        }),
-      )
+      console.log("✅ Subscription data stored successfully")
 
       // Wait a moment to show success, then call onSuccess
       setTimeout(() => {
@@ -187,7 +174,7 @@ function PaymentForm({ onSuccess, onCancel, userEmail, projectId }: PaymentFormP
             <CreditCard className="w-4 h-4 mr-2" />
             Card Number
           </label>
-          <div className="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+          <div className="p-4 rounded-lg bg-[#8888881A] focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
             <CardNumberElement options={elementOptions} />
           </div>
         </div>
@@ -199,7 +186,7 @@ function PaymentForm({ onSuccess, onCancel, userEmail, projectId }: PaymentFormP
               <Calendar className="w-4 h-4 mr-2" />
               Expiry Date
             </label>
-            <div className="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+          <div className="p-4 rounded-lg bg-[#8888881A] focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
               <CardExpiryElement options={elementOptions} />
             </div>
           </div>
@@ -210,8 +197,8 @@ function PaymentForm({ onSuccess, onCancel, userEmail, projectId }: PaymentFormP
               <Shield className="w-4 h-4 mr-2" />
               CVC
             </label>
-            <div className="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-              <CardCvcElement options={elementOptions} />
+          <div className="p-4 rounded-lg bg-[#8888881A] focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+           <CardCvcElement options={elementOptions} />
             </div>
           </div>
         </div>
@@ -243,15 +230,15 @@ function PaymentForm({ onSuccess, onCancel, userEmail, projectId }: PaymentFormP
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="flex-1 py-4 px-6 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all font-medium disabled:opacity-50"
-        >
+          className="Start_browsing_2311231"
+          >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!stripe || isLoading}
-          className="flex-1 py-4 px-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-all duration-200 font-medium shadow-lg"
-        >
+          className="Start_browsing_23112311"
+          >
           {isLoading ? (
             <>
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -259,7 +246,6 @@ function PaymentForm({ onSuccess, onCancel, userEmail, projectId }: PaymentFormP
             </>
           ) : (
             <>
-              <CreditCard className="w-5 h-5" />
               <span>Subscribe $5/month</span>
             </>
           )}
@@ -286,24 +272,24 @@ export function StripePaymentModal({ isOpen, onClose, onSuccess, userEmail, proj
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
         <div className="p-8">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Subscribe to Displan AI</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Subscribe to Displan</h2>
               <p className="text-gray-500 dark:text-gray-400 mt-2">Unlock AI-powered website building features</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 hover:bg-[#8888881A] rounded-lg"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
           <div className="mb-8">
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 border-2 border-blue-200 dark:border-blue-800">
+            <div className="bg-[#8888881A] rounded-xl p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Pro Plan</h3>
@@ -316,28 +302,6 @@ export function StripePaymentModal({ isOpen, onClose, onSuccess, userEmail, proj
               </div>
             </div>
           </div>
-
-          <div className="mb-8">
-            <h4 className="font-semibold text-gray-900 dark:text-white mb-4">What's included:</h4>
-            <ul className="space-y-3 text-gray-600 dark:text-gray-400">
-              <li className="flex items-center">
-                <span className="mr-3 text-green-500 text-lg">✓</span> AI-powered website assistance
-              </li>
-              <li className="flex items-center">
-                <span className="mr-3 text-green-500 text-lg">✓</span> Generate website elements
-              </li>
-              <li className="flex items-center">
-                <span className="mr-3 text-green-500 text-lg">✓</span> Get design recommendations
-              </li>
-              <li className="flex items-center">
-                <span className="mr-3 text-green-500 text-lg">✓</span> Unlimited conversations
-              </li>
-              <li className="flex items-center">
-                <span className="mr-3 text-green-500 text-lg">✓</span> 24/7 AI support
-              </li>
-            </ul>
-          </div>
-
           <Elements stripe={stripePromise}>
             <PaymentForm onSuccess={onSuccess} onCancel={onClose} userEmail={userEmail} projectId={projectId} />
           </Elements>
@@ -346,3 +310,5 @@ export function StripePaymentModal({ isOpen, onClose, onSuccess, userEmail, proj
     </div>
   )
 }
+
+export default StripePaymentModal

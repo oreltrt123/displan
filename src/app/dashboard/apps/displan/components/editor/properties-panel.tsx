@@ -344,10 +344,10 @@ export function PropertiesPanel({
 
         <div className="space-y-3">
           {/* Content Section */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="">
             <button
               onClick={() => toggleSection("content")}
-              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="w-full flex items-center justify-between p-3 text-left hover:bg-[#8888881A]"
             >
               <div className="flex items-center">
                 <Type className="w-4 h-4 mr-2 text-gray-500" />
@@ -361,7 +361,7 @@ export function PropertiesPanel({
             </button>
 
             {expandedSections.content && (
-              <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="p-3 space-y-3">
                 {localElement.element_type.includes("image") ? (
                   <div>
                     <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">Image</label>
@@ -408,7 +408,7 @@ export function PropertiesPanel({
                       ref={inputRef}
                       value={localElement.content || ""}
                       onChange={(e) => handlePropertyChange("content", e.target.value)}
-                      className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                      className="input_field23232425AS_b"
                       placeholder="Enter content..."
                       rows={3}
                     />
@@ -424,18 +424,18 @@ export function PropertiesPanel({
                       placeholder="Enter URL"
                       value={localElement.link_url || ""}
                       onChange={(e) => handlePropertyChange("link_url", e.target.value)}
-                      className="flex-1 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
+                      className="input_field23232425AS"
+                      />
                     <button
                       onClick={() => setShowLinkMenu(!showLinkMenu)}
-                      className="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded text-xs hover:bg-gray-200 dark:hover:bg-gray-600"
+                      className="px-2 py-1.5 menu_container_Cursor_12_f text-gray-900 dark:text-white rounded text-xs"
                     >
                       Pages
                     </button>
                   </div>
 
                   {showLinkMenu && (
-                    <div className="menu_container">
+                    <div className="menu_container12212">
                       {pages.map((page) => (
                         <button
                           key={page.id}
@@ -455,10 +455,10 @@ export function PropertiesPanel({
 
           {/* Typography Section */}
           {!localElement.element_type.includes("image") && (
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="">
               <button
                 onClick={() => toggleSection("typography")}
-                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-[#8888881A]"
               >
                 <div className="flex items-center">
                   <Type className="w-4 h-4 mr-2 text-gray-500" />
@@ -472,19 +472,19 @@ export function PropertiesPanel({
               </button>
 
               {expandedSections.typography && (
-                <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                <div className="p-3 space-y-3">
                   {/* Font Family */}
                   <div className="relative">
                     <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">Font Family</label>
                     <button
                       onClick={() => setShowFontMenu(!showFontMenu)}
-                      className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-left focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="input_field23232425AS"
                     >
                       {fontFamilies.find((f) => f.value === localElement.font_family)?.name || "Inter"}
                     </button>
 
                     {showFontMenu && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 bg-black shadow-lg z-50 max-h-40 overflow-y-auto">
                         {fontFamilies.map((font) => (
                           <button
                             key={font.value}
@@ -492,7 +492,7 @@ export function PropertiesPanel({
                               handlePropertyChange("font_family", font.value)
                               setShowFontMenu(false)
                             }}
-                            className="w-full px-3 py-2 text-xs text-left hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-3 py-2 text-xs text-left hover:bg-[#8888881A] text-gray-900 dark:text-white"
                             style={{ fontFamily: font.value }}
                           >
                             {font.name}
@@ -510,7 +510,7 @@ export function PropertiesPanel({
                         type="number"
                         value={localElement.font_size || 16}
                         onChange={(e) => handlePropertyChange("font_size", Number(e.target.value))}
-                        className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="input_field23232425AS"
                         min="8"
                         max="72"
                       />
@@ -520,7 +520,7 @@ export function PropertiesPanel({
                       <select
                         value={localElement.font_weight || "400"}
                         onChange={(e) => handlePropertyChange("font_weight", e.target.value)}
-                        className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="input_field23232425AS"
                       >
                         {fontWeights.map((weight) => (
                           <option key={weight.value} value={weight.value}>
@@ -544,7 +544,7 @@ export function PropertiesPanel({
                         type="text"
                         value={localElement.text_color || "#000000"}
                         onChange={(e) => handlePropertyChange("text_color", e.target.value)}
-                        className="flex-1 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="input_field23232425AS"
                         placeholder="#000000"
                       />
                     </div>
@@ -582,10 +582,10 @@ export function PropertiesPanel({
                         <button
                           key={alignment.value}
                           onClick={() => handlePropertyChange("text_align", alignment.value)}
-                          className={`px-2 py-1.5 text-xs rounded border ${
+                          className={`px-2 py-1.5 text-xs rounded ${
                             localElement.text_align === alignment.value
-                              ? "bg-blue-500 text-white border-blue-500"
-                              : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              ? "menu_container_Cursor_12_f"
+                              : "menu_container_Cursor_12"
                           }`}
                         >
                           {alignment.name}
@@ -599,10 +599,10 @@ export function PropertiesPanel({
           )}
 
           {/* Appearance Section */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="">
             <button
               onClick={() => toggleSection("appearance")}
-              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="w-full flex items-center justify-between p-3 text-left hover:bg-[#8888881A]"
             >
               <div className="flex items-center">
                 <Palette className="w-4 h-4 mr-2 text-gray-500" />
@@ -616,7 +616,7 @@ export function PropertiesPanel({
             </button>
 
             {expandedSections.appearance && (
-              <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="p-3 space-y-3">
                 {/* Background Color */}
                 <div className="relative">
                   <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">Background Color</label>
@@ -630,7 +630,7 @@ export function PropertiesPanel({
                       type="text"
                       value={localElement.background_color || ""}
                       onChange={(e) => handlePropertyChange("background_color", e.target.value)}
-                      className="flex-1 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="input_field23232425AS"
                       placeholder="transparent"
                     />
                   </div>
@@ -668,7 +668,7 @@ export function PropertiesPanel({
                       type="number"
                       value={localElement.border_width || 0}
                       onChange={(e) => handlePropertyChange("border_width", Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="input_field23232425AS"
                       min="0"
                     />
                   </div>
@@ -678,7 +678,7 @@ export function PropertiesPanel({
                       type="number"
                       value={localElement.border_radius || 0}
                       onChange={(e) => handlePropertyChange("border_radius", Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="input_field23232425AS"
                       min="0"
                     />
                   </div>
@@ -690,7 +690,7 @@ export function PropertiesPanel({
                     type="text"
                     value={localElement.border_color || ""}
                     onChange={(e) => handlePropertyChange("border_color", e.target.value)}
-                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="input_field23232425AS"
                     placeholder="#000000"
                   />
                 </div>
@@ -741,10 +741,10 @@ export function PropertiesPanel({
           </div>
 
           {/* Effects Section */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="">
             <button
               onClick={() => toggleSection("effects")}
-              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="w-full flex items-center justify-between p-3 text-left hover:bg-[#8888881A]"
             >
               <div className="flex items-center">
                 <Sparkles className="w-4 h-4 mr-2 text-gray-500" />
@@ -758,12 +758,12 @@ export function PropertiesPanel({
             </button>
 
             {expandedSections.effects && (
-              <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="p-3 space-y-3">
                 <div className="relative">
                   <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">Animation</label>
                   <button
                     onClick={() => setShowEffectsMenu(!showEffectsMenu)}
-                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-left focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="input_field23232425AS"
                   >
                     {animations.find((a) => a.value === localElement.animation)?.name || "None"}
                   </button>
@@ -798,7 +798,7 @@ export function PropertiesPanel({
                       type="number"
                       value={localElement.transform_rotate || 0}
                       onChange={(e) => handlePropertyChange("transform_rotate", Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="input_field23232425AS"
                       placeholder="0"
                     />
                   </div>
@@ -809,7 +809,7 @@ export function PropertiesPanel({
                       step="0.1"
                       value={localElement.transform_scale_x || 1}
                       onChange={(e) => handlePropertyChange("transform_scale_x", Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="input_field23232425AS"
                       placeholder="1"
                     />
                   </div>
@@ -820,7 +820,7 @@ export function PropertiesPanel({
                       step="0.1"
                       value={localElement.transform_scale_y || 1}
                       onChange={(e) => handlePropertyChange("transform_scale_y", Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="input_field23232425AS"
                       placeholder="1"
                     />
                   </div>
@@ -830,10 +830,10 @@ export function PropertiesPanel({
           </div>
 
           {/* Behavior Section */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="">
             <button
               onClick={() => toggleSection("behavior")}
-              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="w-full flex items-center justify-between p-3 text-left hover:bg-[#8888881A]"
             >
               <div className="flex items-center">
                 <Settings className="w-4 h-4 mr-2 text-gray-500" />
@@ -847,19 +847,19 @@ export function PropertiesPanel({
             </button>
 
             {expandedSections.behavior && (
-              <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="p-3 space-y-3">
                 {/* Cursor */}
                 <div className="relative">
                   <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">Cursor</label>
                   <button
                     onClick={() => setShowCursorMenu(!showCursorMenu)}
-                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-left focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="input_field23232425AS"
                   >
                     {localElement.cursor || "default"}
                   </button>
 
                   {showCursorMenu && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-lg z-50 p-3">
+                    <div className="absolute top-full left-0 right-0 mt-1 menu_container_Cursor">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-medium text-white">Cursor</span>
                         <button onClick={() => setShowCursorMenu(false)} className="text-gray-400 hover:text-white">
@@ -874,10 +874,10 @@ export function PropertiesPanel({
                               handlePropertyChange("cursor", cursor.value)
                               setShowCursorMenu(false)
                             }}
-                            className={`p-3 rounded border-2 text-center hover:border-blue-500 transition-colors ${
+                            className={`menu_container_Cursor_1 ${
                               localElement.cursor === cursor.value
-                                ? "border-blue-500 bg-gray-800"
-                                : "border-gray-600 bg-gray-700"
+                                ? "bg-gray-800"
+                                : "menu_container_Cursor_12"
                             }`}
                           >
                             <div className="text-lg mb-1">{cursor.icon}</div>
@@ -897,8 +897,8 @@ export function PropertiesPanel({
                         onClick={() => handlePropertyChange("device_type", "desktop")}
                         className={`flex flex-col items-center p-2 rounded border text-xs ${
                           localElement.device_type === "desktop" || !localElement.device_type
-                            ? "bg-blue-500 text-white border-blue-500"
-                            : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            ? "menu_container_Cursor_12_f"
+                            : "menu_container_Cursor_12 border-none"
                         }`}
                       >
                         <Monitor className="w-4 h-4 mb-1" />
@@ -908,8 +908,8 @@ export function PropertiesPanel({
                         onClick={() => handlePropertyChange("device_type", "tablet")}
                         className={`flex flex-col items-center p-2 rounded border text-xs ${
                           localElement.device_type === "tablet"
-                            ? "bg-blue-500 text-white border-blue-500"
-                            : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            ? "menu_container_Cursor_12_f"
+                            : "menu_container_Cursor_12 border-none"
                         }`}
                       >
                         <Tablet className="w-4 h-4 mb-1" />
@@ -919,9 +919,9 @@ export function PropertiesPanel({
                         onClick={() => handlePropertyChange("device_type", "mobile")}
                         className={`flex flex-col items-center p-2 rounded border text-xs ${
                           localElement.device_type === "mobile"
-                            ? "bg-blue-500 text-white border-blue-500"
-                            : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        }`}
+                            ? "menu_container_Cursor_12_f"
+                            : "menu_container_Cursor_12 border-none"                        
+                            }`}
                       >
                         <Smartphone className="w-4 h-4 mb-1" />
                         Mobile
@@ -938,7 +938,7 @@ export function PropertiesPanel({
                       type="number"
                       value={localElement.z_index || 0}
                       onChange={(e) => handlePropertyChange("z_index", Number(e.target.value))}
-                      className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="input_field23232425AS"
                     />
                   </div>
                 )}

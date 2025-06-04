@@ -116,7 +116,7 @@ export default function Navbar() {
             <img src="/logo_light_mode.png" alt="Logo" className="dark:hidden" />
             <img src="/logo_dark_mode.png" alt="Logo" className="hidden dark:block" />
           </Link>
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-8 sdadwdasdwdw">
             <Link
               href="/features"
               className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"

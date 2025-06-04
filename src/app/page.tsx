@@ -72,13 +72,13 @@ export default function HomePage() {
           )}
 
           <div className="flex gap-4 justify-center mt-8">
-            <Link
+            {/* <Link
               href="/projects"
               className="Start_browsing_23"
               data-i18n="startBrowsing"
             >
               <span className="Start_browsing_23_text12">Start browsing</span>
-            </Link>
+            </Link> */}
             <button
               onClick={() => setShowVideo(true)}
               className="Start_browsing_231"

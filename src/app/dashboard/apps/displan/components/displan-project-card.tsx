@@ -4,17 +4,32 @@ import type React from "react"
 
 import type { DisplanProjectDesignerCssProject } from "../lib/types/displan-types"
 import { formatDistanceToNow } from "date-fns"
-import { ExternalLink, Crown, User } from "lucide-react"
-import { useState, useEffect } from "react"
+import { ExternalLink, Crown, MoreVertical, Trash2, Settings, Loader2, CheckCircle } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { createClient } from "@supabase/supabase-js"
+import "../../../../../styles/sidebar_settings_editor.css"
 
 interface DisplanProjectCardProps {
   project: DisplanProjectDesignerCssProject
   viewMode: "grid" | "list"
   onOpenProject: (projectId: string) => void
+  onProjectDeleted?: (projectId: string) => void
 }
 
-export function DisplanProjectCard({ project, viewMode, onOpenProject }: DisplanProjectCardProps) {
+export function DisplanProjectCard({ project, viewMode, onOpenProject, onProjectDeleted }: DisplanProjectCardProps) {
   const [userPlan, setUserPlan] = useState<"free" | "pro" | "loading">("loading")
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showNotification, setShowNotification] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Initialize Supabase client
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+  )
 
   useEffect(() => {
     checkUserPlan()
@@ -26,8 +41,23 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject }: Displan
       }
     }
 
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+
     window.addEventListener("storage", handleStorageChange)
-    return () => window.removeEventListener("storage", handleStorageChange)
+    document.addEventListener("mousedown", handleClickOutside)
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      document.removeEventListener("mousedown", handleClickOutside)
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current)
+      }
+    }
   }, [])
 
   // Check user plan
@@ -67,11 +97,12 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject }: Displan
     }
   }
 
-  // Helper function to get current user ID
+  // Helper function to get current user ID - FIXED TO GENERATE UUID
   const getCurrentUserId = () => {
     let userId = localStorage.getItem("displan_user_id")
     if (!userId) {
-      userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      // Generate a proper UUID instead of string
+      userId = crypto.randomUUID()
       localStorage.setItem("displan_user_id", userId)
     }
     return userId
@@ -88,7 +119,95 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject }: Displan
     }
   }
 
-  // Render plan badge
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    setShowDropdown(!showDropdown)
+  }
+
+  const openDeleteModal = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowDropdown(false)
+    setShowDeleteModal(true)
+  }
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false)
+  }
+
+  const handleDeleteProject = async () => {
+    setIsDeleting(true)
+
+    try {
+      // Use the project's actual owner_id instead of generated user ID
+      const projectOwnerId = project.owner_id
+
+      console.log("Attempting to delete project:", {
+        project_id: project.id,
+        owner_id: projectOwnerId,
+      })
+
+      // Method 1: Try using the RPC function with the actual owner_id from the project
+      const { data: rpcData, error: rpcError } = await supabase.rpc("delete_displan_project", {
+        project_id: project.id,
+        user_id: projectOwnerId, // Use the actual owner_id from the project
+      })
+
+      console.log("RPC Response:", { data: rpcData, error: rpcError })
+
+      if (rpcError) {
+        console.error("RPC Error:", rpcError)
+
+        // Method 2: Fallback - Try direct delete using the project's owner_id
+        console.log("Trying direct delete as fallback...")
+        const { error: directError } = await supabase
+          .from("displan_project_designer_css_projects")
+          .delete()
+          .eq("id", project.id)
+          .eq("owner_id", projectOwnerId)
+
+        if (directError) {
+          console.error("Direct delete error:", directError)
+          alert(`Failed to delete project: ${directError.message}`)
+          return
+        }
+      }
+
+      console.log("Project deleted successfully")
+
+      // Close modal after a brief delay to show loading state
+      setTimeout(() => {
+        setShowDeleteModal(false)
+        setIsDeleting(false)
+
+        // Show success notification
+        setShowNotification(true)
+
+        // Auto-dismiss notification after 5 seconds
+        notificationTimeoutRef.current = setTimeout(() => {
+          setShowNotification(false)
+        }, 5000)
+
+        // Notify parent component that project was deleted
+        if (onProjectDeleted) {
+          onProjectDeleted(project.id)
+        }
+      }, 1000)
+    } catch (error) {
+      console.error("Unexpected error deleting project:", error)
+      alert(`Failed to delete project: ${error instanceof Error ? error.message : "Unknown error"}`)
+      setIsDeleting(false)
+    }
+  }
+
+  const handleProjectSettings = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowDropdown(false)
+    // Navigate to project settings
+    window.location.href = `/dashboard/apps/displan/editor/${project.id}/settings`
+  }
+
+  // Render plan badge (keeping original code but not using it in render)
   const renderPlanBadge = () => {
     if (userPlan === "loading") {
       return (
@@ -114,22 +233,144 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject }: Displan
     )
   }
 
+  // Render three-dot menu
+  const renderMenuButton = () => {
+    return (
+      <div className="badge_b1arctdq" ref={dropdownRef} onClick={(e) => e.stopPropagation()}>
+        <button onClick={handleMenuClick} className="badge_b1arctdq_free_span_text" disabled={isDeleting}>
+          <MoreVertical className="w-4 h-4 text-black dark:text-white sdadwdasdadawdasdaw" />
+        </button>
+
+        {showDropdown && (
+          <div className="menu_container">
+            <button onClick={handleProjectSettings} className="menu_item">
+              <Settings className="w-4 h-4 mr-2" />
+              <span className="rb5cx25_2">Project Settings</span>
+            </button>
+            <button onClick={openDeleteModal} disabled={isDeleting} className="menu_item">
+              <Trash2 className="w-4 h-4 mr-2" />
+              <span className="rb5cx25_23">Delete Project</span>
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Delete confirmation modal
+  const renderDeleteModal = () => {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div
+          className="absolute inset-0 bg-black bg-opacity-50"
+          onClick={!isDeleting ? closeDeleteModal : undefined}
+        ></div>
+        <div className="bg_13_fsdf_delete relative z-10">
+          <div className="">
+            <h3 className="settings_nav_section_title122323">Delete Project</h3>
+          </div>
+          <hr className="fsdfadsgesgdg121" />
+
+          <div className="space-y-4">
+            {isDeleting ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                <Loader2 className="w-8 h-8 text-white animate-spin mb-2" />
+                <span className="Text_span_css_codecss">Deleting project...</span>
+              </div>
+            ) : (
+              <>
+                <span className="Text_span_css_codecss1212">
+                  This action is permanent and cannot be undone. The project and all its contents, including files and
+                  data, will be permanently deleted.
+                </span>
+                <div className="flex space-x-3">
+                  <button onClick={closeDeleteModal} className="button_edit_projectsfdafgfwf12_dfdd_none">
+                    Cancel
+                  </button>
+                  <button onClick={handleDeleteProject} className="button_edit_projectsfdafgfwf12_dfdd_delete">
+                    Delete Project
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Success notification
+  const renderNotification = () => {
+    return (
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black dark:bg-white text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-fade-in-up">
+        <CheckCircle className="w-5 h-5 text-green-400" />
+        <span className="text-white dark:text-black">Project successfully deleted</span>
+      </div>
+    )
+  }
+
   if (viewMode === "list") {
     return (
-      <div className="flex items-center justify-between p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
-        <div className="flex items-center space-x-4">
-          <div className="w-16 h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
-            preview
+      <>
+        <div className="flex items-center justify-between p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
+          <div className="flex items-center space-x-4" onClick={handleOpenProject}>
+            <div className="w-16 h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
+              preview
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900">{project.name}</h3>
+              <p className="text-sm text-gray-500">
+                Last updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
+              </p>
+              {project.published_url && (
+                <button
+                  onClick={handleOpenLivesite}
+                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center mt-1"
+                >
+                  <ExternalLink className="w-3 h-3 mr-1" />
+                  {project.published_url}
+                </button>
+              )}
+            </div>
           </div>
-          <div>
-            <h3 className="font-medium text-gray-900">{project.name}</h3>
-            <p className="text-sm text-gray-500">
+          <div className="flex items-center space-x-2">
+            {renderMenuButton()}
+            <button
+              onClick={handleOpenProject}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              Open project
+            </button>
+          </div>
+        </div>
+        {showDeleteModal && renderDeleteModal()}
+        {showNotification && renderNotification()}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <div className="rounded-lg bg-background p-4 hover:shadow-md transition-shadow relative">
+        <div onClick={handleOpenProject}>
+          {project.social_preview_url ? (
+            <img
+              src={project.social_preview_url || "/placeholder.svg"}
+              alt="Project preview"
+              className="thumbnailContainerDark"
+            />
+          ) : (
+            <div className="thumbnailContainerDark"></div>
+          )}
+          <div className="space-y-2 _dddddd1_project">
+            <h3 className="text-sm Text_css_project_simple">{project.name}</h3>
+            <p className="Text_css_project_simple_p">
               Last updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
             </p>
             {project.published_url && (
               <button
                 onClick={handleOpenLivesite}
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center mt-1"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
               >
                 <ExternalLink className="w-3 h-3 mr-1" />
                 {project.published_url}
@@ -137,41 +378,10 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject }: Displan
             )}
           </div>
         </div>
-        {renderPlanBadge()}
-        <button
-          onClick={handleOpenProject}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Open project
-        </button>
+        <div className="safasfawfafs">{renderMenuButton()}</div>
       </div>
-    )
-  }
-
-  return (
-    <div className="rounded-lg bg-background p-4 hover:shadow-md transition-shadow" onClick={handleOpenProject}>
-      {project.social_preview_url ? (
-        <img
-          src={project.social_preview_url || "/placeholder.svg"}
-          alt="Project preview"
-          className="thumbnailContainerDark"
-        />
-      ) : (
-        <div className="thumbnailContainerDark"></div>
-      )}
-      <div className="space-y-2 _dddddd1_project">
-        {renderPlanBadge()}
-        <h3 className="text-sm Text_css_project_simple">{project.name}</h3>
-        <p className="Text_css_project_simple_p">
-          Last updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
-        </p>
-        {project.published_url && (
-          <button onClick={handleOpenLivesite} className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-            <ExternalLink className="w-3 h-3 mr-1" />
-            {project.published_url}
-          </button>
-        )}
-      </div>
-    </div>
+      {showDeleteModal && renderDeleteModal()}
+      {showNotification && renderNotification()}
+    </>
   )
 }

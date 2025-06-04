@@ -12,6 +12,8 @@ import {
 } from "../lib/actions/displan-project-actions"
 import Link from "next/link"
 import "../../website-builder/designer/styles/button.css"
+import "@/styles/navbar.css"
+
 interface DisplanDashboardProps {
   initialProjects: DisplanProjectDesignerCssProject[]
 }
@@ -59,7 +61,7 @@ export function DisplanDashboard({ initialProjects }: DisplanDashboardProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-          <Link href="/" className="text-2xl font-bold tracking-tight text-black dark:text-white link_button dsafafwf">
+          <Link href="/" className="text-2xl font-bold tracking-tight text-black dark:text-white link_button dsafafwf2">
             <img src="/logo_light_mode.png" alt="Logo" className="dark:hidden" />
             <img src="/logo_dark_mode.png" alt="Logo" className="hidden dark:block" />
           </Link>

@@ -27,6 +27,7 @@ export function MenuElementsPanel({ onAddElement, onBack }: MenuElementsPanelPro
     { id: "empty-13", name: "Uploader", preview: "/webbuild/12.png" }, 
     { id: "empty-14", name: "InputShotcut", preview: "/webbuild/13.png" }, 
     { id: "empty-15", name: "Plan", preview: "/webbuild/14.png" }, 
+    { id: "empty-16", name: "Loader", preview: "/webbuild/15.png" }, 
   ] 
 
   const handleAddMenu = (templateId: string) => { 
@@ -44,7 +45,7 @@ export function MenuElementsPanel({ onAddElement, onBack }: MenuElementsPanelPro
         <span className="text-sm font-medium text-gray-900 dark:text-white">Menu Templates</span> 
       </div> 
 
-      <div className="space-y-3 overflow-y-auto flex-1"> 
+      <div className="space-y-3 overflow-y-auto flex-1 max-h-[700px] pr-2">
         {menuTemplates.map((template) => ( 
           <div 
             key={template.id} 

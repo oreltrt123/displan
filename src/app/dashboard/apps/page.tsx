@@ -36,7 +36,7 @@ export default async function AppsPage() {
         <div className="container mx-auto px-4 py-8 flex flex-col gap-8">
           {/* Header Section */}
           <header className="flex flex-col gap-4">
-            <h1 className="text-3xl font-bold tracking-tighter">Apps</h1>
+            <h1 className="text-black dark:text-white font-bold tracking-tighter asfasfafgwg">Apps</h1>
           </header>
 
           {/* Apps Grid */}
@@ -110,6 +110,25 @@ export default async function AppsPage() {
                 </p>
                 <div className="app-actions">
                   <Link href="/dashboard/apps/board" className="app-learn-more">
+                    Get started <ArrowRight size={16} className="ml-1" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+
+             <div className="app-card">
+              <div className="app-card-content">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
+                  <Layout size={24} className="text-blue-400" />
+                </div>
+                <h2 className="app-title">Convert HTML <span className="asfawgagasgawgasg">Beta</span></h2>
+                <p className="app-description">
+                  Convert website to html 
+                  <span className="asfawgagasgawgasg1">This is a trial version and may contain bugs or issues. Updates are on the way. We appreciate your understanding.</span>
+                </p>
+                <div className="app-actions">
+                  <Link href="/dashboard/apps/convert" className="app-learn-more">
                     Get started <ArrowRight size={16} className="ml-1" />
                   </Link>
                 </div>

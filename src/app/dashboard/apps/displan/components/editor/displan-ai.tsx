@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Send, Search, Loader2, Code, Sparkles, Zap } from "lucide-react"
+import { Send, Search, Loader2, Code, Sparkles, Zap, X } from "lucide-react"
 import { v4 as uuidv4 } from "uuid"
 import { displanKnowledgeBase } from "./ai-knowledge-base"
 import { parseElementRequest, createElementFromRequest } from "./element-creator"
@@ -31,7 +31,66 @@ export function DisplanAI({ onAddElement, projectId }: DisplanAIProps) {
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Helper function to get current user ID
+  const getCurrentUserId = () => {
+    let userId = localStorage.getItem("displan_user_id")
+    if (!userId) {
+      userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      localStorage.setItem("displan_user_id", userId)
+    }
+    return userId
+  }
+
+  // Cancel subscription function
+  const handleCancelSubscription = async () => {
+    setIsCancelling(true)
+
+    try {
+      const userId = getCurrentUserId()
+      const subscriptionData = localStorage.getItem("displan_ai_subscription")
+
+      if (subscriptionData) {
+        const parsedData = JSON.parse(subscriptionData)
+
+        // Call server API to cancel subscription
+        await fetch("/api/cancel-subscription", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": userId,
+          },
+          body: JSON.stringify({
+            subscriptionId: parsedData.subscriptionId,
+            userId: userId,
+          }),
+        })
+      }
+
+      // Remove subscription from localStorage
+      localStorage.removeItem("displan_ai_subscription")
+
+      // Trigger storage event to notify other components
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "displan_ai_subscription",
+          newValue: null,
+        }),
+      )
+
+      // Reload the page to show subscription panel
+      window.location.reload()
+    } catch (error) {
+      console.error("Error cancelling subscription:", error)
+      // Still remove locally even if server call fails
+      localStorage.removeItem("displan_ai_subscription")
+      window.location.reload()
+    } finally {
+      setIsCancelling(false)
+    }
+  }
 
   // Scroll to bottom of messages
   useEffect(() => {
@@ -302,6 +361,32 @@ export function DisplanAI({ onAddElement, projectId }: DisplanAIProps) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Subscription Header */}
+      <div className="p-2 border-b border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-green-900/20">
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-green-600 dark:text-green-400">
+            <span className="text-green-500">●</span> AI Subscription Active
+          </div>
+          <button
+            onClick={handleCancelSubscription}
+            disabled={isCancelling}
+            className="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors disabled:opacity-50 flex items-center space-x-1"
+          >
+            {isCancelling ? (
+              <>
+                <Loader2 className="w-3 h-3 animate-spin" />
+                <span>Cancelling...</span>
+              </>
+            ) : (
+              <>
+                <X className="w-3 h-3" />
+                <span>Cancel Subscription</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-2 space-y-4">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>

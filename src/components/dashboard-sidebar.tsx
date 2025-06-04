@@ -36,7 +36,7 @@ export default function DashboardSidebar({ projects, userEmail, profile, userId 
   }, [searchTerm, projects])
 
   return (
-    <aside className="w-64 border-r bg-white dark:bg-background flex flex-col">
+    <aside className="w-64 border-r dark:border-r-[#8888881A] bg-white dark:bg-background flex flex-col">
       {/* Search */}
               {/* <Link href="/dashboard" className="text-2xl font-bold tracking-tight text-white link_button dsafafwf2">
               <img 

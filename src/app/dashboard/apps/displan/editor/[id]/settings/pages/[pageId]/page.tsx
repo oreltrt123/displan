@@ -7,6 +7,7 @@ import {
   displan_project_designer_css_get_page_settings,
   displan_project_designer_css_update_page_settings,
 } from "../../../../../lib/actions/displan-project-pages-actions"
+import "../../../../../../../../../styles/sidebar_settings_editor.css"
 
 export default function PageSettingsPage() {
   const params = useParams()
@@ -120,7 +121,7 @@ export default function PageSettingsPage() {
   return (
     <div className="space-y-8">
       {/* Page Settings */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-black rounded-lg p-6">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
             <FileText className="w-6 h-6 mr-3 text-gray-600 dark:text-gray-400" />
@@ -141,7 +142,7 @@ export default function PageSettingsPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Page Name</label>
+              <label className="settings_nav_section_title12">Page Name</label>
               <input
                 type="text"
                 value={settings.name}
@@ -151,7 +152,7 @@ export default function PageSettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Page Slug</label>
+              <label className="settings_nav_section_title12">Page Slug</label>
               <input
                 type="text"
                 value={settings.slug}
@@ -163,7 +164,7 @@ export default function PageSettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+            <label className="settings_nav_section_title12">Description</label>
             <textarea
               rows={3}
               value={settings.description}
@@ -174,7 +175,7 @@ export default function PageSettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Custom URL</label>
+            <label className="settings_nav_section_title12">Custom URL</label>
             <input
               type="url"
               value={settings.custom_url}
@@ -187,11 +188,11 @@ export default function PageSettingsPage() {
       </div>
 
       {/* Page Preview Image */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-black rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Page Preview Image</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Main preview image for this page</p>
 
-        <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+        <div className="p-4">
           {settings.preview_url ? (
             <div className="space-y-3">
               <img
@@ -223,8 +224,7 @@ export default function PageSettingsPage() {
                   htmlFor="page-preview-upload"
                   className="button_edit_project_r22232_Bu cursor-pointer inline-flex items-center"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Change
+                  <span className="dgsgdgegdggeg">Change</span>
                 </label>
               </div>
             </div>
@@ -256,8 +256,7 @@ export default function PageSettingsPage() {
                   htmlFor="page-preview-upload-empty"
                   className="button_edit_project_r22232_Bu cursor-pointer inline-flex items-center"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload
+                  <span className="dgsgdgegdggeg">Upload</span>
                 </label>
               </div>
             </div>
@@ -266,13 +265,13 @@ export default function PageSettingsPage() {
       </div>
 
       {/* Social Preview Image */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-black rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Social Preview Image</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Image shown when this page is shared on social media (1200x630px recommended)
         </p>
 
-        <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+        <div className="rounded-lg p-4">
           {settings.social_preview_url ? (
             <div className="space-y-3">
               <img
@@ -304,8 +303,7 @@ export default function PageSettingsPage() {
                   htmlFor="social-preview-upload"
                   className="button_edit_project_r22232_Bu cursor-pointer inline-flex items-center"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Change
+                  <span className="dgsgdgegdggeg">Change</span>
                 </label>
               </div>
             </div>
@@ -337,8 +335,7 @@ export default function PageSettingsPage() {
                   htmlFor="social-preview-upload-empty"
                   className="button_edit_project_r22232_Bu cursor-pointer inline-flex items-center"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload
+                  <span className="dgsgdgegdggeg">Upload</span>
                 </label>
               </div>
             </div>
@@ -347,7 +344,7 @@ export default function PageSettingsPage() {
       </div>
 
       {/* Custom Code */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-black rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
           <Code className="w-5 h-5 mr-2" />
           Custom Code
@@ -357,11 +354,11 @@ export default function PageSettingsPage() {
         </p>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Custom Code</label>
+          <label className="settings_nav_section_title12">Custom Code</label>
           <textarea
             value={settings.custom_code}
             onChange={(e) => handleInputChange("custom_code", e.target.value)}
-            className="simple_box_Description_site_r233 w-full font-mono text-sm"
+            className="simple_box_Description_site_r233123 w-full font-mono text-sm"
             rows={8}
             placeholder={`<!-- Add your custom HTML, CSS, or JavaScript here -->
 <style>

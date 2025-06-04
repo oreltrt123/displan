@@ -7,6 +7,7 @@ import {
   displan_project_designer_css_get_project_settings,
   displan_project_designer_css_update_project_settings,
 } from "../../../../lib/actions/displan-project-settings-actions"
+import "../../../../../../../../styles/sidebar_settings_editor.css"
 
 export default function CodeSettingsPage() {
   const params = useParams()
@@ -82,8 +83,7 @@ export default function CodeSettingsPage() {
   return (
     <div className="bg-white dark:bg-black rounded-lg p-6">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-0 flex items-center">
-          <Code className="w-5 h-5 mr-2" />
+        <h2 className="titl2_d2m1313">
           Custom Code
         </h2>
         <div className="flex items-center space-x-4">
@@ -97,14 +97,14 @@ export default function CodeSettingsPage() {
           </button>
         </div>
       </div>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <p className="text-sm sadawdsdawdsd">
         Add custom HTML, CSS, or JavaScript code that will be injected into your website. This code will be added to the
         canvas.
       </p>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Custom Code</label>
+          <label className="settings_nav_section_title12">Custom Code</label>
           <textarea
             value={settings.custom_code}
             onChange={(e) => handleInputChange("custom_code", e.target.value)}

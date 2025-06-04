@@ -43,7 +43,7 @@ export default async function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-background text-gray-900 dark:text-gray-100">
+    <div className="flex h-screen bg-white dark:bg-background text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
       <DashboardSidebar projects={projects || []} userEmail={user.email || ""} profile={profile} userId={user.id} />
 
@@ -53,7 +53,7 @@ export default async function Dashboard() {
 
         <div className="container mx-auto px-6 py-8">
           {/* User Profile Section */}
-          <section className="bg-white dark:bg-background border rounded-xl p-6 shadow-sm mb-8">
+          <section className="bg-white dark:bg-background border dark:border-[#8888881A] rounded-xl p-6 shadow-sm mb-8">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                 <UserCircle size={32} className="text-blue-600 dark:text-blue-400" />

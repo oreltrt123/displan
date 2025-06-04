@@ -52,12 +52,12 @@ export function ButtonElementsPanel({ onAddElement, onBack }: ButtonElementsPane
         <span className="text-sm font-medium text-gray-900 dark:text-white">Button Elements</span>
       </div>
 
-      <div className="space-y-3 overflow-y-auto flex-1">
+      <div className="space-y-3 overflow-y-auto flex-1 max-h-[700px] pr-2">
         {buttonStyles.map((style) => (
           <div
             key={style.id}
             onClick={() => handleAddButton(style.id, style.className)}
-            className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+            className="p-3 hover:bg-[#8888881A] cursor-pointer"
           >
             <div className="flex flex-col">
               <div className="mb-2">

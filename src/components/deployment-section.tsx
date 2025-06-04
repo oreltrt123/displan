@@ -7,9 +7,15 @@ interface DeploymentSectionProps {
   projectId: string
   currentSubdomain?: string
   isPublished?: boolean
+  onDeploymentSuccess?: () => void
 }
 
-export function DeploymentSection({ projectId, currentSubdomain, isPublished }: DeploymentSectionProps) {
+export function DeploymentSection({
+  projectId,
+  currentSubdomain,
+  isPublished,
+  onDeploymentSuccess,
+}: DeploymentSectionProps) {
   const [subdomain, setSubdomain] = useState(currentSubdomain || "")
   const [isDeploying, setIsDeploying] = useState(false)
   const [deploymentStatus, setDeploymentStatus] = useState<"idle" | "success" | "error">("idle")
@@ -47,6 +53,13 @@ export function DeploymentSection({ projectId, currentSubdomain, isPublished }: 
 
       setDeployedUrl(data.url)
       setDeploymentStatus("success")
+
+      // Refresh parent component data after successful deployment
+      if (onDeploymentSuccess) {
+        setTimeout(() => {
+          onDeploymentSuccess()
+        }, 1000) // Small delay to ensure server has updated
+      }
     } catch (error) {
       console.error("Deployment error:", error)
       setErrorMessage(error instanceof Error ? error.message : "Failed to deploy")
@@ -72,84 +85,82 @@ export function DeploymentSection({ projectId, currentSubdomain, isPublished }: 
 
   return (
     <div className="bg-white dark:bg-black rounded-lg p-6">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-        <Globe className="w-5 h-5 mr-2" />
-        Deploy to Internet
-      </h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+      <h2 className="titl2_d2m1313">Deploy to Internet</h2>
+      <p className="sadawdsdawdsd112">
         Publish your website to the internet with a custom subdomain. Your site will be available at{" "}
         <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">https://[subdomain].displan.design</code>
       </p>
 
       <div className="space-y-4">
-        {/* Subdomain Input */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Choose your subdomain
-          </label>
-          <div className="flex items-center space-x-2">
-            <div className="flex-1 flex items-center overflow-hidden">
-              <span className="px-3 py-2 bg-gray-50 dark:bg-[#8888881A] text-gray-500 dark:text-gray-400 text-sm">
-                https://
-              </span>
-              <input
-                type="text"
-                value={subdomain}
-                onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                className="flex-1 px-3 py-1.5 bg-white dark:bg-[#8888881A] text-gray-900 dark:text-white focus:outline-none"
-                placeholder="mysite"
-                disabled={isDeploying}
-              />
-              <span className="px-3 py-2 bg-gray-50 dark:bg-[#8888881A] text-gray-500 dark:text-gray-400 text-sm">
-                .displan.design
-              </span>
+        {/* Show input form only if not published */}
+        {!isPublished && (
+          <>
+            {/* Subdomain Input */}
+            <div>
+              <label className="settings_nav_section_title12">Choose your subdomain</label>
+              <div className="flex items-center space-x-2">
+                <div className="flex-1 flex items-center overflow-hidden">
+                  <span className="px-3 py-2 bg-gray-50 dark:bg-[#8888881A] text-gray-500 dark:text-gray-400 text-sm">
+                    https://
+                  </span>
+                  <input
+                    type="text"
+                    value={subdomain}
+                    onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                    className="flex-1 px-3 py-1.5 bg-gray-50 dark:bg-[#8888881A] text-gray-900 dark:text-white focus:outline-none"
+                    placeholder="mysite"
+                    disabled={isDeploying}
+                  />
+                  <span className="px-3 py-2 bg-gray-50 dark:bg-[#8888881A] text-gray-500 dark:text-gray-400 text-sm">
+                    .displan.design
+                  </span>
+                </div>
+                <button
+                  onClick={handleDeploy}
+                  disabled={isDeploying || !subdomain.trim()}
+                  className="button_edit_project_r22232_Bu inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeploying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Deploying...
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="w-4 h-4 mr-2" />
+                      Deploy
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="settings_nav_section_title123">Only lowercase letters, numbers, and hyphens are allowed</p>
             </div>
-            <button
-              onClick={handleDeploy}
-              disabled={isDeploying || !subdomain.trim()}
-              className="button_edit_project_r22232_Bu inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isDeploying ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deploying...
-                </>
-              ) : (
-                <>
-                  <Globe className="w-4 h-4 mr-2" />
-                  Deploy
-                </>
-              )}
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Only lowercase letters, numbers, and hyphens are allowed
-          </p>
-        </div>
 
-        {/* Status Messages */}
-        {deploymentStatus === "success" && (
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
-              <span className="text-sm text-green-700 dark:text-green-300 font-medium">
-                Website deployed successfully!
-              </span>
-            </div>
-          </div>
+            {/* Status Messages */}
+            {deploymentStatus === "success" && (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div className="flex items-center">
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
+                  <span className="text-sm text-green-700 dark:text-green-300 font-medium">
+                    Website deployed successfully!
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {deploymentStatus === "error" && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <div className="flex items-center">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
+                  <span className="text-sm text-red-700 dark:text-red-300 font-medium">{errorMessage}</span>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
-        {deploymentStatus === "error" && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
-              <span className="text-sm text-red-700 dark:text-red-300 font-medium">{errorMessage}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Deployed URL */}
-        {deployedUrl && (
+        {/* Deployed URL - Show if published OR just deployed */}
+        {deployedUrl && (isPublished || deploymentStatus === "success") && (
           <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
@@ -176,16 +187,18 @@ export function DeploymentSection({ projectId, currentSubdomain, isPublished }: 
           </div>
         )}
 
-        {/* Info Box */}
-        <div className="bg-blue-50 dark:bg-[#8888881A] rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">How it works:</h4>
-          <ul className="text-sm text-[#8888881A] dark:text-gray-300 space-y-1">
-            <li>• Choose a unique subdomain for your website</li>
-            <li>• Click Deploy to publish your site to the internet</li>
-            <li>• Your site will be available at https://[subdomain].displan.design</li>
-            <li>• Updates to your project will automatically reflect on your live site</li>
-          </ul>
-        </div>
+        {/* Info Box - Show only if not published */}
+        {!isPublished && (
+          <div className="bg-blue-50 dark:bg-[#8888881A] rounded-lg p-4">
+            <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">How it works:</h4>
+            <ul className="text-sm text-[#5d626b] dark:text-gray-300 space-y-1">
+              <li>• Choose a unique subdomain for your website</li>
+              <li>• Click Deploy to publish your site to the internet</li>
+              <li>• Your site will be available at https://[subdomain].displan.design</li>
+              <li>• Updates to your project will automatically reflect on your live site</li>
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   )

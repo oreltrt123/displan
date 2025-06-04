@@ -81,10 +81,10 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
           <button
             ref={avatarRef}
             onClick={toggleDropdown}
-            className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            className="w-9 h-9 rounded-full bg-[#8888881A] flex items-center justify-center transition-colors"
             aria-label="User menu"
           >
-            <User size={20} className="text-white" />
+            <User size={20} className="text-black dark:text-white" />
           </button>
 
           {isDropdownOpen && (
@@ -126,7 +126,7 @@ export default function DashboardNavbar({ hasProfile = false }: DashboardNavbarP
                   </Link>
                 ) : (
                   <Link
-                    href="/profile/create"
+                    href="/dashboard/profile/create"
                     className="menu_item"
                   >
                     <User size={16} />
