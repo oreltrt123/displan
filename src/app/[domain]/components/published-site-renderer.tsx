@@ -293,7 +293,7 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
                 href="#"
                 className="flex-none rounded-full bg-gray-900 px-3.5 py-1 text-sm font-semibold text-white shadow-xs hover:bg-gray-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
               >
-                Register now <span aria-hidden="true">&rarr;</span>
+                Register now <span aria-hidden="true">→</span>
               </a>
             </div>
             <div className="flex flex-1 justify-end">
@@ -366,7 +366,7 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
                 </div>
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end">
                   <a href="#" className="text-sm/6 font-semibold text-gray-900">
-                    Log in <span aria-hidden="true">&rarr;</span>
+                    Log in <span aria-hidden="true">→</span>
                   </a>
                 </div>
               </nav>
@@ -447,9 +447,7 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
           </div>
         )
 
-      // For editor-specific templates (empty-6 through empty-15, template_11),
-      // render placeholder content instead of trying to import editor components
-  case "empty-6":
+      case "empty-6":
         return (
           <div className="p-8">
               <UserSearch />
@@ -531,14 +529,6 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
               <Template />
           </div>
         )
-        return (
-          <div className="w-full h-64 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Interactive Component</h3>
-              <p className="text-sm text-gray-500">This component is available in the editor</p>
-            </div>
-          </div>
-        )
 
       default:
         return (
@@ -550,7 +540,6 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
   }
 
   const renderElement = (element: any) => {
-    // For menu templates, render them as full-width sections
     if (element.element_type.startsWith("menu-")) {
       const templateId = element.element_type.replace("menu-", "")
       return (
@@ -560,7 +549,6 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
       )
     }
 
-    // For other elements (text, buttons), use absolute positioning
     if (element.element_type.startsWith("text-")) {
       return (
         <div
@@ -628,27 +616,21 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
     return null
   }
 
-  // Separate menu templates from other elements
   const menuElements = siteData.elements.filter((el: any) => el.element_type.startsWith("menu-"))
   const otherElements = siteData.elements.filter((el: any) => !el.element_type.startsWith("menu-"))
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Custom Code Container */}
       <div id="custom-code-container"></div>
 
-      {/* Site Content - Render exactly like the canvas */}
       <div className="relative">
-        {/* Render menu templates as stacked full-width sections */}
         <div className="w-full">{menuElements.map(renderElement)}</div>
 
-        {/* Render other elements with absolute positioning in a container */}
         <div className="relative " style={{ minHeight: "800px", width: "100%" }}>
           {otherElements.map(renderElement)}
         </div>
       </div>
 
-      {/* DisPlan Branding */}
       <div className="fixed bottom-4 right-4 z-50">
         <a
           href="https://displan.design"
