@@ -1,17 +1,34 @@
 "use client"
 
-import { Eye, EyeOff, Save, Crown, User } from "lucide-react"
+import { Eye, EyeOff, Save, Crown, User } from 'lucide-react'
 import { useSubscription } from "../../../../../../hooks/use-subscription"
-import "../../../website-builder/designer/styles/button.css"
+import { ResponsiveControls } from "./responsive-controls"
 
 interface TopBarProps {
   isPreviewMode?: boolean
   onTogglePreview?: () => void
   onSave?: () => void
   isSaving?: boolean
+  previewMode?: "desktop" | "tablet" | "mobile"
+  onChangePreviewMode?: (mode: "desktop" | "tablet" | "mobile") => void
+  canvasWidth?: number
+  canvasHeight?: number
+  onCanvasWidthChange?: (width: number) => void
+  onCanvasHeightChange?: (height: number) => void
 }
 
-export function TopBar({ isPreviewMode = false, onTogglePreview, onSave, isSaving = false }: TopBarProps) {
+export function TopBar({
+  isPreviewMode = false,
+  onTogglePreview,
+  onSave,
+  isSaving = false,
+  previewMode = "desktop",
+  onChangePreviewMode,
+  canvasWidth = 1200,
+  canvasHeight = 800,
+  onCanvasWidthChange,
+  onCanvasHeightChange,
+}: TopBarProps) {
   const { isSubscribed, isLoading, debug } = useSubscription()
 
   console.log("🎯 TopBar render - isSubscribed:", isSubscribed, "isLoading:", isLoading)
@@ -56,23 +73,32 @@ export function TopBar({ isPreviewMode = false, onTogglePreview, onSave, isSavin
 
   if (isPreviewMode) {
     return (
-      <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
-        <div className="flex items-center">
-          {/* {renderPlanBadge()} */}
-
+      <div className="flex flex-col w-full">
+        <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
+          <div className="flex items-center">{/* {renderPlanBadge()} */}</div>
+          <button onClick={onTogglePreview} className="button_edit_project_r222323A">
+            <EyeOff className="w-4 h-4" />
+          </button>
         </div>
-        <button onClick={onTogglePreview} className="button_edit_project_r222323A">
-          <EyeOff className="w-4 h-4" />
-        </button>
+        {isPreviewMode && onChangePreviewMode && (
+          <div className="w-full bg-background border-t border-gray-200 dark:border-gray-800">
+            <ResponsiveControls
+              previewMode={previewMode}
+              onChangePreviewMode={onChangePreviewMode}
+              canvasWidth={canvasWidth}
+              canvasHeight={canvasHeight}
+              onCanvasWidthChange={onCanvasWidthChange || (() => {})}
+              onCanvasHeightChange={onCanvasHeightChange || (() => {})}
+            />
+          </div>
+        )}
       </div>
     )
   }
 
   return (
     <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
-      <div className="flex items-center">
-        {/* {renderPlanBadge()} */}
-      </div>
+      <div className="flex items-center">{/* {renderPlanBadge()} */}</div>
       <div className="flex gap-2">
         <button onClick={onSave} disabled={isSaving} className="button_edit_project_r222323A">
           <Save className="w-4 h-4" />

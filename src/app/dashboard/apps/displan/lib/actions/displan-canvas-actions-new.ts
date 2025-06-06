@@ -12,9 +12,21 @@ function isValidUUID(id: string): boolean {
   return uuidRegex.test(id)
 }
 
-// Check if an element is a template element
+// Enhanced check for template elements
 function isTemplateElement(elementId: string): boolean {
-  return elementId.startsWith("template-") || elementId.startsWith("empty-")
+  return (
+    elementId.includes("_template-") ||
+    elementId.includes("_empty-") ||
+    elementId.startsWith("user_") ||
+    elementId.includes("_heading") ||
+    elementId.includes("_text") ||
+    elementId.includes("_image") ||
+    elementId.includes("_button") ||
+    elementId.includes("_link") ||
+    elementId.includes("_component") ||
+    elementId.startsWith("template-") ||
+    elementId.startsWith("empty-")
+  )
 }
 
 // Fetch elements for a specific page
@@ -57,6 +69,7 @@ export async function displan_project_designer_css_add_element_new(
   elementType: string,
   x: number,
   y: number,
+  properties?: any,
 ) {
   try {
     const supabase = createClient()
@@ -71,41 +84,41 @@ export async function displan_project_designer_css_add_element_new(
     }
 
     // Default properties based on element type
-    let content = ""
-    let width = 200
-    let height = 50
-    let fontSize = 16
-    let fontWeight = "normal"
+    let content = properties?.content || ""
+    let width = properties?.width || 200
+    let height = properties?.height || 50
+    let fontSize = properties?.font_size || 16
+    let fontWeight = properties?.font_weight || "normal"
 
     if (elementType.startsWith("text-")) {
-      content = "Text Element"
+      content = properties?.content || "Text Element"
       if (elementType === "text-heading") {
-        content = "Heading"
-        width = 300
-        height = 60
-        fontSize = 32
-        fontWeight = "bold"
+        content = properties?.content || "Heading"
+        width = properties?.width || 300
+        height = properties?.height || 60
+        fontSize = properties?.font_size || 32
+        fontWeight = properties?.font_weight || "bold"
       } else if (elementType === "text-subheading") {
-        content = "Subheading"
-        width = 250
-        height = 40
-        fontSize = 24
-        fontWeight = "semibold"
+        content = properties?.content || "Subheading"
+        width = properties?.width || 250
+        height = properties?.height || 40
+        fontSize = properties?.font_size || 24
+        fontWeight = properties?.font_weight || "semibold"
       } else if (elementType === "text-paragraph") {
-        content = "This is a paragraph of text. Click to edit."
-        width = 400
-        height = 100
-        fontSize = 16
+        content = properties?.content || "This is a paragraph of text. Click to edit."
+        width = properties?.width || 400
+        height = properties?.height || 100
+        fontSize = properties?.font_size || 16
       }
     } else if (elementType.startsWith("button-")) {
-      content = "Button"
-      width = 120
-      height = 40
-      fontSize = 14
-      fontWeight = "medium"
+      content = properties?.content || "Button"
+      width = properties?.width || 120
+      height = properties?.height || 40
+      fontSize = properties?.font_size || 14
+      fontWeight = properties?.font_weight || "medium"
     } else if (elementType.startsWith("menu-")) {
-      width = 1200
-      height = 400
+      width = properties?.width || 1200
+      height = properties?.height || 400
     }
 
     const newElement = {
@@ -118,26 +131,32 @@ export async function displan_project_designer_css_add_element_new(
       y_position: y,
       width,
       height,
-      width_type: "fixed",
-      height_type: "fixed",
-      opacity: 1.0,
-      visible: true,
-      cursor: "default",
-      animation: "none",
-      device_type: "desktop",
-      z_index: 0,
+      width_type: properties?.width_type || "fixed",
+      height_type: properties?.height_type || "fixed",
+      opacity: properties?.opacity || 1.0,
+      visible: properties?.visible !== undefined ? properties.visible : true,
+      cursor: properties?.cursor || "default",
+      animation: properties?.animation || "none",
+      device_type: properties?.device_type || "desktop",
+      z_index: properties?.z_index || 0,
       font_size: fontSize,
       font_weight: fontWeight,
-      text_align: "left",
-      padding_top: 8,
-      padding_right: 16,
-      padding_bottom: 8,
-      padding_left: 16,
-      margin_top: 0,
-      margin_right: 0,
-      margin_bottom: 0,
-      margin_left: 0,
-      is_template_element: false,
+      text_align: properties?.text_align || "left",
+      background_color: properties?.background_color || null,
+      text_color: properties?.text_color || null,
+      border_radius: properties?.border_radius || 0,
+      border_width: properties?.border_width || 0,
+      border_color: properties?.border_color || null,
+      padding_top: properties?.padding_top || 8,
+      padding_right: properties?.padding_right || 16,
+      padding_bottom: properties?.padding_bottom || 8,
+      padding_left: properties?.padding_left || 16,
+      margin_top: properties?.margin_top || 0,
+      margin_right: properties?.margin_right || 0,
+      margin_bottom: properties?.margin_bottom || 0,
+      margin_left: properties?.margin_left || 0,
+      is_template_element: properties?.is_template_element || false,
+      template_element_id: properties?.template_element_id || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
@@ -177,8 +196,19 @@ export async function displan_project_designer_css_update_element_new(elementId:
 
     // Check if this is a template element
     if (isTemplateElement(elementId)) {
-      console.log("Handling template element update")
-      return { success: true, data: { id: elementId, ...properties }, error: null }
+      console.log("This is a template element, using special handling")
+      
+      // For template elements, we'll just return success with the updated properties
+      // The actual update will be handled by the canvas component
+      return { 
+        success: true, 
+        data: { 
+          id: elementId, 
+          ...properties,
+          updated_at: new Date().toISOString()
+        }, 
+        error: null 
+      }
     }
 
     // Validate UUID for regular elements
@@ -245,24 +275,116 @@ export async function displan_project_designer_css_update_template_element(
 
     console.log("Updating template element:", templateElementId, "with properties:", properties)
 
-    // Use the database function to update template element properties
-    const { data, error } = await supabase.rpc("update_template_element_properties", {
-      project_id_param: projectId,
-      page_slug_param: pageSlug,
-      template_element_id_param: templateElementId,
-      element_type_param: elementType,
-      properties: properties,
-    })
+    // First, check if this template element already exists in the database
+    const { data: existingElement, error: fetchError } = await supabase
+      .from(TABLE_NAME)
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("page_slug", pageSlug)
+      .eq("template_element_id", templateElementId)
+      .maybeSingle()
 
-    if (error) {
-      console.error("Error updating template element:", error)
-      return { success: false, error: error.message, data: null }
+    if (fetchError) {
+      console.error("Error checking for existing template element:", fetchError)
+      return { success: false, error: fetchError.message, data: null }
+    }
+
+    let result;
+    
+    if (existingElement) {
+      // Update existing template element
+      console.log("Updating existing template element in database")
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .update({
+          content: properties.content !== undefined ? properties.content : existingElement.content,
+          background_color: properties.background_color !== undefined ? properties.background_color : existingElement.background_color,
+          text_color: properties.text_color !== undefined ? properties.text_color : existingElement.text_color,
+          border_radius: properties.border_radius !== undefined ? properties.border_radius : existingElement.border_radius,
+          border_width: properties.border_width !== undefined ? properties.border_width : existingElement.border_width,
+          border_color: properties.border_color !== undefined ? properties.border_color : existingElement.border_color,
+          font_size: properties.font_size !== undefined ? properties.font_size : existingElement.font_size,
+          font_weight: properties.font_weight !== undefined ? properties.font_weight : existingElement.font_weight,
+          font_family: properties.font_family !== undefined ? properties.font_family : existingElement.font_family,
+          text_align: properties.text_align !== undefined ? properties.text_align : existingElement.text_align,
+          opacity: properties.opacity !== undefined ? properties.opacity : existingElement.opacity,
+          visible: properties.visible !== undefined ? properties.visible : existingElement.visible,
+          cursor: properties.cursor !== undefined ? properties.cursor : existingElement.cursor,
+          animation: properties.animation !== undefined ? properties.animation : existingElement.animation,
+          transform_rotate: properties.transform_rotate !== undefined ? properties.transform_rotate : existingElement.transform_rotate,
+          transform_scale_x: properties.transform_scale_x !== undefined ? properties.transform_scale_x : existingElement.transform_scale_x,
+          transform_scale_y: properties.transform_scale_y !== undefined ? properties.transform_scale_y : existingElement.transform_scale_y,
+          link_url: properties.link_url !== undefined ? properties.link_url : existingElement.link_url,
+          link_page: properties.link_page !== undefined ? properties.link_page : existingElement.link_page,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", existingElement.id)
+        .select()
+        .single()
+
+      if (error) {
+        console.error("Error updating template element:", error)
+        return { success: false, error: error.message, data: null }
+      }
+      
+      result = data;
+    } else {
+      // Create new template element entry
+      console.log("Creating new template element in database")
+      const newElement = {
+        id: uuidv4(),
+        project_id: projectId,
+        page_slug: pageSlug,
+        element_type: elementType,
+        template_element_id: templateElementId,
+        is_template_element: true,
+        content: properties.content || "Template Element",
+        x_position: properties.x_position || 0,
+        y_position: properties.y_position || 0,
+        width: properties.width || 200,
+        height: properties.height || 50,
+        width_type: properties.width_type || "fixed",
+        height_type: properties.height_type || "fixed",
+        background_color: properties.background_color || null,
+        text_color: properties.text_color || null,
+        border_radius: properties.border_radius || 0,
+        border_width: properties.border_width || 0,
+        border_color: properties.border_color || null,
+        font_size: properties.font_size || 16,
+        font_weight: properties.font_weight || "400",
+        font_family: properties.font_family || "Inter, sans-serif",
+        text_align: properties.text_align || "left",
+        opacity: properties.opacity || 1.0,
+        visible: properties.visible !== undefined ? properties.visible : true,
+        cursor: properties.cursor || "default",
+        animation: properties.animation || "none",
+        transform_rotate: properties.transform_rotate || 0,
+        transform_scale_x: properties.transform_scale_x || 1.0,
+        transform_scale_y: properties.transform_scale_y || 1.0,
+        link_url: properties.link_url || null,
+        link_page: properties.link_page || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .insert([newElement])
+        .select()
+        .single()
+
+      if (error) {
+        console.error("Error creating template element:", error)
+        return { success: false, error: error.message, data: null }
+      }
+      
+      result = data;
     }
 
     // Revalidate the path to update the UI
     revalidatePath(`/dashboard/apps/displan/editor/${projectId}`)
 
-    return { success: true, data, error: null }
+    return { success: true, data: result, error: null }
   } catch (error) {
     console.error("Server error:", error)
     return { success: false, error: "Failed to update template element", data: null }
@@ -278,18 +400,39 @@ export async function displan_project_designer_css_get_template_element_styles(
   try {
     const supabase = createClient()
 
-    const { data, error } = await supabase.rpc("get_template_element_styles", {
-      project_id_param: projectId,
-      page_slug_param: pageSlug,
-      template_element_id_param: templateElementId,
-    })
+    // First check if we have a stored version of this template element
+    const { data: existingElement, error: fetchError } = await supabase
+      .from(TABLE_NAME)
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("page_slug", pageSlug)
+      .eq("template_element_id", templateElementId)
+      .maybeSingle()
 
-    if (error) {
-      console.error("Error fetching template element styles:", error)
-      return { success: false, error: error.message, data: null }
+    if (fetchError) {
+      console.error("Error fetching template element styles:", fetchError)
+      return { success: false, error: fetchError.message, data: null }
     }
 
-    return { success: true, data, error: null }
+    if (existingElement) {
+      return { success: true, data: existingElement, error: null }
+    }
+
+    // If no stored version exists, return default empty data
+    return { 
+      success: true, 
+      data: {
+        template_element_id: templateElementId,
+        content: null,
+        background_color: null,
+        text_color: null,
+        font_size: null,
+        font_weight: null,
+        font_family: null,
+        text_align: null
+      }, 
+      error: null 
+    }
   } catch (error) {
     console.error("Server error:", error)
     return { success: false, error: "Failed to get template element styles", data: null }

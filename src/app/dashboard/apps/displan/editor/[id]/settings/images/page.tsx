@@ -110,7 +110,7 @@ export default function ImagesSettingsPage() {
   return (
     <div className="bg-white dark:bg-black rounded-lg p-6">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="titl2_d2m1313">
+        <h2 className="titl2_d2m1313 dark:text-white">
           Website Images
         </h2>
         <div className="flex items-center space-x-4">
@@ -134,13 +134,13 @@ export default function ImagesSettingsPage() {
           </p>
 
           <div className="space-y-4">
-            <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+            <div className="border dark:border-[#8888881A] rounded-lg p-4">
               {settings.social_preview_url ? (
                 <div className="space-y-3">
                   <img
                     src={settings.social_preview_url || "/placeholder.svg"}
                     alt="Social Preview"
-                    className="w-full max-w-md h-auto rounded border border-gray-200 dark:border-gray-700"
+                    className="w-full max-w-md h-auto rounded"
                   />
                   <div className="flex items-center space-x-2">
                     <input
@@ -166,7 +166,6 @@ export default function ImagesSettingsPage() {
                       htmlFor="social-preview-upload"
                       className="button_edit_project_r22232_Bu cursor-pointer inline-flex items-center"
                     >
-                      <Upload className="w-4 h-4 mr-2" />
                       Change
                     </label>
                   </div>
@@ -197,9 +196,8 @@ export default function ImagesSettingsPage() {
                     />
                     <label
                       htmlFor="social-preview-upload-empty"
-                      className="button_edit_project_r22232_Bu cursor-pointer inline-flex items-center"
+                      className="button_edit_project_r22232_Bu"
                     >
-                      <Upload className="w-4 h-4 mr-2" />
                       Upload
                     </label>
                   </div>

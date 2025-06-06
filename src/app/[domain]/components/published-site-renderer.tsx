@@ -14,6 +14,7 @@ import Plan from "../../dashboard/apps/displan/components/editor/canvas/plan"
 import Uploader from "../../dashboard/apps/displan/components/editor/canvas/file-uploader"
 import AnimatedValue from "../../dashboard/apps/displan/components/editor/canvas/slider"
 import InputShotcut from "../../dashboard/apps/displan/components/editor/canvas/input-shotcut"
+import Template from "../../dashboard/apps/displan/components/editor/canvas/template"
 
 interface PublishedSiteRendererProps {
   siteData: PublishedSiteData
@@ -202,6 +203,12 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
         return (
           <div>
             <Plan />
+          </div>
+        )
+      case "template_11":
+        return (
+          <div className="">
+              <Template />
           </div>
         )
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { LeftSidebar } from "../../components/editor/left-sidebar"
 import { RightSidebar } from "../../components/editor/right-sidebar"
 import { Canvas } from "../../components/editor/canvas"
@@ -29,6 +29,7 @@ import type { DisplanCanvasElement } from "../../lib/types/displan-canvas-types"
 
 export default function EditorPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const projectId = params.id as string
 
   const [currentTool, setCurrentTool] = useState<EditorTool>("cursor")
@@ -42,6 +43,11 @@ export default function EditorPage() {
   const [isPreviewMode, setIsPreviewMode] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined)
+  
+  // Responsive controls state
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop")
+  const [canvasWidth, setCanvasWidth] = useState(1200)
+  const [canvasHeight, setCanvasHeight] = useState(800)
 
   useEffect(() => {
     // Try to get user email from localStorage or session
@@ -50,10 +56,43 @@ export default function EditorPage() {
       setUserEmail(email)
     }
 
+    // Load saved responsive settings from localStorage
+    const savedSettings = localStorage.getItem("canvas-settings")
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings)
+        setPreviewDevice(settings.previewDevice || "desktop")
+        setCanvasWidth(settings.canvasWidth || 1200)
+        setCanvasHeight(settings.canvasHeight || 800)
+        setZoom(settings.zoom || 100)
+        setIsDarkMode(settings.isDarkMode || false)
+      } catch (error) {
+        console.error("Error loading saved settings:", error)
+      }
+    }
+
+    // Check if there's a page parameter in the URL
+    const pageParam = searchParams.get("page")
+    if (pageParam) {
+      setCurrentPage(pageParam)
+    }
+
     loadComments()
     loadPages()
     loadElements()
-  }, [projectId, currentPage])
+  }, [projectId, currentPage, searchParams])
+
+  // Save responsive settings to localStorage whenever they change
+  useEffect(() => {
+    const settings = {
+      previewDevice,
+      canvasWidth,
+      canvasHeight,
+      zoom,
+      isDarkMode,
+    }
+    localStorage.setItem("canvas-settings", JSON.stringify(settings))
+  }, [previewDevice, canvasWidth, canvasHeight, zoom, isDarkMode])
 
   useEffect(() => {
     if (isDarkMode) {
@@ -185,6 +224,34 @@ export default function EditorPage() {
     }
   }
 
+  // Handle responsive controls
+  const handleChangePreviewMode = (mode: "desktop" | "tablet" | "mobile") => {
+    console.log("Changing preview mode to:", mode)
+    setPreviewDevice(mode)
+    
+    // Set default dimensions based on device
+    if (mode === "desktop") {
+      setCanvasWidth(1200)
+      setCanvasHeight(800)
+    } else if (mode === "tablet") {
+      setCanvasWidth(768)
+      setCanvasHeight(1024)
+    } else {
+      setCanvasWidth(375)
+      setCanvasHeight(667)
+    }
+  }
+
+  const handleCanvasWidthChange = (width: number) => {
+    console.log("Changing canvas width to:", width)
+    setCanvasWidth(width)
+  }
+
+  const handleCanvasHeightChange = (height: number) => {
+    console.log("Changing canvas height to:", height)
+    setCanvasHeight(height)
+  }
+
   // Handle AI-generated element requests
   const handleAIAddElement = (elementType: string, x: number, y: number, properties: any) => {
     handleAddElement(elementType, x, y, properties)
@@ -197,6 +264,12 @@ export default function EditorPage() {
         onTogglePreview={handleTogglePreviewMode}
         onSave={handleSaveCanvas}
         isSaving={isSaving}
+        previewMode={previewDevice}
+        onChangePreviewMode={handleChangePreviewMode}
+        canvasWidth={canvasWidth}
+        canvasHeight={canvasHeight}
+        onCanvasWidthChange={handleCanvasWidthChange}
+        onCanvasHeightChange={handleCanvasHeightChange}
       />
 
       <div className={`flex-1 flex overflow-hidden transition-all duration-300`}>
@@ -223,6 +296,7 @@ export default function EditorPage() {
           onSelectElement={handleSelectElement}
           onMoveElement={handleMoveElement}
           onUpdateElement={handleUpdateElement}
+          onAddElement={handleAddElement}
           zoom={zoom}
           onToolChange={setCurrentTool}
           isDarkMode={isDarkMode}
@@ -230,6 +304,9 @@ export default function EditorPage() {
           onZoomChange={setZoom}
           projectId={projectId}
           isPreviewMode={isPreviewMode}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
+          previewDevice={previewDevice}
         />
 
         {!isPreviewMode && (
@@ -237,7 +314,13 @@ export default function EditorPage() {
             {currentTool === "comment" ? (
               <RightSidebar comments={comments} onDeleteComment={handleDeleteComment} showComments={true} />
             ) : (
-              <PropertiesPanel selectedElement={selectedElement} pages={pages} onUpdateElement={handleUpdateElement} />
+              <PropertiesPanel 
+                selectedElement={selectedElement} 
+                pages={pages} 
+                onUpdateElement={handleUpdateElement}
+                projectId={projectId}
+                pageSlug={currentPage}
+              />
             )}
           </div>
         )}
@@ -245,3 +328,4 @@ export default function EditorPage() {
     </div>
   )
 }
+        

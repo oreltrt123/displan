@@ -147,7 +147,7 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
     <>
       <div
         className="w-[300px] bg-white dark:bg-black dark:border-gray-900 h-full overflow-hidden flex"
-        style={{ minWidth: "300px", maxWidth: "300px" }}
+        style={{ minWidth: "400px", maxWidth: "400px" }}
       >
         {/* Left Tab Navigation */}
         <div className="w-12 sdadwdsdawdsd flex flex-col py-4">

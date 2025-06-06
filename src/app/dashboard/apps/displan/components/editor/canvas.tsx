@@ -18,6 +18,7 @@ import Uploader from "./canvas/file-uploader"
 import AnimatedValue from "./canvas/slider"
 import InputShotcut from "./canvas/input-shotcut"
 import Loader from "./canvas/loader"
+import Template from "./canvas/template"
 
 type Tool = "cursor" | "hand" | "comment"
 
@@ -39,6 +40,9 @@ interface CanvasProps {
   projectId: string
   isPreviewMode?: boolean
   customCode?: string
+  canvasWidth?: number
+  canvasHeight?: number
+  previewDevice?: "desktop" | "tablet" | "mobile"
 }
 
 interface EditableTemplateElement {
@@ -66,6 +70,9 @@ export function Canvas({
   projectId,
   isPreviewMode = false,
   customCode = "",
+  canvasWidth = 1200,
+  canvasHeight = 800,
+  previewDevice = "desktop",
 }: CanvasProps) {
   const [showCommentInput, setShowCommentInput] = useState(false)
   const [commentPosition, setCommentPosition] = useState({ x: 0, y: 0 })
@@ -83,12 +90,34 @@ export function Canvas({
   const [editableElements, setEditableElements] = useState<Map<string, EditableTemplateElement>>(new Map())
   const [editingElementId, setEditingElementId] = useState<string | null>(null)
 
+  // Stable ID management for individual template elements
+  const [elementStableIds, setElementStableIds] = useState<Map<string, string>>(new Map())
+  const [userSessionId] = useState(() => `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
+
   const canvasRef = useRef<HTMLDivElement>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Generate unique ID for template elements
+  // Generate stable ID for individual template elements
+  const getStableElementId = (templateId: string, elementKey: string) => {
+    const elementIdentifier = `${templateId}_${elementKey}`
+
+    // Check if we already have a stable ID for this specific element
+    if (elementStableIds.has(elementIdentifier)) {
+      return elementStableIds.get(elementIdentifier)!
+    }
+
+    // Generate new stable ID for this specific element for this user
+    const newElementId = `${userSessionId}_${templateId}_${elementKey}`
+
+    // Store it for future use
+    setElementStableIds((prev) => new Map(prev).set(elementIdentifier, newElementId))
+
+    return newElementId
+  }
+
+  // Generate unique ID for regular elements (non-template)
   const generateUniqueId = (prefix = "element") => {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   }
@@ -265,10 +294,10 @@ export function Canvas({
       ;(window as any).addElementToCanvas = handleAIAddElement
       // Also store canvas dimensions for AI positioning
       ;(window as any).getCanvasDimensions = () => ({
-        width: 1200,
-        height: 800,
-        centerX: 600,
-        centerY: 400,
+        width: canvasWidth,
+        height: canvasHeight,
+        centerX: canvasWidth / 2,
+        centerY: canvasHeight / 2,
       })
     }
 
@@ -279,7 +308,7 @@ export function Canvas({
         delete (window as any).getCanvasDimensions
       }
     }
-  }, [handleAIAddElement])
+  }, [handleAIAddElement, canvasWidth, canvasHeight])
 
   // Generate CSS styles for an element
   const generateElementStyles = (element: DisplanCanvasElement): React.CSSProperties => {
@@ -359,6 +388,11 @@ export function Canvas({
     // Z-index
     if (element.z_index !== undefined) {
       styles.zIndex = element.z_index
+    }
+
+    // Device visibility - hide elements that don't match current preview device
+    if (isPreviewMode && element.device_type && element.device_type !== previewDevice) {
+      styles.display = "none"
     }
 
     return styles
@@ -644,20 +678,24 @@ export function Canvas({
     return "default"
   }
 
-  // Enhanced wrapper component for editable elements
+  // Enhanced wrapper component for individual template elements with stable IDs
   const EditableElement = ({
     children,
-    elementId,
+    templateId,
+    elementKey,
     elementType,
     content,
     className = "",
   }: {
     children: React.ReactNode
-    elementId: string
+    templateId: string
+    elementKey: string
     elementType: string
     content: string
     className?: string
   }) => {
+    // Generate stable ID for this specific element
+    const elementId = getStableElementId(templateId, elementKey)
     const isSelected = selectedTemplateElement === elementId
     const isEditing = editingElementId === elementId
     const editableElement = editableElements.get(elementId)
@@ -701,7 +739,8 @@ export function Canvas({
             <div className="mx-auto grid max-w-7xl gap-20 px-6 lg:px-8 xl:grid-cols-3">
               <div className="max-w-xl">
                 <EditableElement
-                  elementId={generateUniqueId("template-1-title")}
+                  templateId={templateId}
+                  elementKey="title"
                   elementType="heading"
                   content="Meet our leadership"
                 >
@@ -710,7 +749,8 @@ export function Canvas({
                   </h2>
                 </EditableElement>
                 <EditableElement
-                  elementId={generateUniqueId("template-1-description")}
+                  templateId={templateId}
+                  elementKey="description"
                   elementType="text"
                   content="We're a dynamic group of individuals who are passionate about what we do and dedicated to delivering the best results for our clients."
                   className="mt-6"
@@ -725,7 +765,8 @@ export function Canvas({
                 <li>
                   <div className="flex items-center gap-x-6">
                     <EditableElement
-                      elementId={generateUniqueId("template-1-avatar")}
+                      templateId={templateId}
+                      elementKey="avatar"
                       elementType="image"
                       content="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
                     >
@@ -736,15 +777,12 @@ export function Canvas({
                       />
                     </EditableElement>
                     <div>
-                      <EditableElement
-                        elementId={generateUniqueId("template-1-name")}
-                        elementType="text"
-                        content="Test Name"
-                      >
+                      <EditableElement templateId={templateId} elementKey="name" elementType="text" content="Test Name">
                         <h3 className="text-base/7 font-semibold tracking-tight text-gray-900">Test Name</h3>
                       </EditableElement>
                       <EditableElement
-                        elementId={generateUniqueId("template-1-role")}
+                        templateId={templateId}
+                        elementKey="role"
                         elementType="text"
                         content="Co-Founder / CEO"
                       >
@@ -765,7 +803,8 @@ export function Canvas({
             <div className="absolute inset-y-0 right-1/2 -z-10 mr-16 w-[200%] origin-bottom-left skew-x-[-30deg] bg-white shadow-xl ring-1 shadow-indigo-600/10 ring-indigo-50 sm:mr-28 lg:mr-0 xl:mr-16 xl:origin-center"></div>
             <div className="mx-auto max-w-2xl lg:max-w-4xl">
               <EditableElement
-                elementId={generateUniqueId("template-2-logo")}
+                templateId={templateId}
+                elementKey="logo"
                 elementType="image"
                 content="/logo_light_mode.png"
               >
@@ -774,7 +813,8 @@ export function Canvas({
               <figure className="mt-10">
                 <blockquote className="text-center text-xl/8 font-semibold text-gray-900 sm:text-2xl/9">
                   <EditableElement
-                    elementId={generateUniqueId("template-2-quote")}
+                    templateId={templateId}
+                    elementKey="quote"
                     elementType="text"
                     content="Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo expedita voluptas culpa sapiente alias molestiae. Numquam corrupti in laborum sed rerum et corporis."
                   >
@@ -786,7 +826,8 @@ export function Canvas({
                 </blockquote>
                 <figcaption className="mt-10">
                   <EditableElement
-                    elementId={generateUniqueId("template-2-avatar")}
+                    templateId={templateId}
+                    elementKey="avatar"
                     elementType="image"
                     content="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
                   >
@@ -797,18 +838,15 @@ export function Canvas({
                     />
                   </EditableElement>
                   <div className="mt-4 flex items-center justify-center space-x-3 text-base">
-                    <EditableElement
-                      elementId={generateUniqueId("template-2-name")}
-                      elementType="text"
-                      content="Test Name"
-                    >
+                    <EditableElement templateId={templateId} elementKey="name" elementType="text" content="Test Name">
                       <div className="font-semibold text-gray-900">Test Name</div>
                     </EditableElement>
                     <svg viewBox="0 0 2 2" width="3" height="3" aria-hidden="true" className="fill-gray-900">
                       <circle cx="1" cy="1" r="1" />
                     </svg>
                     <EditableElement
-                      elementId={generateUniqueId("template-2-title")}
+                      templateId={templateId}
+                      elementKey="title"
                       elementType="text"
                       content="CEO of Workcation"
                     >
@@ -827,7 +865,8 @@ export function Canvas({
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
               <div className="mx-auto max-w-2xl lg:mx-0">
                 <EditableElement
-                  elementId={generateUniqueId("empty-0-title")}
+                  templateId={templateId}
+                  elementKey="title"
                   elementType="heading"
                   content="From the blog"
                 >
@@ -836,7 +875,8 @@ export function Canvas({
                   </h2>
                 </EditableElement>
                 <EditableElement
-                  elementId={generateUniqueId("empty-0-subtitle")}
+                  templateId={templateId}
+                  elementKey="subtitle"
                   elementType="text"
                   content="Learn how to grow your business with our expert advice."
                   className="mt-2"
@@ -848,7 +888,8 @@ export function Canvas({
                 <article className="flex max-w-xl flex-col items-start justify-between">
                   <div className="flex items-center gap-x-4 text-xs">
                     <EditableElement
-                      elementId={generateUniqueId("empty-0-date")}
+                      templateId={templateId}
+                      elementKey="date"
                       elementType="text"
                       content="Mar 16, 2020"
                     >
@@ -857,7 +898,8 @@ export function Canvas({
                       </time>
                     </EditableElement>
                     <EditableElement
-                      elementId={generateUniqueId("empty-0-category")}
+                      templateId={templateId}
+                      elementKey="category"
                       elementType="link"
                       content="Marketing"
                     >
@@ -871,7 +913,8 @@ export function Canvas({
                   </div>
                   <div className="group relative">
                     <EditableElement
-                      elementId={generateUniqueId("empty-0-article-title")}
+                      templateId={templateId}
+                      elementKey="article-title"
                       elementType="heading"
                       content="Boost your conversion rate"
                       className="mt-3"
@@ -884,7 +927,8 @@ export function Canvas({
                       </h3>
                     </EditableElement>
                     <EditableElement
-                      elementId={generateUniqueId("empty-0-article-excerpt")}
+                      templateId={templateId}
+                      elementKey="article-excerpt"
                       elementType="text"
                       content="Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta."
                       className="mt-5"
@@ -898,7 +942,8 @@ export function Canvas({
                   </div>
                   <div className="relative mt-8 flex items-center gap-x-4">
                     <EditableElement
-                      elementId={generateUniqueId("empty-0-author-avatar")}
+                      templateId={templateId}
+                      elementKey="author-avatar"
                       elementType="image"
                       content="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
                     >
@@ -910,7 +955,8 @@ export function Canvas({
                     </EditableElement>
                     <div className="text-sm/6">
                       <EditableElement
-                        elementId={generateUniqueId("empty-0-author-name")}
+                        templateId={templateId}
+                        elementKey="author-name"
                         elementType="text"
                         content="Test Name"
                       >
@@ -922,7 +968,8 @@ export function Canvas({
                         </p>
                       </EditableElement>
                       <EditableElement
-                        elementId={generateUniqueId("empty-0-author-role")}
+                        templateId={templateId}
+                        elementKey="author-role"
                         elementType="text"
                         content="Co-Founder / CTO"
                       >
@@ -952,17 +999,14 @@ export function Canvas({
               ></div>
             </div>
             <div className="mx-auto max-w-2xl text-center">
-              <EditableElement
-                elementId={generateUniqueId("empty-1-title")}
-                elementType="heading"
-                content="Contact sales"
-              >
+              <EditableElement templateId={templateId} elementKey="title" elementType="heading" content="Contact sales">
                 <h2 className="text-4xl font-semibold tracking-tight text-balance text-gray-900 sm:text-5xl">
                   Contact sales
                 </h2>
               </EditableElement>
               <EditableElement
-                elementId={generateUniqueId("empty-1-subtitle")}
+                templateId={templateId}
+                elementKey="subtitle"
                 elementType="text"
                 content="Aute magna irure deserunt veniam aliqua magna enim voluptate."
                 className="mt-2"
@@ -974,7 +1018,8 @@ export function Canvas({
               <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
                 <div>
                   <EditableElement
-                    elementId={generateUniqueId("empty-1-first-name-label")}
+                    templateId={templateId}
+                    elementKey="first-name-label"
                     elementType="text"
                     content="First name"
                   >
@@ -994,7 +1039,8 @@ export function Canvas({
                 </div>
                 <div>
                   <EditableElement
-                    elementId={generateUniqueId("empty-1-last-name-label")}
+                    templateId={templateId}
+                    elementKey="last-name-label"
                     elementType="text"
                     content="Last name"
                   >
@@ -1015,7 +1061,8 @@ export function Canvas({
               </div>
               <div className="mt-10">
                 <EditableElement
-                  elementId={generateUniqueId("empty-1-submit-button")}
+                  templateId={templateId}
+                  elementKey="submit-button"
                   elementType="button"
                   content="Let's talk"
                 >
@@ -1048,7 +1095,8 @@ export function Canvas({
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <EditableElement
-                elementId={generateUniqueId("empty-2-announcement")}
+                templateId={templateId}
+                elementKey="announcement"
                 elementType="text"
                 content="DisPlan 2025 - Join us in Denver from June 7 – 9 to see what's coming next."
               >
@@ -1061,7 +1109,8 @@ export function Canvas({
                 </p>
               </EditableElement>
               <EditableElement
-                elementId={generateUniqueId("empty-2-cta-button")}
+                templateId={templateId}
+                elementKey="cta-button"
                 elementType="button"
                 content="Register now"
               >
@@ -1088,15 +1137,12 @@ export function Canvas({
         return (
           <div className="bg-gray-50 py-24 sm:py-32">
             <div className="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
-              <EditableElement
-                elementId={generateUniqueId("empty-3-subtitle")}
-                elementType="text"
-                content="Deploy faster"
-              >
+              <EditableElement templateId={templateId} elementKey="subtitle" elementType="text" content="Deploy faster">
                 <h2 className="text-center text-base/7 font-semibold text-indigo-600">Deploy faster</h2>
               </EditableElement>
               <EditableElement
-                elementId={generateUniqueId("empty-3-title")}
+                templateId={templateId}
+                elementKey="title"
                 elementType="heading"
                 content="Everything you need to deploy your app"
                 className="mx-auto mt-2 max-w-lg text-center"
@@ -1111,7 +1157,8 @@ export function Canvas({
                   <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)] lg:rounded-l-[calc(2rem+1px)]">
                     <div className="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
                       <EditableElement
-                        elementId={generateUniqueId("empty-3-feature-title")}
+                        templateId={templateId}
+                        elementKey="feature-title"
                         elementType="text"
                         content="Mobile friendly"
                         className="mt-2"
@@ -1121,7 +1168,8 @@ export function Canvas({
                         </p>
                       </EditableElement>
                       <EditableElement
-                        elementId={generateUniqueId("empty-3-feature-description")}
+                        templateId={templateId}
+                        elementKey="feature-description"
                         elementType="text"
                         content="Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo."
                         className="mt-2 max-w-lg"
@@ -1146,7 +1194,8 @@ export function Canvas({
               <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
                 <div className="flex lg:flex-1">
                   <EditableElement
-                    elementId={generateUniqueId("empty-4-logo")}
+                    templateId={templateId}
+                    elementKey="logo"
                     elementType="image"
                     content="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
                   >
@@ -1162,7 +1211,8 @@ export function Canvas({
                 </div>
                 <div className="hidden lg:flex lg:gap-x-12">
                   <EditableElement
-                    elementId={generateUniqueId("empty-4-nav-product")}
+                    templateId={templateId}
+                    elementKey="nav-product"
                     elementType="link"
                     content="Product"
                   >
@@ -1171,7 +1221,8 @@ export function Canvas({
                     </a>
                   </EditableElement>
                   <EditableElement
-                    elementId={generateUniqueId("empty-4-nav-features")}
+                    templateId={templateId}
+                    elementKey="nav-features"
                     elementType="link"
                     content="Features"
                   >
@@ -1180,7 +1231,8 @@ export function Canvas({
                     </a>
                   </EditableElement>
                   <EditableElement
-                    elementId={generateUniqueId("empty-4-nav-marketplace")}
+                    templateId={templateId}
+                    elementKey="nav-marketplace"
                     elementType="link"
                     content="Marketplace"
                   >
@@ -1189,7 +1241,8 @@ export function Canvas({
                     </a>
                   </EditableElement>
                   <EditableElement
-                    elementId={generateUniqueId("empty-4-nav-company")}
+                    templateId={templateId}
+                    elementKey="nav-company"
                     elementType="link"
                     content="Company"
                   >
@@ -1199,11 +1252,7 @@ export function Canvas({
                   </EditableElement>
                 </div>
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-                  <EditableElement
-                    elementId={generateUniqueId("empty-4-login-link")}
-                    elementType="link"
-                    content="Log in"
-                  >
+                  <EditableElement templateId={templateId} elementKey="login-link" elementType="link" content="Log in">
                     <a href="#" className="text-sm/6 font-semibold text-gray-900">
                       Log in <span aria-hidden="true">&rarr;</span>
                     </a>
@@ -1216,7 +1265,8 @@ export function Canvas({
               <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
                 <div className="text-center">
                   <EditableElement
-                    elementId={generateUniqueId("empty-4-hero-title")}
+                    templateId={templateId}
+                    elementKey="hero-title"
                     elementType="heading"
                     content="Data to enrich your online business"
                   >
@@ -1225,7 +1275,8 @@ export function Canvas({
                     </h1>
                   </EditableElement>
                   <EditableElement
-                    elementId={generateUniqueId("empty-4-hero-description")}
+                    templateId={templateId}
+                    elementKey="hero-description"
                     elementType="text"
                     content="Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt amet fugiat veniam occaecat."
                     className="mt-8"
@@ -1237,7 +1288,8 @@ export function Canvas({
                   </EditableElement>
                   <div className="mt-10 flex items-center justify-center gap-x-6">
                     <EditableElement
-                      elementId={generateUniqueId("empty-4-cta-primary")}
+                      templateId={templateId}
+                      elementKey="cta-primary"
                       elementType="button"
                       content="Get started"
                     >
@@ -1249,7 +1301,8 @@ export function Canvas({
                       </a>
                     </EditableElement>
                     <EditableElement
-                      elementId={generateUniqueId("empty-4-cta-secondary")}
+                      templateId={templateId}
+                      elementKey="cta-secondary"
                       elementType="link"
                       content="Learn more"
                     >
@@ -1268,11 +1321,12 @@ export function Canvas({
         return (
           <div className="relative isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
             <div className="mx-auto max-w-4xl text-center">
-              <EditableElement elementId={generateUniqueId("empty-5-subtitle")} elementType="text" content="Pricing">
+              <EditableElement templateId={templateId} elementKey="subtitle" elementType="text" content="Pricing">
                 <h2 className="text-base/7 font-semibold text-indigo-600">Pricing</h2>
               </EditableElement>
               <EditableElement
-                elementId={generateUniqueId("empty-5-title")}
+                templateId={templateId}
+                elementKey="title"
                 elementType="heading"
                 content="Choose your DisPlan plan for you"
                 className="mt-2"
@@ -1283,7 +1337,8 @@ export function Canvas({
               </EditableElement>
             </div>
             <EditableElement
-              elementId={generateUniqueId("empty-5-description")}
+              templateId={templateId}
+              elementKey="description"
               elementType="text"
               content="Choose an affordable plan that's packed with the best features for engaging your audience, creating customer loyalty, and driving sales."
               className="mx-auto mt-6 max-w-2xl text-center"
@@ -1295,17 +1350,18 @@ export function Canvas({
             </EditableElement>
             <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-2">
               <div className="rounded-3xl rounded-t-3xl bg-white/60 p-8 ring-1 ring-gray-900/10 sm:mx-8 sm:rounded-b-none sm:p-10 lg:mx-0 lg:rounded-tr-none lg:rounded-bl-3xl">
-                <EditableElement elementId={generateUniqueId("empty-5-plan1-name")} elementType="text" content="Hobby">
+                <EditableElement templateId={templateId} elementKey="plan1-name" elementType="text" content="Hobby">
                   <h3 className="text-base/7 font-semibold text-indigo-600">Hobby</h3>
                 </EditableElement>
                 <p className="mt-4 flex items-baseline gap-x-2">
-                  <EditableElement elementId={generateUniqueId("empty-5-plan1-price")} elementType="text" content="$29">
+                  <EditableElement templateId={templateId} elementKey="plan1-price" elementType="text" content="$29">
                     <span className="text-5xl font-semibold tracking-tight text-gray-900">$29</span>
                   </EditableElement>
                   <span className="text-base text-gray-500">/month</span>
                 </p>
                 <EditableElement
-                  elementId={generateUniqueId("empty-5-plan1-description")}
+                  templateId={templateId}
+                  elementKey="plan1-description"
                   elementType="text"
                   content="The perfect plan if you're just getting started with our product."
                   className="mt-6"
@@ -1315,7 +1371,8 @@ export function Canvas({
                   </p>
                 </EditableElement>
                 <EditableElement
-                  elementId={generateUniqueId("empty-5-plan1-cta")}
+                  templateId={templateId}
+                  elementKey="plan1-cta"
                   elementType="button"
                   content="Get started today"
                   className="mt-8 block sm:mt-10"
@@ -1330,20 +1387,22 @@ export function Canvas({
               </div>
               <div className="relative rounded-3xl bg-gray-900 p-8 shadow-2xl ring-1 ring-gray-900/10 sm:p-10">
                 <EditableElement
-                  elementId={generateUniqueId("empty-5-plan2-name")}
+                  templateId={templateId}
+                  elementKey="plan2-name"
                   elementType="text"
                   content="Enterprise"
                 >
                   <h3 className="text-base/7 font-semibold text-indigo-400">Enterprise</h3>
                 </EditableElement>
                 <p className="mt-4 flex items-baseline gap-x-2">
-                  <EditableElement elementId={generateUniqueId("empty-5-plan2-price")} elementType="text" content="$99">
+                  <EditableElement templateId={templateId} elementKey="plan2-price" elementType="text" content="$99">
                     <span className="text-5xl font-semibold tracking-tight text-white">$99</span>
                   </EditableElement>
                   <span className="text-base text-gray-400">/month</span>
                 </p>
                 <EditableElement
-                  elementId={generateUniqueId("empty-5-plan2-description")}
+                  templateId={templateId}
+                  elementKey="plan2-description"
                   elementType="text"
                   content="Dedicated support and infrastructure for your company."
                   className="mt-6"
@@ -1351,7 +1410,8 @@ export function Canvas({
                   <p className="text-base/7 text-gray-300">Dedicated support and infrastructure for your company.</p>
                 </EditableElement>
                 <EditableElement
-                  elementId={generateUniqueId("empty-5-plan2-cta")}
+                  templateId={templateId}
+                  elementKey="plan2-cta"
                   elementType="button"
                   content="Get started today"
                   className="mt-8 block sm:mt-10"
@@ -1372,7 +1432,8 @@ export function Canvas({
         return (
           <div className="p-8">
             <EditableElement
-              elementId={generateUniqueId("empty-6-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="UserSearch Component"
             >
@@ -1385,7 +1446,8 @@ export function Canvas({
         return (
           <div className="p-8">
             <EditableElement
-              elementId={generateUniqueId("empty-7-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="ClickSelect Component"
             >
@@ -1398,7 +1460,8 @@ export function Canvas({
         return (
           <div className="p-8">
             <EditableElement
-              elementId={generateUniqueId("empty-8-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="ImageCarousel Component"
             >
@@ -1409,9 +1472,10 @@ export function Canvas({
 
       case "empty-9":
         return (
-          <div className="p-8">
+          <div className="">
             <EditableElement
-              elementId={generateUniqueId("empty-9-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="View Component"
             >
@@ -1422,9 +1486,10 @@ export function Canvas({
 
       case "empty-10":
         return (
-          <div className="p-8">
+          <div className="">
             <EditableElement
-              elementId={generateUniqueId("empty-10-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="AnimatedValue Component"
             >
@@ -1435,9 +1500,10 @@ export function Canvas({
 
       case "empty-11":
         return (
-          <div className="p-8">
+          <div className="">
             <EditableElement
-              elementId={generateUniqueId("empty-11-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="Cursor Component"
             >
@@ -1448,9 +1514,10 @@ export function Canvas({
 
       case "empty-12":
         return (
-          <div className="p-8">
+          <div className="">
             <EditableElement
-              elementId={generateUniqueId("empty-12-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="Feedback Component"
             >
@@ -1463,7 +1530,8 @@ export function Canvas({
         return (
           <div className="p-8">
             <EditableElement
-              elementId={generateUniqueId("empty-13-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="Uploader Component"
             >
@@ -1476,7 +1544,8 @@ export function Canvas({
         return (
           <div className="p-8">
             <EditableElement
-              elementId={generateUniqueId("empty-14-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="InputShotcut Component"
             >
@@ -1489,7 +1558,8 @@ export function Canvas({
         return (
           <div className="p-8">
             <EditableElement
-              elementId={generateUniqueId("empty-15-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="Plan Component"
             >
@@ -1501,14 +1571,30 @@ export function Canvas({
         return (
           <div className="p-8">
             <EditableElement
-              elementId={generateUniqueId("empty-16-wrapper")}
+              templateId={templateId}
+              elementKey="wrapper"
               elementType="component"
               content="Loader Component"
             >
-               <Loader />
+              <Loader />
             </EditableElement>
           </div>
         )
+
+      case "template_11":
+        return (
+          <div className="">
+            <EditableElement
+              templateId={templateId}
+              elementKey="wrapper"
+              elementType="component"
+              content="Cursor Component"
+            >
+              <Template />
+            </EditableElement>
+          </div>
+        )
+
       default:
         return (
           <div className="w-full h-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded flex items-center justify-center">
@@ -1654,6 +1740,11 @@ export function Canvas({
   const menuElements = localElements.filter((el) => el.element_type.startsWith("menu-"))
   const otherElements = localElements.filter((el) => !el.element_type.startsWith("menu-"))
 
+  // Filter elements based on device type in preview mode
+  const visibleElements = isPreviewMode
+    ? otherElements.filter((el) => !el.device_type || el.device_type === previewDevice)
+    : otherElements
+
   return (
     <div className="flex-1 bg-[#8888881A] dark:bg-[#1D1D1D] p-8 overflow-hidden relative">
       <div
@@ -1668,22 +1759,31 @@ export function Canvas({
       >
         <div
           data-canvas="true"
-          className="bg-white thumbnailContainerDark12 relative overflow-y-auto"
+          className="bg-white relative overflow-y-auto"
           style={{
-            width: "1200px",
-            height: "800px",
+            width: `${canvasWidth}px`,
+            height: `${canvasHeight}px`,
             transform: `translate(${canvasPosition.x}px, ${canvasPosition.y}px) scale(${zoom / 100})`,
             transformOrigin: "center center",
+            transition: isPreviewMode ? "width 0.3s, height 0.3s" : "none",
           }}
         >
           {/* Custom Code Container */}
           <div id="custom-code-container" className="w-full"></div>
 
           {/* Render menu templates as stacked full-width sections */}
-          <div className="w-full">{menuElements.map(renderElement)}</div>
+          <div className="w-full">
+            {menuElements.map((element) => {
+              // Skip rendering if device type doesn't match in preview mode
+              if (isPreviewMode && element.device_type && element.device_type !== previewDevice) {
+                return null
+              }
+              return renderElement(element)
+            })}
+          </div>
 
           {/* Render other elements with absolute positioning */}
-          {otherElements.map(renderElement)}
+          {visibleElements.map(renderElement)}
 
           {!isPreviewMode &&
             comments.map((comment, index) => {

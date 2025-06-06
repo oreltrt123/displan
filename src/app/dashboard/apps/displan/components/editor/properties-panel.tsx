@@ -65,9 +65,21 @@ export function PropertiesPanel({
   const inputRef = useRef<HTMLInputElement>(null)
   const updateTimeoutRef = useRef<NodeJS.Timeout>()
 
-  // Check if element is a template element
+  // Enhanced check for template elements
   const isTemplateElement = (elementId: string): boolean => {
-    return elementId.startsWith("template-") || elementId.startsWith("empty-")
+    return (
+      elementId.includes("_template-") ||
+      elementId.includes("_empty-") ||
+      elementId.startsWith("user_") ||
+      elementId.includes("_heading") ||
+      elementId.includes("_text") ||
+      elementId.includes("_image") ||
+      elementId.includes("_button") ||
+      elementId.includes("_link") ||
+      elementId.includes("_component") ||
+      elementId.startsWith("template-") ||
+      elementId.startsWith("empty-")
+    )
   }
 
   // Update local state when selected element changes
@@ -104,6 +116,8 @@ export function PropertiesPanel({
 
           if (isTemplateElement(elementId)) {
             // Handle template element update
+            console.log("Updating template element:", elementId, "with properties:", properties)
+
             result = await displan_project_designer_css_update_template_element(
               projectId,
               pageSlug,
@@ -113,8 +127,12 @@ export function PropertiesPanel({
             )
           } else {
             // Handle regular element update
+            console.log("Updating regular element:", elementId, "with properties:", properties)
+
             result = await displan_project_designer_css_update_element_new(elementId, properties)
           }
+
+          console.log("Update result:", result)
 
           if (result.success) {
             setUpdateSuccess(true)
@@ -322,7 +340,7 @@ export function PropertiesPanel({
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {isTemplateElement(localElement.id)
-                ? `Template: ${localElement.id}`
+                ? `Template Element ID: ${localElement.id.slice(0, 12)}...`
                 : `ID: ${localElement.id.slice(0, 8)}...`}
             </p>
           </div>
@@ -396,9 +414,19 @@ export function PropertiesPanel({
                       )}
                       {isTemplateElement(localElement.id) && (
                         <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-700 dark:text-yellow-400">
-                          Template images cannot be changed. Use URL field instead.
+                          Template images cannot be uploaded. Use URL field instead.
                         </div>
                       )}
+                      <div>
+                        <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
+                        <input
+                          type="text"
+                          value={localElement.content || ""}
+                          onChange={(e) => handlePropertyChange("content", e.target.value)}
+                          className="input_field23232425AS"
+                          placeholder="https://example.com/image.jpg"
+                        />
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -425,7 +453,7 @@ export function PropertiesPanel({
                       value={localElement.link_url || ""}
                       onChange={(e) => handlePropertyChange("link_url", e.target.value)}
                       className="input_field23232425AS"
-                      />
+                    />
                     <button
                       onClick={() => setShowLinkMenu(!showLinkMenu)}
                       className="px-2 py-1.5 menu_container_Cursor_12_f text-gray-900 dark:text-white rounded text-xs"
@@ -437,11 +465,7 @@ export function PropertiesPanel({
                   {showLinkMenu && (
                     <div className="menu_container12212">
                       {pages.map((page) => (
-                        <button
-                          key={page.id}
-                          onClick={() => handlePageSelect(page)}
-                          className="menu_item"
-                        >
+                        <button key={page.id} onClick={() => handlePageSelect(page)} className="menu_item">
                           {page.is_folder ? <Folder className="w-3 h-3 mr-2" /> : <FileText className="w-3 h-3 mr-2" />}
                           {page.name}
                         </button>
@@ -476,10 +500,7 @@ export function PropertiesPanel({
                   {/* Font Family */}
                   <div className="relative">
                     <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">Font Family</label>
-                    <button
-                      onClick={() => setShowFontMenu(!showFontMenu)}
-                      className="input_field23232425AS"
-                    >
+                    <button onClick={() => setShowFontMenu(!showFontMenu)} className="input_field23232425AS">
                       {fontFamilies.find((f) => f.value === localElement.font_family)?.name || "Inter"}
                     </button>
 
@@ -761,10 +782,7 @@ export function PropertiesPanel({
               <div className="p-3 space-y-3">
                 <div className="relative">
                   <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">Animation</label>
-                  <button
-                    onClick={() => setShowEffectsMenu(!showEffectsMenu)}
-                    className="input_field23232425AS"
-                  >
+                  <button onClick={() => setShowEffectsMenu(!showEffectsMenu)} className="input_field23232425AS">
                     {animations.find((a) => a.value === localElement.animation)?.name || "None"}
                   </button>
 
@@ -851,10 +869,7 @@ export function PropertiesPanel({
                 {/* Cursor */}
                 <div className="relative">
                   <label className="block text-xs text-gray-700 dark:text-gray-300 mb-1">Cursor</label>
-                  <button
-                    onClick={() => setShowCursorMenu(!showCursorMenu)}
-                    className="input_field23232425AS"
-                  >
+                  <button onClick={() => setShowCursorMenu(!showCursorMenu)} className="input_field23232425AS">
                     {localElement.cursor || "default"}
                   </button>
 
@@ -875,9 +890,7 @@ export function PropertiesPanel({
                               setShowCursorMenu(false)
                             }}
                             className={`menu_container_Cursor_1 ${
-                              localElement.cursor === cursor.value
-                                ? "bg-gray-800"
-                                : "menu_container_Cursor_12"
+                              localElement.cursor === cursor.value ? "bg-gray-800" : "menu_container_Cursor_12"
                             }`}
                           >
                             <div className="text-lg mb-1">{cursor.icon}</div>
@@ -920,8 +933,8 @@ export function PropertiesPanel({
                         className={`flex flex-col items-center p-2 rounded border text-xs ${
                           localElement.device_type === "mobile"
                             ? "menu_container_Cursor_12_f"
-                            : "menu_container_Cursor_12 border-none"                        
-                            }`}
+                            : "menu_container_Cursor_12 border-none"
+                        }`}
                       >
                         <Smartphone className="w-4 h-4 mb-1" />
                         Mobile

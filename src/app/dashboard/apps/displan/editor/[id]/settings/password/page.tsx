@@ -85,7 +85,7 @@ export default function PasswordSettingsPage() {
 
   return (
     <div className="bg-white dark:bg-black rounded-lg p-6">
-      <h2 className="titl2_d2m1313">
+      <h2 className="titl2_d2m1313 dark:text-white">
         Password Protection
       </h2>
       <p className="sadawdsdawdsd112">

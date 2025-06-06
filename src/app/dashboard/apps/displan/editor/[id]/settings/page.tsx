@@ -230,7 +230,7 @@ export default function GeneralSettingsPage() {
       <div className="bg-white dark:bg-black rounded-lg p-6">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
-            <h1 className="titl2_d2m1313">Website Settings</h1>
+            <h1 className="titl2_d2m1313 dark:text-white">Website Settings</h1>
             {settings.is_published && settings.published_url && (
               <button
                 onClick={handleOpenLivesite}
@@ -292,15 +292,14 @@ export default function GeneralSettingsPage() {
       <div className="bg-white dark:bg-black rounded-lg p-6 mt-6">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
-            <h1 className="titl2_d2m1313">Delete Website</h1>
+            <h1 className="titl2_d2m1313 dark:text-white">Delete Website</h1>
           </div>
         </div>
         <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
-            Once you delete a project, there is no going back. Please be certain.
+          <p className="safasfawfasf">
+           By clicking delete, you confirm the permanent removal of your project, including all its content and its URL. This action is irreversible.
           </p>
           <button onClick={openDeleteModal} className="button_edit_project_r22232_Bu_delete">
-            <Trash2 className="w-4 h-4 mr-2" />
             Delete Project
           </button>
         </div>

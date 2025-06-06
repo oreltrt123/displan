@@ -1,0 +1,396 @@
+.project-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.project-sidebar {
+  width: 280px;
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.new-project-btn {
+  padding: 8px 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.new-project-btn:hover {
+  background: #2563eb;
+}
+
+.sidebar-content {
+  flex: 1;
+  padding: 16px 0;
+  overflow-y: auto;
+}
+
+.nav-section {
+  margin-bottom: 24px;
+}
+
+.nav-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 8px 20px;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item {
+  margin: 0;
+}
+
+.nav-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 8px 20px;
+  border: none;
+  background: none;
+  color: #475569;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.nav-button:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.nav-button.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.nav-icon {
+  margin-right: 12px;
+  font-size: 16px;
+}
+
+.nav-text {
+  flex: 1;
+  truncate: true;
+}
+
+.deployed-badge {
+  background: #10b981;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+
+.sidebar-separator {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 16px 20px;
+}
+
+.project-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.project-header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.project-info {
+  flex: 1;
+}
+
+.project-id {
+  font-size: 12px;
+  color: #64748b;
+  font-family: monospace;
+  margin-bottom: 8px;
+}
+
+.project-info h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+}
+
+.project-name-input {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  border: 2px solid #3b82f6;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 0 0 12px 0;
+  background: white;
+}
+
+.project-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.project-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.action-button.edit {
+  background: #f59e0b;
+  color: white;
+}
+
+.action-button.edit:hover {
+  background: #d97706;
+}
+
+.action-button.save {
+  background: #10b981;
+  color: white;
+}
+
+.action-button.save:hover {
+  background: #059669;
+}
+
+.action-button.cancel {
+  background: #ef4444;
+  color: white;
+}
+
+.action-button.cancel:hover {
+  background: #dc2626;
+}
+
+.action-button.download {
+  background: #3b82f6;
+  color: white;
+}
+
+.action-button.download:hover {
+  background: #2563eb;
+}
+
+.action-button.copy {
+  background: #6b7280;
+  color: white;
+}
+
+.action-button.copy:hover {
+  background: #4b5563;
+}
+
+.action-button.deploy {
+  background: #8b5cf6;
+  color: white;
+}
+
+.action-button.deploy:hover {
+  background: #7c3aed;
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.deployment-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.deployed-label {
+  background: #10b981;
+  color: white;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.deployed-link {
+  color: #3b82f6;
+  font-size: 12px;
+  font-family: monospace;
+  text-decoration: none;
+}
+
+.deployed-link:hover {
+  text-decoration: underline;
+}
+
+.project-content {
+  flex: 1;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.code-section {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 500;
+  color: #475569;
+}
+
+.code-size {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.code-textarea {
+  flex: 1;
+  padding: 20px;
+  border: none;
+  background: #fafafa;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+}
+
+.code-textarea.editable {
+  background: white;
+  border: 2px solid #3b82f6;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 18px;
+  color: #64748b;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+  padding: 24px;
+}
+
+.error h2 {
+  font-size: 24px;
+  color: #ef4444;
+  margin: 0 0 12px 0;
+}
+
+.error p {
+  color: #64748b;
+  margin: 0 0 24px 0;
+}
+
+.back-button {
+  padding: 12px 24px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background: #2563eb;
+}
+
+@media (max-width: 768px) {
+  .project-container {
+    flex-direction: column;
+  }
+
+  .project-sidebar {
+    width: 100%;
+    height: auto;
+  }
+
+  .project-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .project-actions {
+    justify-content: stretch;
+  }
+
+  .action-button {
+    flex: 1;
+  }
+}

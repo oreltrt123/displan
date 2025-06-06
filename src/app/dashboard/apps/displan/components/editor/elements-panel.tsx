@@ -1,17 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { Type, Square, List } from "lucide-react"
+import { Type, Square, List, Layers } from "lucide-react"
 import { TextElementsPanel } from "./elements/text-elements-panel"
 import { ButtonElementsPanel } from "./elements/button-elements-panel"
 import { MenuElementsPanel } from "./elements/menu-elements-panel"
+import { MenuTemplatesPanel } from "./elements/menu-templates-panel"
 
 interface ElementsPanelProps {
   onAddElement?: (elementType: string, x: number, y: number) => void
 }
 
 export function ElementsPanel({ onAddElement }: ElementsPanelProps) {
-  const [currentView, setCurrentView] = useState<"main" | "text" | "button" | "menu">("main")
+  const [currentView, setCurrentView] = useState<"main" | "text" | "button" | "menu" | "template" >("main")
 
   const goBack = () => {
     setCurrentView("main")
@@ -30,6 +31,14 @@ export function ElementsPanel({ onAddElement }: ElementsPanelProps) {
           >
             <Type className="w-4 h-4 mr-2" />
             <span className="text-sm">Text</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView("template")}
+            className="w-full flex items-center p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-white"
+          >
+            <Layers className="w-4 h-4 mr-2" />
+            <span className="text-sm">Template</span>
           </button>
 
           <button
@@ -55,6 +64,11 @@ export function ElementsPanel({ onAddElement }: ElementsPanelProps) {
   // Text elements view
   if (currentView === "text") {
     return <TextElementsPanel onAddElement={onAddElement} onBack={goBack} />
+  }
+
+    // Button elements view
+  if (currentView === "template") {
+    return <MenuTemplatesPanel onAddElement={onAddElement} onBack={goBack} />
   }
 
   // Button elements view

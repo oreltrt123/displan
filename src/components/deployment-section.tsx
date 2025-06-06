@@ -85,7 +85,7 @@ export function DeploymentSection({
 
   return (
     <div className="bg-white dark:bg-black rounded-lg p-6">
-      <h2 className="titl2_d2m1313">Deploy to Internet</h2>
+      <h2 className="titl2_d2m1313 dark:text-white">Deploy to Internet</h2>
       <p className="sadawdsdawdsd112">
         Publish your website to the internet with a custom subdomain. Your site will be available at{" "}
         <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">https://[subdomain].displan.design</code>
@@ -161,7 +161,7 @@ export function DeploymentSection({
 
         {/* Deployed URL - Show if published OR just deployed */}
         {deployedUrl && (isPublished || deploymentStatus === "success") && (
-          <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+          <div className="border dark:border-[#8888881A] rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Your website is live at:</p>

@@ -83,7 +83,7 @@ export default function CodeSettingsPage() {
   return (
     <div className="bg-white dark:bg-black rounded-lg p-6">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="titl2_d2m1313">
+        <h2 className="titl2_d2m1313 dark:text-white">
           Custom Code
         </h2>
         <div className="flex items-center space-x-4">

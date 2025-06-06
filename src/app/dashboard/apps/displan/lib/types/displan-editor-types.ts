@@ -2,6 +2,7 @@ export interface DisplanProjectDesignerCssComment {
   id: string
   project_id: string
   page_id: string
+  page_slug?: string
   x_position: number
   y_position: number
   message: string
