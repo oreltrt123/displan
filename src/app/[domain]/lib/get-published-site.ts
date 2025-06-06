@@ -15,6 +15,8 @@ export interface PublishedSiteData {
 
 export async function getPublishedSiteData(subdomain: string): Promise<PublishedSiteData | null> {
   try {
+    console.log("🔍 Fetching published site data for subdomain:", subdomain)
+
     const supabase = createClient()
 
     // Get the project by subdomain
@@ -25,8 +27,10 @@ export async function getPublishedSiteData(subdomain: string): Promise<Published
       .eq("is_published", true)
       .single()
 
+    console.log("📦 Project query result:", { project, projectError })
+
     if (projectError || !project) {
-      console.error("Project not found:", projectError)
+      console.error("❌ Project not found:", projectError)
       return null
     }
 
@@ -38,12 +42,18 @@ export async function getPublishedSiteData(subdomain: string): Promise<Published
       .eq("page_id", "home")
       .order("created_at", { ascending: true })
 
+    console.log("🧩 Elements query result:", {
+      elements,
+      elementsError,
+      elementsCount: elements?.length || 0,
+    })
+
     if (elementsError) {
-      console.error("Error fetching elements:", elementsError)
+      console.error("❌ Error fetching elements:", elementsError)
       return null
     }
 
-    return {
+    const siteData = {
       id: project.id,
       name: project.name,
       description: project.description,
@@ -55,8 +65,11 @@ export async function getPublishedSiteData(subdomain: string): Promise<Published
       elements: elements || [],
       is_published: project.is_published,
     }
+
+    console.log("✅ Final site data:", siteData)
+    return siteData
   } catch (error) {
-    console.error("Error getting published site data:", error)
+    console.error("💥 Error getting published site data:", error)
     return null
   }
 }

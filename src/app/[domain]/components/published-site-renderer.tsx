@@ -1,11 +1,7 @@
 "use client"
 
-import type React from "react"
-
 import { useEffect, useState } from "react"
 import type { PublishedSiteData } from "../lib/get-published-site"
-
-// Keep all your original imports
 import ClickSelect from "../../dashboard/apps/displan/components/editor/canvas/user-search"
 import UserSearch from "../../dashboard/apps/displan/components/editor/canvas/click-select"
 import ImageCarousel from "../../dashboard/apps/displan/components/editor/canvas/carousel"
@@ -21,36 +17,6 @@ import Template from "../../dashboard/apps/displan/components/editor/canvas/temp
 
 interface PublishedSiteRendererProps {
   siteData: PublishedSiteData
-}
-
-// Error boundary component to catch component errors
-function ComponentErrorBoundary({
-  children,
-  fallback,
-  componentName,
-}: {
-  children: React.ReactNode
-  fallback: React.ReactNode
-  componentName: string
-}) {
-  const [hasError, setHasError] = useState(false)
-
-  useEffect(() => {
-    setHasError(false)
-  }, [children])
-
-  if (hasError) {
-    console.error(`Error rendering ${componentName}`)
-    return <>{fallback}</>
-  }
-
-  try {
-    return <>{children}</>
-  } catch (error) {
-    console.error(`Error in ${componentName}:`, error)
-    setHasError(true)
-    return <>{fallback}</>
-  }
 }
 
 export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) {
@@ -110,8 +76,6 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
   }, [siteData.custom_code])
 
   const renderMenuTemplate = (templateId: string) => {
-    console.log(`Rendering template: ${templateId}`)
-
     switch (templateId) {
       case "template-1":
         return (
@@ -483,197 +447,97 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
           </div>
         )
 
-      // Keep all your original components with error boundaries
-      case "empty-6":
+      // For editor-specific templates (empty-6 through empty-15, template_11),
+      // render placeholder content instead of trying to import editor components
+  case "empty-6":
         return (
-          <ComponentErrorBoundary
-            componentName="UserSearch"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading UserSearch component</p>
-              </div>
-            }
-          >
-            <div className="p-8">
+          <div className="p-8">
               <UserSearch />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "empty-7":
         return (
-          <ComponentErrorBoundary
-            componentName="ClickSelect"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading ClickSelect component</p>
-              </div>
-            }
-          >
-            <div className="p-8">
+          <div className="p-8">
               <ClickSelect />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "empty-8":
         return (
-          <ComponentErrorBoundary
-            componentName="ImageCarousel"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading ImageCarousel component</p>
-              </div>
-            }
-          >
-            <div className="p-8">
+          <div className="p-8">
               <ImageCarousel />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "empty-9":
         return (
-          <ComponentErrorBoundary
-            componentName="View"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading View component</p>
-              </div>
-            }
-          >
-            <div className="">
+          <div className="">
               <View />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "empty-10":
         return (
-          <ComponentErrorBoundary
-            componentName="AnimatedValue"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading AnimatedValue component</p>
-              </div>
-            }
-          >
-            <div className="">
+          <div className="">
               <AnimatedValue />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "empty-11":
         return (
-          <ComponentErrorBoundary
-            componentName="Cursor"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading Cursor component</p>
-              </div>
-            }
-          >
-            <div className="">
+          <div className="">
               <Cursor />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "empty-12":
         return (
-          <ComponentErrorBoundary
-            componentName="Feedback"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading Feedback component</p>
-              </div>
-            }
-          >
-            <div className="">
+          <div className="">
               <Feedback />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "empty-13":
         return (
-          <ComponentErrorBoundary
-            componentName="Uploader"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading Uploader component</p>
-              </div>
-            }
-          >
-            <div className="p-8">
+          <div className="p-8">
               <Uploader />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "empty-14":
         return (
-          <ComponentErrorBoundary
-            componentName="InputShotcut"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading InputShotcut component</p>
-              </div>
-            }
-          >
-            <div className="p-8">
+          <div className="p-8">
               <InputShotcut />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "empty-15":
         return (
-          <ComponentErrorBoundary
-            componentName="Plan"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading Plan component</p>
-              </div>
-            }
-          >
-            <div className="p-8">
+          <div className="p-8">
               <Plan />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
-
       case "empty-16":
         return (
-          <ComponentErrorBoundary
-            componentName="Loader"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading Loader component</p>
-              </div>
-            }
-          >
-            <div className="p-8">
+          <div className="p-8">
               <Loader />
-            </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       case "template_11":
         return (
-          <ComponentErrorBoundary
-            componentName="Template"
-            fallback={
-              <div className="p-8 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-600">Error loading Template component</p>
-              </div>
-            }
-          >
-            <div className="">
+          <div className="">
               <Template />
+          </div>
+        )
+        return (
+          <div className="w-full h-64 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Interactive Component</h3>
+              <p className="text-sm text-gray-500">This component is available in the editor</p>
             </div>
-          </ComponentErrorBoundary>
+          </div>
         )
 
       default:
@@ -686,8 +550,6 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
   }
 
   const renderElement = (element: any) => {
-    console.log("Rendering element:", element)
-
     // For menu templates, render them as full-width sections
     if (element.element_type.startsWith("menu-")) {
       const templateId = element.element_type.replace("menu-", "")
@@ -763,38 +625,12 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
       )
     }
 
-    if (element.element_type.startsWith("container-")) {
-      return (
-        <div
-          key={element.id}
-          className="absolute"
-          style={{
-            left: element.x_position,
-            top: element.y_position,
-            width: element.width,
-            height: element.height,
-          }}
-        >
-          <div className={`displan-${element.element_type} w-full h-full`}>
-            {element.content && <div className="p-4">{element.content}</div>}
-          </div>
-        </div>
-      )
-    }
-
     return null
   }
-
-  // Add debugging
-  console.log("Site data:", siteData)
-  console.log("Elements:", siteData.elements)
 
   // Separate menu templates from other elements
   const menuElements = siteData.elements.filter((el: any) => el.element_type.startsWith("menu-"))
   const otherElements = siteData.elements.filter((el: any) => !el.element_type.startsWith("menu-"))
-
-  console.log("Menu elements:", menuElements)
-  console.log("Other elements:", otherElements)
 
   return (
     <div className="min-h-screen bg-white">
@@ -807,7 +643,7 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
         <div className="w-full">{menuElements.map(renderElement)}</div>
 
         {/* Render other elements with absolute positioning in a container */}
-        <div className="relative bg-white" style={{ minHeight: "800px", width: "100%" }}>
+        <div className="relative " style={{ minHeight: "800px", width: "100%" }}>
           {otherElements.map(renderElement)}
         </div>
       </div>

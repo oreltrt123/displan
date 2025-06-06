@@ -11,18 +11,25 @@ interface DomainPageProps {
 export default async function DomainPage({ params }: DomainPageProps) {
   const { domain } = params
 
+  console.log("🌐 Domain page called with domain:", domain)
+
   // Skip processing for the main domain
   if (domain === "www" || domain === "displan") {
+    console.log("🚫 Skipping main domain")
     notFound()
   }
 
   // Get the published site data
   const siteData = await getPublishedSiteData(domain)
 
+  console.log("📊 Site data received:", siteData)
+
   if (!siteData) {
+    console.log("❌ No site data found, returning 404")
     notFound()
   }
 
+  console.log("✅ Rendering PublishedSiteRenderer with data")
   return <PublishedSiteRenderer siteData={siteData} />
 }
 
