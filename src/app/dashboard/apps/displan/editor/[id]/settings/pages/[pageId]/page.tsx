@@ -8,7 +8,7 @@ import {
   displan_project_designer_css_update_page_settings,
 } from "../../../../../lib/actions/displan-project-pages-actions"
 import "../../../../../../../../../styles/sidebar_settings_editor.css"
-
+import "../../../../../../website-builder/designer/styles/button.css"
 export default function PageSettingsPage() {
   const params = useParams()
   const projectId = params.id as string

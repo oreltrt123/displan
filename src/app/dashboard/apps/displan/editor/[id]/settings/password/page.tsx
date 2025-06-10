@@ -8,6 +8,7 @@ import {
   displan_project_designer_css_update_project_settings,
 } from "../../../../lib/actions/displan-project-settings-actions"
 import "../../../../../../../../styles/sidebar_settings_editor.css"
+import "../../../../../website-builder/designer/styles/button.css"
 
 export default function PasswordSettingsPage() {
   const params = useParams()

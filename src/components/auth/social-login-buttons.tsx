@@ -1,31 +1,33 @@
-"use client";
+"use client"
 
-import React from "react";
-import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import type React from "react"
+import { createClient } from "../../../supabase/client"
 
 const SocialLoginButtons: React.FC = () => {
-  const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient()
 
   const handleOAuthLogin = async (provider: "google" | "github" | "discord") => {
     try {
+      // Determine redirect URL based on environment
+      const redirectHost =
+        process.env.NODE_ENV === "development" ? window.location.origin : "https://www.displan.design"
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${redirectHost}`,
         },
-      });
+      })
 
       if (error) {
-        console.error(`${provider} login error:`, error.message);
-        alert(`Login failed with ${provider}. Please try again.`);
+        console.error(`${provider} login error:`, error.message)
+        alert(`Login failed with ${provider}. Please try again. `)
       }
     } catch (err) {
-      console.error(`Unexpected error during ${provider} login:`, err);
-      alert(`An unexpected error occurred with ${provider}.`);
+      console.error(`Unexpected error during ${provider} login:`, err)
+      alert(`An unexpected error occurred with ${provider}.`)
     }
-  };
+  }
 
   return (
     <div className="w-full">
@@ -39,7 +41,7 @@ const SocialLoginButtons: React.FC = () => {
         {/* Google Login */}
         <button
           onClick={() => handleOAuthLogin("google")}
-          className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none"
+          className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none hover:bg-gray-50"
         >
           <img src="/images/img_icons8google_1.svg" alt="Google icon" className="w-6 h-6 mr-2" />
           <span className="text-[12px] font-medium text-black">Sign in with Google</span>
@@ -48,7 +50,7 @@ const SocialLoginButtons: React.FC = () => {
         {/* Discord Login */}
         <button
           onClick={() => handleOAuthLogin("discord")}
-          className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none"
+          className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none hover:bg-gray-50"
         >
           <img src="/images/discord-icon-svgrepo-com.svg" alt="Discord icon" className="w-6 h-6 mr-2" />
           <span className="text-[12px] font-medium text-black">Sign in with Discord</span>
@@ -57,14 +59,14 @@ const SocialLoginButtons: React.FC = () => {
         {/* GitHub Login */}
         <button
           onClick={() => handleOAuthLogin("github")}
-          className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none"
+          className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none hover:bg-gray-50"
         >
           <img src="/images/github-142-svgrepo-com.svg" alt="GitHub icon" className="w-6 h-6 mr-2" />
           <span className="text-[12px] font-medium text-black">Sign in with GitHub</span>
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SocialLoginButtons;
+export default SocialLoginButtons

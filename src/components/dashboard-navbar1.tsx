@@ -7,6 +7,7 @@ import { createClient } from "../../supabase/client"
 import { useRouter } from "next/navigation"
 import "../styles/navbar.css"
 import "../app/dashboard/apps/website-builder/designer/styles/button.css"
+
 interface DashboardNavbarProps {
   hasProfile?: boolean
 }

@@ -22,38 +22,40 @@ export function ElementsPanel({ onAddElement }: ElementsPanelProps) {
   if (currentView === "main") {
     return (
       <div className="space-y-2 h-full">
-        <span className="text-sm font-medium text-gray-900 dark:text-white mb-4 block">Elements</span>
-
         <div className="space-y-2">
           <button
             onClick={() => setCurrentView("text")}
-            className="w-full flex items-center p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full flex items-center p-3 cursor-pointer hover:bg-[#8888881A] text-gray-900 dark:text-white"
           >
-            <Type className="w-4 h-4 mr-2" />
+            <img className="w-5 h-5 mr-2 dark:hidden" src="/components/editor/element/text_light.png" alt="" />
+             <img className="w-5 h-5 mr-2 hidden dark:block" src="/components/editor/element/text_dark.png" alt="" />
             <span className="text-sm">Text</span>
           </button>
 
           <button
             onClick={() => setCurrentView("template")}
-            className="w-full flex items-center p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full flex items-center p-3 cursor-pointer hover:bg-[#8888881A] text-gray-900 dark:text-white"
           >
-            <Layers className="w-4 h-4 mr-2" />
+            <img className="w-5 h-5 mr-2 dark:hidden" src="/components/editor/element/template_light.png" alt="" />
+            <img className="w-5 h-5 mr-2 hidden dark:block" src="/components/editor/element/template_dark.png" alt="" />
             <span className="text-sm">Template</span>
           </button>
 
           <button
             onClick={() => setCurrentView("button")}
-            className="w-full flex items-center p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full flex items-center p-3 cursor-pointer hover:bg-[#8888881A] text-gray-900 dark:text-white"
           >
-            <Square className="w-4 h-4 mr-2" />
+            <img className="w-5 h-5 mr-2 dark:hidden" src="/components/editor/element/button_light.png" alt="" />
+            <img className="w-5 h-5 mr-2 hidden dark:block" src="/components/editor/element/button_dark.png" alt="" />
             <span className="text-sm">Button</span>
           </button>
 
           <button
             onClick={() => setCurrentView("menu")}
-            className="w-full flex items-center p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full flex items-center p-3 cursor-pointer hover:bg-[#8888881A] text-gray-900 dark:text-white"
           >
-            <List className="w-4 h-4 mr-2" />
+            <img className="w-5 h-5 mr-2 dark:hidden" src="/components/editor/element/menu_light.png" alt="" />
+            <img className="w-5 h-5 mr-2 hidden dark:block" src="/components/editor/element/menu_dark.png" alt="" />
             <span className="text-sm">Menu</span>
           </button>
         </div>

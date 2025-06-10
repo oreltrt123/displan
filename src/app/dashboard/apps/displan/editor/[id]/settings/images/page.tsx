@@ -8,6 +8,7 @@ import {
   displan_project_designer_css_get_project_settings,
   displan_project_designer_css_update_project_settings,
 } from "../../../../lib/actions/displan-project-settings-actions"
+import "../../../../../website-builder/designer/styles/button.css"
 
 export default function ImagesSettingsPage() {
   const params = useParams()

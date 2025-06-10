@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { LeftSidebar } from "../../components/editor/left-sidebar"
 import { RightSidebar } from "../../components/editor/right-sidebar"
-import { Canvas } from "../../components/editor/canvas"
+import  Canvas  from "../../components/editor/canvas"
 import { TopBar } from "../../components/editor/top-bar"
 import { PropertiesPanel } from "../../components/editor/properties-panel"
 import {

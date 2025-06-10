@@ -231,6 +231,9 @@ export function DisplanAI({ onAddElement, projectId }: DisplanAIProps) {
   const generateResponse = async (userInput: string): Promise<string> => {
     const input = userInput.toLowerCase()
 
+    // Add 2-3 second thinking delay
+    await new Promise((resolve) => setTimeout(resolve, 2000 + Math.random() * 1000))
+
     // Check if this is a greeting
     if (input.match(/^(hi|hello|hey|greetings|howdy)/i)) {
       return "Hello! I'm Displan AI, your website building assistant. How can I help you today?"
@@ -387,7 +390,8 @@ export function DisplanAI({ onAddElement, projectId }: DisplanAIProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-4">
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-4 pb-32">
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
@@ -421,37 +425,43 @@ export function DisplanAI({ onAddElement, projectId }: DisplanAIProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-2 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            placeholder="Ask about website building or request an element..."
-            className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-            disabled={isLoading}
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={isLoading || !input.trim()}
-            className="p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-md hover:opacity-90 disabled:opacity-50"
-          >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-          </button>
-        </div>
-        <div className="flex justify-between mt-2 text-xs text-gray-500">
+      {/* Input Area - Fixed at bottom with 10px margin */}
+      <div className="e242sr123swerw3">
+        {/* Full width border line */}
+        <div className="w-full h-px bg-gray-200 dark:bg-gray-700"></div>
+
+        <div className="p-2 e242sr123swerw3_2">
           <div className="flex items-center space-x-2">
-            <Zap className="w-3 h-3" />
-            <span>Ask me to create elements</span>
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+              placeholder="Ask about website building or request an element..."
+              className="flex-1 p-2 border-none outline-none rounded-md bg-[#8888881A] text-gray-900 dark:text-white"
+              disabled={isLoading}
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={isLoading || !input.trim()}
+              className="p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-md hover:opacity-90 disabled:opacity-50"
+            >
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </button>
           </div>
-          <div className="flex items-center space-x-2">
-            <Search className="w-3 h-3" />
-            <span>Ask complex questions</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Code className="w-3 h-3" />
-            <span>Get design help</span>
+          <div className="flex justify-between mt-2 text-xs text-gray-500">
+            <div className="flex items-center space-x-2">
+              <Zap className="w-3 h-3" />
+              <span>Ask me to create elements</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Search className="w-3 h-3" />
+              <span>Ask complex questions</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Code className="w-3 h-3" />
+              <span>Get design help</span>
+            </div>
           </div>
         </div>
       </div>

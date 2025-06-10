@@ -9,6 +9,7 @@ import {
 } from "../../../lib/actions/displan-project-settings-actions"
 import { Loader2, CheckCircle, Trash2, ExternalLink } from "lucide-react"
 import "../../../../../../../styles/sidebar_settings_editor.css"
+import "../../../../website-builder/designer/styles/button.css"
 
 export default function GeneralSettingsPage() {
   const params = useParams()

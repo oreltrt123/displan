@@ -1,5 +1,4 @@
 import { signInAction } from "@/app/actions"
-import Navbar from "@/components/navbar"
 import Link from "next/link"
 import SocialLoginButtons from "@/components/auth/social-login-buttons"
 import "../style12.css"
@@ -71,7 +70,7 @@ export default function SignInPage({ searchParams }: SignInPageProps) {
 
               <button
                 type="submit"
-                className="w-full h-[32px] text-[13px] font-bold bg-[#3a5b22] text-white border border-[#3a5b22] rounded-[10px] transition-colors duration-200 focus:outline-none"
+                className="w-full h-[32px] text-[13px] font-bold bg-[#3a5b22] text-white border border-[#3a5b22] rounded-[10px] transition-colors duration-200 focus:outline-none hover:bg-[#2d4419]"
               >
                 Login
               </button>
@@ -79,10 +78,12 @@ export default function SignInPage({ searchParams }: SignInPageProps) {
               {(error || message) && (
                 <div
                   className={`p-3 mt-4 text-sm rounded-md ${
-                    error ? "bg-red-500/20 text-red-200" : "bg-green-500/20 text-green-200"
+                    error
+                      ? "bg-red-500/20 text-red-600 border border-red-300"
+                      : "bg-green-500/20 text-green-600 border border-green-300"
                   }`}
                 >
-                  {error || message}
+                  {error || message} <Link className="text-blue-500" href={'/docs/sign_in_failed'}>Learn More</Link>
                 </div>
               )}
 
@@ -91,7 +92,7 @@ export default function SignInPage({ searchParams }: SignInPageProps) {
               <div className="mt-8 text-center">
                 <p className="text-[14px] font-medium text-black">
                   Don't have an account?{" "}
-                  <Link href="/sign-up" className="text-[#0f3cde]">
+                  <Link href="/sign-up" className="text-[#0f3cde] hover:underline">
                     Sign Up
                   </Link>
                 </p>

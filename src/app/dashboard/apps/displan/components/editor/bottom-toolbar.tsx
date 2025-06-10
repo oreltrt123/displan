@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter , usePathname } from "next/navigation"
 import { Settings } from "lucide-react"
 import type { EditorTool } from "../../lib/types/displan-editor-types"
 
@@ -53,6 +53,22 @@ export function BottomToolbar({
     localStorage.setItem("displan-theme", newDarkMode ? "dark" : "light")
     onToggleDarkMode()
   }
+  const pathname = usePathname()
+    const getProjectId = (): string => {
+    if (projectId) return projectId
+    
+    // Extract from pathname: /dashboard/apps/displan/editor/[id]/...
+    const pathSegments = pathname.split('/')
+    const editorIndex = pathSegments.findIndex(segment => segment === 'editor')
+    
+    if (editorIndex !== -1 && pathSegments[editorIndex + 1]) {
+      return pathSegments[editorIndex + 1]
+    }
+    
+    return 'default' // fallback
+  }
+
+  const currentProjectId = getProjectId()
 
   // Sync with parent component's isDarkMode prop changes
   useEffect(() => {
@@ -68,7 +84,7 @@ export function BottomToolbar({
   }
 
   const handleSettingsClick = () => {
-    router.push(`/dashboard/apps/displan/editor/${projectId}/settings`)
+    router.push(`/dashboard/apps/displan/editor/${currentProjectId}/settings`)
   }
 
   // Use localDarkMode for consistent theming

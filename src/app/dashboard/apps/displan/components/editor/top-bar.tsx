@@ -1,8 +1,12 @@
 "use client"
 
-import { Eye, EyeOff, Save, Crown, User } from 'lucide-react'
+import type React from "react"
+
+import { Eye, EyeOff, Save, Crown, User, ArrowLeft, Search, Home, File, Settings, UserIcon, Command } from 'lucide-react'
 import { useSubscription } from "../../../../../../hooks/use-subscription"
 import { ResponsiveControls } from "./responsive-controls"
+import { useRouter, usePathname } from "next/navigation"
+import { useState, useEffect } from "react"
 
 interface TopBarProps {
   isPreviewMode?: boolean
@@ -15,6 +19,14 @@ interface TopBarProps {
   canvasHeight?: number
   onCanvasWidthChange?: (width: number) => void
   onCanvasHeightChange?: (height: number) => void
+  projectId?: string // Optional - will extract from URL if not provided
+}
+
+interface CommandPaletteItem {
+  id: string
+  title: string
+  icon: React.ReactNode
+  action: () => void
 }
 
 export function TopBar({
@@ -28,10 +40,126 @@ export function TopBar({
   canvasHeight = 800,
   onCanvasWidthChange,
   onCanvasHeightChange,
+  projectId,
 }: TopBarProps) {
   const { isSubscribed, isLoading, debug } = useSubscription()
+  const router = useRouter()
+  const pathname = usePathname()
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [commandButtonRect, setCommandButtonRect] = useState<DOMRect | null>(null)
 
-  console.log("🎯 TopBar render - isSubscribed:", isSubscribed, "isLoading:", isLoading)
+  // Extract project ID from URL if not provided as prop
+  const getProjectId = (): string => {
+    if (projectId) return projectId
+    
+    // Extract from pathname: /dashboard/apps/displan/editor/[id]/...
+    const pathSegments = pathname.split('/')
+    const editorIndex = pathSegments.findIndex(segment => segment === 'editor')
+    
+    if (editorIndex !== -1 && pathSegments[editorIndex + 1]) {
+      return pathSegments[editorIndex + 1]
+    }
+    
+    return 'default' // fallback
+  }
+
+  const currentProjectId = getProjectId()
+
+  console.log("🎯 TopBar render - isSubscribed:", isSubscribed, "isLoading:", isLoading, "projectId:", currentProjectId)
+
+  // Check if we're on a settings page
+  const isOnSettingsPage = pathname.includes("/settings")
+
+  // Command palette items
+  const commandItems: CommandPaletteItem[] = [
+    {
+      id: "dashboard",
+      title: "Return to Dashboard",
+      icon: <Home className="w-4 h-4" />,
+      action: () => {
+        router.push("/dashboard/apps/displan")
+        setIsCommandPaletteOpen(false)
+      },
+    },
+    {
+      id: "files",
+      title: "Files",
+      icon: <File className="w-4 h-4" />,
+      action: () => {
+        // Add your file action here
+        console.log("Files clicked")
+        setIsCommandPaletteOpen(false)
+      },
+    },
+    {
+      id: "project-settings",
+      title: "Project Settings",
+      icon: <Settings className="w-4 h-4" />,
+      action: () => {
+        router.push(`/dashboard/apps/displan/editor/${currentProjectId}/settings`)
+        setIsCommandPaletteOpen(false)
+      },
+    },
+    {
+      id: "account",
+      title: "Account",
+      icon: <UserIcon className="w-4 h-4" />,
+      action: () => {
+        router.push("/dashboard/settings/account")
+        setIsCommandPaletteOpen(false)
+      },
+    },
+  ]
+
+  // Filter items based on search query
+  const filteredItems = commandItems.filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()))
+
+  // Handle publish button click - same pattern as your bottom-toolbar
+  const handlePublish = () => {
+    router.push(`/dashboard/apps/displan/editor/${currentProjectId}/settings/domains`)
+  }
+
+  // Handle back to editor click - same pattern as your bottom-toolbar
+  const handleBackToEditor = () => {
+    router.push(`/dashboard/apps/displan/editor/${currentProjectId}`)
+  }
+
+  // Handle logo click
+  const handleLogoClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const buttonRect = e.currentTarget.getBoundingClientRect()
+    setCommandButtonRect(buttonRect)
+    setIsCommandPaletteOpen(true)
+  }
+
+  // Close command palette on escape key or outside click
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsCommandPaletteOpen(false)
+        setSearchQuery("")
+      }
+    }
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isCommandPaletteOpen) {
+        const target = e.target as Element
+        if (!target.closest('[data-command-palette]')) {
+          setIsCommandPaletteOpen(false)
+          setSearchQuery("")
+        }
+      }
+    }
+
+    if (isCommandPaletteOpen) {
+      document.addEventListener("keydown", handleKeyDown)
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown)
+        document.removeEventListener("mousedown", handleClickOutside)
+      }
+    }
+  }, [isCommandPaletteOpen])
 
   const renderPlanBadge = () => {
     if (isLoading) {
@@ -74,11 +202,39 @@ export function TopBar({
   if (isPreviewMode) {
     return (
       <div className="flex flex-col w-full">
-        <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
-          <div className="flex items-center">{/* {renderPlanBadge()} */}</div>
-          <button onClick={onTogglePreview} className="button_edit_project_r222323A">
-            <EyeOff className="w-4 h-4" />
+       <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
+        <div className="flex items-center gap-3">
+          {/* Logo/Site Logo */}
+          <button
+            onClick={handleLogoClick}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#8888881A] transition-colors asfasfawfasffw"
+            title="Open command palette"
+          >
+            <img src="/components/editor/logo_editor.png" alt="" />
           </button>
+
+          {/* Back to Editor button - only show on settings pages */}
+          {isOnSettingsPage && (
+            <button onClick={handleBackToEditor} className="button_edit_project_r222323A" title="Back to Editor">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={onSave} disabled={isSaving} className="button_edit_project_r222323A">
+            <Save className="w-4 h-4" />
+          </button>
+
+          <button onClick={onTogglePreview} className="button_edit_project_r222323A">
+          <img src="/components/editor/focus_.png" alt="" />
+          </button>
+          
+          {/* Publish button */}
+          <button onClick={handlePublish} className="button_edit_project">
+            Publish
+          </button>
+        </div>
         </div>
         {isPreviewMode && onChangePreviewMode && (
           <div className="w-full bg-background border-t border-gray-200 dark:border-gray-800">
@@ -97,16 +253,84 @@ export function TopBar({
   }
 
   return (
-    <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
-      <div className="flex items-center">{/* {renderPlanBadge()} */}</div>
-      <div className="flex gap-2">
-        <button onClick={onSave} disabled={isSaving} className="button_edit_project_r222323A">
-          <Save className="w-4 h-4" />
-        </button>
-        <button onClick={onTogglePreview} className="button_edit_project_r222323A">
-          <Eye className="w-4 h-4" />
-        </button>
+    <>
+      <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
+        <div className="flex items-center gap-3">
+          {/* Logo/Site Logo */}
+          <button
+            onClick={handleLogoClick}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#8888881A] transition-colors asfasfawfasffw"
+            title="Open command palette"
+          >
+            <img className="dark:hidden" src="/components/editor/logo_editor_light.png" alt="" />
+            <img className="hidden dark:block" src="/components/editor/logo_editor_dark.png" alt="" />
+          </button>
+        </div>
+
+        <div className="flex gap-2">
+          {/* Back to Editor button - only show on settings pages */}
+          {isOnSettingsPage && (
+            <button onClick={handleBackToEditor} className="button_edit_project_r222323A" title="Back to Editor">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+          <button onClick={onSave} disabled={isSaving} className="button_edit_project_r222323A">
+            <Save className="w-4 h-4" />
+          </button>
+
+          <button onClick={onTogglePreview} className="button_edit_project_r222323A">
+          <img src="/components/editor/focus.png" alt="" />
+          </button>
+          
+          {/* Publish button */}
+          <button onClick={handlePublish} className="button_edit_project">
+            Publish
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Command Palette */}
+      {isCommandPaletteOpen && (
+        <div
+          data-command-palette
+          className="fixed z-50 menu_container12212re2"
+          style={{
+            top: commandButtonRect ? `${commandButtonRect.bottom + 8}px` : "60px",
+            left: commandButtonRect ? `${commandButtonRect.left}px` : "16px",
+          }}
+        >
+          {/* Search Input */}
+          <div className="flex items-center px-4 py-3 border-b border-[#8888881A]">
+            <Search className="w-4 h-4 text-white mr-3" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-transparent outline-none text-sm text-white placeholder-white"
+              autoFocus
+            />
+          </div>
+
+          {/* Command Items */}
+          <div className="py-2 max-h-80 overflow-y-auto">
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={item.action}
+                  className="menu_itemmenu_container12212re2"
+                >
+                  <span className="text-sm text-white sadawdsdawdsd112rrrr242">{item.title}</span>
+                    <img className="dgsdgsdgsegeg" src="/components/editor/external-link.png" alt="" />
+                </button>
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-sm text-white">No results found</div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   )
 }
