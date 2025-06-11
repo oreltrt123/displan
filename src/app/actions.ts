@@ -145,3 +145,12 @@ export async function resetPasswordAction(formData: FormData): Promise<void> {
     return redirectWithMessage("/reset-password", "Update failed. Try again.")
   }
 }
+export async function signInWithGoogleAction(): Promise<void> {
+  const supabase = createClient()
+  await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/callback`,
+    },
+  })
+}

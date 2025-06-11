@@ -8,20 +8,19 @@ const SocialLoginButtons: React.FC = () => {
 
   const handleOAuthLogin = async (provider: "google" | "github" | "discord") => {
     try {
-      // Determine redirect URL based on environment
-      const redirectHost =
-        process.env.NODE_ENV === "development" ? window.location.origin : "https://www.displan.design"
+      // Correct redirect path using NEXT_PUBLIC_APP_URL or fallback to localhost
+      const redirectHost = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/callback`
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${redirectHost}`,
+          redirectTo: redirectHost,
         },
       })
 
       if (error) {
         console.error(`${provider} login error:`, error.message)
-        alert(`Login failed with ${provider}. Please try again. `)
+        alert(`Login failed with ${provider}. Please try again.`)
       }
     } catch (err) {
       console.error(`Unexpected error during ${provider} login:`, err)
