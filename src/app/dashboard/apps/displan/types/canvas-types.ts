@@ -23,6 +23,7 @@ export interface CanvasProps {
   isPreviewMode?: boolean
   customCode?: string
   canvasWidth?: number
+  currentPageId?: string
   canvasHeight?: number
   previewDevice?: "desktop" | "tablet" | "mobile"
   onBackgroundSave?: (background: CanvasBackground, pageId: string) => void
@@ -68,4 +69,24 @@ export interface ResizeData {
   height: number
   elementX: number
   elementY: number
+}
+
+export interface ElementStyle {
+  backgroundColor?: string
+  color?: string
+  borderRadius?: string
+  fontFamily?: string
+  fontSize?: string
+  fontWeight?: string
+  padding?: string
+  margin?: string
+  boxShadow?: string
+  border?: string
+  textAlign?: string
+}
+
+export interface StyleEditingState {
+  elementId: string | null
+  isActive: boolean
+  position: { x: number; y: number }
 }

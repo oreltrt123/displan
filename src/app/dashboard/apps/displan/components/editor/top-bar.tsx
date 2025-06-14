@@ -1,12 +1,13 @@
 "use client"
 
 import type React from "react"
-
-import { Eye, EyeOff, Save, Crown, User, ArrowLeft, Search, Home, File, Settings, UserIcon, Command } from 'lucide-react'
+import { Save, Crown, User, ArrowLeft, Search, Home, File, Settings, UserIcon, Download } from "lucide-react"
 import { useSubscription } from "../../../../../../hooks/use-subscription"
 import { ResponsiveControls } from "./responsive-controls"
+import { CodeExportModal } from "./code-export-modal"
 import { useRouter, usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
+import "../../../website-builder/designer/styles/button.css"
 
 interface TopBarProps {
   isPreviewMode?: boolean
@@ -19,7 +20,8 @@ interface TopBarProps {
   canvasHeight?: number
   onCanvasWidthChange?: (width: number) => void
   onCanvasHeightChange?: (height: number) => void
-  projectId?: string // Optional - will extract from URL if not provided
+  projectId?: string
+  canvasElements?: any[] // Add canvas elements prop
 }
 
 interface CommandPaletteItem {
@@ -41,32 +43,43 @@ export function TopBar({
   onCanvasWidthChange,
   onCanvasHeightChange,
   projectId,
+  canvasElements = [],
 }: TopBarProps) {
   const { isSubscribed, isLoading, debug } = useSubscription()
   const router = useRouter()
   const pathname = usePathname()
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [commandButtonRect, setCommandButtonRect] = useState<DOMRect | null>(null)
 
   // Extract project ID from URL if not provided as prop
   const getProjectId = (): string => {
     if (projectId) return projectId
-    
+
     // Extract from pathname: /dashboard/apps/displan/editor/[id]/...
-    const pathSegments = pathname.split('/')
-    const editorIndex = pathSegments.findIndex(segment => segment === 'editor')
-    
+    const pathSegments = pathname.split("/")
+    const editorIndex = pathSegments.findIndex((segment) => segment === "editor")
+
     if (editorIndex !== -1 && pathSegments[editorIndex + 1]) {
       return pathSegments[editorIndex + 1]
     }
-    
-    return 'default' // fallback
+
+    return "default" // fallback
   }
 
   const currentProjectId = getProjectId()
 
-  console.log("🎯 TopBar render - isSubscribed:", isSubscribed, "isLoading:", isLoading, "projectId:", currentProjectId)
+  console.log(
+    "🎯 TopBar render - isSubscribed:",
+    isSubscribed,
+    "isLoading:",
+    isLoading,
+    "projectId:",
+    currentProjectId,
+    "elements:",
+    canvasElements.length,
+  )
 
   // Check if we're on a settings page
   const isOnSettingsPage = pathname.includes("/settings")
@@ -115,14 +128,20 @@ export function TopBar({
   // Filter items based on search query
   const filteredItems = commandItems.filter((item) => item.title.toLowerCase().includes(searchQuery.toLowerCase()))
 
-  // Handle publish button click - same pattern as your bottom-toolbar
+  // Handle publish button click
   const handlePublish = () => {
     router.push(`/dashboard/apps/displan/editor/${currentProjectId}/settings/domains`)
   }
 
-  // Handle back to editor click - same pattern as your bottom-toolbar
+  // Handle back to editor click
   const handleBackToEditor = () => {
     router.push(`/dashboard/apps/displan/editor/${currentProjectId}`)
+  }
+
+  // Handle export button click
+  const handleExport = () => {
+    console.log("🚀 Export clicked - elements:", canvasElements.length)
+    setIsExportModalOpen(true)
   }
 
   // Handle logo click
@@ -144,7 +163,7 @@ export function TopBar({
     const handleClickOutside = (e: MouseEvent) => {
       if (isCommandPaletteOpen) {
         const target = e.target as Element
-        if (!target.closest('[data-command-palette]')) {
+        if (!target.closest("[data-command-palette]")) {
           setIsCommandPaletteOpen(false)
           setSearchQuery("")
         }
@@ -202,39 +221,43 @@ export function TopBar({
   if (isPreviewMode) {
     return (
       <div className="flex flex-col w-full">
-       <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
-        <div className="flex items-center gap-3">
-          {/* Logo/Site Logo */}
-          <button
-            onClick={handleLogoClick}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#8888881A] transition-colors asfasfawfasffw"
-            title="Open command palette"
-          >
-            <img src="/components/editor/logo_editor.png" alt="" />
-          </button>
-
-          {/* Back to Editor button - only show on settings pages */}
-          {isOnSettingsPage && (
-            <button onClick={handleBackToEditor} className="button_edit_project_r222323A" title="Back to Editor">
-              <ArrowLeft className="w-4 h-4" />
+        <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
+          <div className="flex items-center gap-3">
+            {/* Logo/Site Logo */}
+            <button
+              onClick={handleLogoClick}
+              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#8888881A] transition-colors asfasfawfasffw"
+              title="Open command palette"
+            >
+              <img src="/components/editor/logo_editor.png" alt="" />
             </button>
-          )}
-        </div>
 
-        <div className="flex gap-2">
-          <button onClick={onSave} disabled={isSaving} className="button_edit_project_r222323A">
-            <Save className="w-4 h-4" />
-          </button>
+            {/* Back to Editor button - only show on settings pages */}
+            {isOnSettingsPage && (
+              <button onClick={handleBackToEditor} className="button_edit_project_r222323A" title="Back to Editor">
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            )}
+          </div>
 
-          <button onClick={onTogglePreview} className="button_edit_project_r222323A">
-          <img src="/components/editor/focus_.png" alt="" />
-          </button>
-          
-          {/* Publish button */}
-          <button onClick={handlePublish} className="button_edit_project">
-            Publish
-          </button>
-        </div>
+          <div className="flex gap-2">
+            <button onClick={onSave} disabled={isSaving} className="button_edit_project_r222323A" title="Save">
+              <Save className="w-4 h-4" />
+            </button>
+
+            <button onClick={handleExport} className="button_edit_project_r222323A" title="Export Code">
+              <Download className="w-4 h-4" />
+            </button>
+
+            <button onClick={onTogglePreview} className="button_edit_project_r222323A" title="Exit Preview">
+              <img src="/components/editor/focus_.png" alt="" />
+            </button>
+
+            {/* Publish button */}
+            <button onClick={handlePublish} className="button_edit_project">
+              Publish
+            </button>
+          </div>
         </div>
         {isPreviewMode && onChangePreviewMode && (
           <div className="w-full bg-background border-t border-gray-200 dark:border-gray-800">
@@ -274,14 +297,19 @@ export function TopBar({
               <ArrowLeft className="w-4 h-4" />
             </button>
           )}
-          <button onClick={onSave} disabled={isSaving} className="button_edit_project_r222323A">
+
+          <button onClick={onSave} disabled={isSaving} className="button_edit_project_r222323A" title="Save">
             <Save className="w-4 h-4" />
           </button>
 
-          <button onClick={onTogglePreview} className="button_edit_project_r222323A">
-          <img src="/components/editor/focus.png" alt="" />
+          {/* <button onClick={handleExport} className="button_edit_project_r222323A" title="Export Code">
+            <Download className="w-4 h-4" />
+          </button> */}
+
+          <button onClick={onTogglePreview} className="button_edit_project_r222323A" title="Preview">
+            <img src="/components/editor/focus.png" alt="" />
           </button>
-          
+
           {/* Publish button */}
           <button onClick={handlePublish} className="button_edit_project">
             Publish
@@ -316,13 +344,9 @@ export function TopBar({
           <div className="py-2 max-h-80 overflow-y-auto">
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={item.action}
-                  className="menu_itemmenu_container12212re2"
-                >
+                <button key={item.id} onClick={item.action} className="menu_itemmenu_container12212re2">
                   <span className="text-sm text-white sadawdsdawdsd112rrrr242">{item.title}</span>
-                    <img className="dgsdgsdgsegeg" src="/components/editor/external-link.png" alt="" />
+                  <img className="dgsdgsdgsegeg" src="/components/editor/external-link.png" alt="" />
                 </button>
               ))
             ) : (
@@ -331,6 +355,16 @@ export function TopBar({
           </div>
         </div>
       )}
+
+      {/* Export Modal */}
+      <CodeExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        canvasElements={canvasElements}
+        canvasWidth={canvasWidth}
+        canvasHeight={canvasHeight}
+        projectId={currentProjectId}
+      />
     </>
   )
 }

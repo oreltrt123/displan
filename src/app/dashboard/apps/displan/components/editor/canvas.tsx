@@ -9,7 +9,18 @@ import { CanvasStyles } from "./canvas-styles"
 import { ElementRenderer } from "./element-renderer"
 import { CanvasUI } from "./canvas-ui"
 import { getCanvasBackgroundStyle } from "../../utils/canvas-utils"
-import type { CanvasProps } from "../../types/canvas-types"
+import type { CanvasProps } from "../../types/canvas-types" // Renamed to avoid redeclaration
+import { useState } from "react"
+
+interface CMSEntry {
+  id: string
+  title: string
+  slug: string
+  date: string
+  status: "draft" | "published"
+  content: string
+  collection_id: string
+}
 
 export default function Canvas({
   currentTool,
@@ -29,6 +40,7 @@ export default function Canvas({
   onToggleDarkMode,
   onZoomChange,
   projectId,
+  currentPageId, // Add this line
   isPreviewMode = false,
   customCode = "",
   canvasWidth = 1200,
@@ -37,55 +49,23 @@ export default function Canvas({
   onBackgroundSave,
   onBackgroundLoad,
 }: CanvasProps) {
+  // Updated to use CanvasPropsType
   const router = useRouter()
   const state = useCanvasState()
 
-  // Template element update handler
+  // Add these state variables after the existing state declarations
+  const [cmsEntry, setCmsEntry] = useState<CMSEntry | null>(null)
+  const [isCmsMode, setIsCmsMode] = useState(false)
+  const [cmsLoading, setCmsLoading] = useState(false)
+
+  // Template element update handler - simplified for V232
   const handleUpdateTemplateElement = useCallback(
     async (elementId: string, elementType: string, properties: any) => {
-      console.log("Updating template element:", { elementId, elementType, properties })
-
-      try {
-        // Call your server action or API to update template element
-        const response = await fetch("/api/update-template-element", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            projectId,
-            pageSlug: state.currentPageId,
-            templateElementId: elementId,
-            elementType,
-            properties,
-          }),
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to update template element")
-        }
-
-        const result = await response.json()
-        console.log("Template element updated successfully:", result)
-
-        // Update local state if needed
-        state.setEditableElements((prev) => {
-          const newMap = new Map(prev)
-          const existing = newMap.get(elementId)
-          if (existing) {
-            newMap.set(elementId, {
-              ...existing,
-              content: properties.content || existing.content,
-            })
-          }
-          return newMap
-        })
-      } catch (error) {
-        console.error("Error updating template element:", error)
-        // You might want to show an error message to the user here
-      }
+      console.log("Template V232 - Updating element:", { elementId, elementType, properties })
+      // The template renderer handles its own saving now
+      return { success: true }
     },
-    [projectId, state.currentPageId, state.setEditableElements],
+    [projectId, state.currentPageId],
   )
 
   // Load page-specific background on mount and page change
@@ -143,6 +123,152 @@ export default function Canvas({
       })
     }
   }, [state.textEditingState, state.editInputRef, state.textEditTimeoutRef, state.setTextEditingState])
+
+  // Add this function to detect if current page is a CMS entry
+  const detectAndLoadCmsEntry = useCallback(async (pageId: string) => {
+    if (pageId.startsWith("cms-")) {
+      const parts = pageId.split("-")
+      if (parts.length >= 3) {
+        const collectionId = parts[1]
+        const entrySlug = parts.slice(2).join("-")
+
+        setIsCmsMode(true)
+        setCmsLoading(true)
+
+        try {
+          const response = await fetch(`/api/cms/collections/${collectionId}/entries`)
+          if (response.ok) {
+            const entries = await response.json()
+            const foundEntry = entries.find((e: CMSEntry) => e.slug === entrySlug)
+
+            if (foundEntry) {
+              setCmsEntry(foundEntry)
+              // Convert CMS content to canvas elements
+              await convertCmsToCanvasElements(foundEntry)
+            }
+          }
+        } catch (error) {
+          console.error("Failed to load CMS entry:", error)
+        } finally {
+          setCmsLoading(false)
+        }
+      }
+    } else {
+      setIsCmsMode(false)
+      setCmsEntry(null)
+    }
+  }, [])
+
+  const convertCmsToCanvasElements = useCallback(
+    async (entry: CMSEntry) => {
+      if (!onAddElement) return
+
+      // Wait a bit for any existing elements to be cleared
+      setTimeout(() => {
+        // Add title as a heading element
+        onAddElement("text", canvasWidth / 2 - 200, 100, {
+          text: entry.title,
+          fontSize: 32,
+          fontWeight: "bold",
+          color: "#000000",
+          textAlign: "center",
+          width: 400,
+          height: 50,
+        })
+
+        // Add date as a subtitle
+        const formattedDate = new Date(entry.date).toLocaleDateString()
+        onAddElement("text", canvasWidth / 2 - 100, 170, {
+          text: formattedDate,
+          fontSize: 14,
+          color: "#666666",
+          textAlign: "center",
+          width: 200,
+          height: 25,
+        })
+
+        // Add status badge
+        onAddElement("text", canvasWidth / 2 - 50, 210, {
+          text: entry.status.toUpperCase(),
+          fontSize: 12,
+          fontWeight: "bold",
+          color: entry.status === "published" ? "#10B981" : "#F59E0B",
+          textAlign: "center",
+          width: 100,
+          height: 25,
+        })
+
+        // Split content into paragraphs and add as separate text elements
+        const paragraphs = entry.content.split("\n").filter((p) => p.trim())
+        let yPosition = 280
+
+        paragraphs.forEach((paragraph, index) => {
+          if (paragraph.trim()) {
+            onAddElement("text", 100, yPosition, {
+              text: paragraph.trim(),
+              fontSize: 16,
+              color: "#333333",
+              lineHeight: 1.6,
+              width: canvasWidth - 200,
+              height: Math.max(60, Math.ceil(paragraph.length / 80) * 25),
+            })
+            yPosition += Math.max(80, Math.ceil(paragraph.length / 80) * 30)
+          }
+        })
+      }, 100)
+    },
+    [onAddElement, canvasWidth],
+  )
+
+  // Add this useEffect after the existing ones
+  useEffect(() => {
+    if (currentPageId) {
+      detectAndLoadCmsEntry(currentPageId)
+    }
+  }, [currentPageId, detectAndLoadCmsEntry])
+
+  // Add this function to handle saving CMS changes
+  const saveCmsChanges = useCallback(async () => {
+    if (!cmsEntry || !isCmsMode) return
+
+    // Extract content from canvas elements
+    const titleElement = elements.find((el) => el.y === 100 && el.element_type === "text")
+    const contentElements = elements.filter((el) => el.y >= 280 && el.element_type === "text")
+
+    const updatedContent = contentElements
+      .sort((a, b) => a.y - b.y)
+      .map((el) => el.text || "")
+      .join("\n\n")
+
+    const updatedEntry = {
+      ...cmsEntry,
+      title: titleElement?.text || cmsEntry.title,
+      content: updatedContent,
+    }
+
+    try {
+      const response = await fetch(`/api/cms/entries/${cmsEntry.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedEntry),
+      })
+
+      if (response.ok) {
+        setCmsEntry(updatedEntry)
+        console.log("CMS entry updated successfully")
+      }
+    } catch (error) {
+      console.error("Failed to save CMS changes:", error)
+    }
+  }, [cmsEntry, isCmsMode, elements])
+
+  // Add auto-save functionality
+  useEffect(() => {
+    if (isCmsMode && elements.length > 0) {
+      const saveTimer = setTimeout(saveCmsChanges, 2000) // Auto-save after 2 seconds of inactivity
+      return () => clearTimeout(saveTimer)
+    }
+  }, [elements, isCmsMode, saveCmsChanges])
 
   // Initialize event handlers
   const eventHandlers = useCanvasEventHandlers({
@@ -248,7 +374,7 @@ export default function Canvas({
     : otherElements
 
   return (
-    <div className="flex-1 bg-[#8888881A] dark:bg-[#1D3D3D] p-8 overflow-hidden relative">
+    <div className="flex-1 bg-[#8888881A] dark:bg-[#1D1D1D] p-8 overflow-hidden relative">
       <CanvasStyles customCode={customCode} />
 
       <div
@@ -262,6 +388,22 @@ export default function Canvas({
         onClick={eventHandlers.handleCanvasClick}
         onContextMenu={(e) => e.preventDefault()}
       >
+        {/* Add this right after the canvas div opening tag */}
+        {cmsLoading && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading CMS entry...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Add CMS mode indicator */}
+        {isCmsMode && cmsEntry && (
+          <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-lg text-sm z-40">
+            CMS: {cmsEntry.title}
+          </div>
+        )}
         <div
           data-canvas="true"
           className="relative overflow-y-auto"

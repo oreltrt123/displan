@@ -196,7 +196,7 @@ export default function DeleteProjectPage({ params }: DeleteProjectPageProps) {
                   type="text"
                   value={confirmName}
                   onChange={(e) => setConfirmName(e.target.value)}
-                  className="block w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="r2552esf25_252trewt3er"
                   placeholder={project?.name}
                 />
               </div>
@@ -212,7 +212,7 @@ export default function DeleteProjectPage({ params }: DeleteProjectPageProps) {
                 </button>
 
                 <Link
-                  href={`/project/${params.id}/settings`}
+                  href={`/dashboard/project/${params.id}/settings`}
                   className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2"
                 >
                   <X size={16} />

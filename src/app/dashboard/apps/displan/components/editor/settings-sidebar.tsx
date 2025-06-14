@@ -13,6 +13,19 @@ interface DisplanProjectDesignerCssPage {
   project_id: string
 }
 
+type NavItem =
+  | {
+      title: string
+      icon: React.ElementType
+      path: string
+    }
+  | {
+      title: string
+      iconLight: string
+      iconDark: string
+      path: string
+    }
+
 export function SettingsSidebar() {
   const params = useParams()
   const router = useRouter()
@@ -21,7 +34,7 @@ export function SettingsSidebar() {
   const [pages, setPages] = useState<DisplanProjectDesignerCssPage[]>([])
   const [isLoadingPages, setIsLoadingPages] = useState(true)
 
-  const settingsNavItems = [
+  const settingsNavItems: NavItem[] = [
     {
       title: "General",
       icon: Settings,
@@ -47,9 +60,14 @@ export function SettingsSidebar() {
       icon: ImageIcon,
       path: `/dashboard/apps/displan/editor/${projectId}/settings/images`,
     },
+    {
+      title: "AI",
+      iconLight: "/components/editor/ai_dark.png",
+      iconDark: "/components/editor/ai_light.png",
+      path: `/dashboard/apps/displan/editor/${projectId}/settings/ai`,
+    },
   ]
 
-  // Load pages for this project
   useEffect(() => {
     loadProjectPages()
   }, [projectId])
@@ -71,13 +89,9 @@ export function SettingsSidebar() {
     }
   }
 
-  const isActive = (path: string) => {
-    return pathname === path
-  }
-
-  const isPageActive = (pageId: string) => {
-    return pathname === `/dashboard/apps/displan/editor/${projectId}/settings/pages/${pageId}`
-  }
+  const isActive = (path: string) => pathname === path
+  const isPageActive = (pageId: string) =>
+    pathname === `/dashboard/apps/displan/editor/${projectId}/settings/pages/${pageId}`
 
   return (
     <div className="settings-sidebar">
@@ -91,17 +105,30 @@ export function SettingsSidebar() {
                   onClick={() => router.push(item.path)}
                   className={`settings-nav-button ${isActive(item.path) ? "active" : ""}`}
                 >
-                  <item.icon className="settings-nav-icon" />
+                  {"icon" in item ? (
+                    <item.icon className="settings-nav-icon" />
+                  ) : (
+                    <>
+                      <img
+                        src={item.iconLight}
+                        alt={item.title}
+                        className="settings-nav-icon light-mode"
+                      />
+                      <img
+                        src={item.iconDark}
+                        alt={item.title}
+                        className="settings-nav-icon dark-mode"
+                      />
+                    </>
+                  )}
                   <span className="settings-nav-text">{item.title}</span>
                 </button>
               </li>
             ))}
           </ul>
 
-          {/* Separator line */}
-          <hr className="fsdfadsgesgdg"/>
+          <hr className="fsdfadsgesgdg" />
 
-          {/* Pages Section */}
           <div className="settings-nav-section">
             <h3 className="settings-nav-section-title">Pages</h3>
             <ul className="settings-nav-list">

@@ -148,34 +148,34 @@ export default function HomePage() {
       {/* Main Content */}
       <div className="convert-main">
         <div className="main-header">
-          <h1>URL to HTML Converter</h1>
-          <p>Convert any website to a standalone HTML file with all assets embedded</p>
+          <h1 className="text-black dark:text-white">URL to HTML Converter</h1>
+          <p className="text-black dark:text-[#727272]">Convert any website to a standalone HTML file with all assets embedded</p>
         </div>
 
         <div className="convert-section">
           <div className="convert-card">
-            <h2>Convert Website</h2>
-            <p>Enter a URL and project name to convert a website to HTML</p>
+            <h2 className="text-black dark:text-white">Convert Website</h2>
+            <p className="text-black dark:text-[#727272]">Enter a URL and project name to convert a website to HTML</p>
 
             <div className="form-group">
-              <label>Project Name</label>
+              <label className="text-black dark:text-white">Project Name</label>
               <input
                 type="text"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
                 placeholder="My Website Project"
-                className="form-input"
+                className="r2552esf25_252trewt3er"
               />
             </div>
 
             <div className="form-group">
-              <label>Website URL</label>
+              <label className="text-black dark:text-white">Website URL</label>
               <input
                 type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com"
-                className="form-input"
+                className="r2552esf25_252trewt3er"
               />
             </div>
 
@@ -187,13 +187,13 @@ export default function HomePage() {
           </div>
 
           <div className="info-card">
-            <h3>How it works:</h3>
+            <h3 className="text-black dark:text-white">How it works:</h3>
             <ul>
-              <li>✓ Fetches the complete website with all assets</li>
-              <li>✓ Embeds all CSS, images, and JavaScript inline</li>
-              <li>✓ Creates a standalone HTML file that works offline</li>
-              <li>✓ Saves to your project library with unique ID</li>
-              <li>✓ Ready for download, editing, or deployment</li>
+              <li className="text-black dark:text-[#727272]">✓ Fetches the complete website with all assets</li>
+              <li className="text-black dark:text-[#727272]">✓ Embeds all CSS, images, and JavaScript inline</li>
+              <li className="text-black dark:text-[#727272]">✓ Creates a standalone HTML file that works offline</li>
+              <li className="text-black dark:text-[#727272]">✓ Saves to your project library with unique ID</li>
+              <li className="text-black dark:text-[#727272]">✓ Ready for download, editing, or deployment</li>
             </ul>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { LeftSidebar } from "../../components/editor/left-sidebar"
 import { RightSidebar } from "../../components/editor/right-sidebar"
-import  Canvas  from "../../components/editor/canvas"
+import Canvas from "../../components/editor/canvas"
 import { TopBar } from "../../components/editor/top-bar"
 import { PropertiesPanel } from "../../components/editor/properties-panel"
 import {
@@ -43,11 +43,16 @@ export default function EditorPage() {
   const [isPreviewMode, setIsPreviewMode] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined)
-  
+
   // Responsive controls state
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop")
   const [canvasWidth, setCanvasWidth] = useState(1200)
   const [canvasHeight, setCanvasHeight] = useState(800)
+
+  // Add CMS state management
+  const [isCmsMode, setIsCmsMode] = useState(false)
+  const [currentCmsEntry, setCurrentCmsEntry] = useState<any>(null)
+  const [cmsLoading, setCmsLoading] = useState(false)
 
   useEffect(() => {
     // Try to get user email from localStorage or session
@@ -228,7 +233,7 @@ export default function EditorPage() {
   const handleChangePreviewMode = (mode: "desktop" | "tablet" | "mobile") => {
     console.log("Changing preview mode to:", mode)
     setPreviewDevice(mode)
-    
+
     // Set default dimensions based on device
     if (mode === "desktop") {
       setCanvasWidth(1200)
@@ -257,6 +262,133 @@ export default function EditorPage() {
     handleAddElement(elementType, x, y, properties)
   }
 
+  const handleDeleteElement = async (elementId: string) => {
+    console.log("Deleting element:", elementId)
+    try {
+      // Remove from local state immediately for better UX
+      setElements((prevElements) => prevElements.filter((el) => el.id !== elementId))
+
+      // Clear selection if the deleted element was selected
+      if (selectedElement && selectedElement.id === elementId) {
+        setSelectedElement(null)
+      }
+
+      // Reload elements to sync with server
+      setTimeout(() => {
+        loadElements()
+      }, 100)
+    } catch (error) {
+      console.error("Error deleting element:", error)
+      // Reload elements to restore state if deletion failed
+      loadElements()
+    }
+  }
+
+  // Replace the existing handleCreatePage function with this enhanced version that includes CMS detection
+  const handlePageChange = async (pageId: string) => {
+    console.log("Page changed to:", pageId)
+    setCurrentPage(pageId)
+
+    // Check if this is a CMS entry
+    if (pageId.startsWith("cms-")) {
+      const parts = pageId.split("-")
+      if (parts.length >= 3) {
+        const collectionId = parts[1]
+        const entrySlug = parts.slice(2).join("-")
+
+        setIsCmsMode(true)
+        setCmsLoading(true)
+
+        try {
+          // Load the CMS entry
+          const response = await fetch(`/api/cms/collections/${collectionId}/entries`)
+          if (response.ok) {
+            const entries = await response.json()
+            const foundEntry = entries.find((e: any) => e.slug === entrySlug)
+
+            if (foundEntry) {
+              setCurrentCmsEntry(foundEntry)
+
+              // Clear existing elements first
+              setElements([])
+              setSelectedElement(null)
+
+              // Wait a bit then add CMS elements
+              setTimeout(() => {
+                addCmsElementsToCanvas(foundEntry)
+              }, 200)
+            }
+          }
+        } catch (error) {
+          console.error("Failed to load CMS entry:", error)
+        } finally {
+          setCmsLoading(false)
+        }
+      }
+    } else {
+      // Regular page
+      setIsCmsMode(false)
+      setCurrentCmsEntry(null)
+      setCmsLoading(false)
+    }
+  }
+
+  // Add function to convert CMS content to canvas elements
+  const addCmsElementsToCanvas = (entry: any) => {
+    console.log("Adding CMS elements to canvas:", entry)
+
+    // Add title
+    handleAddElement("text", canvasWidth / 2 - 200, 100, {
+      text: entry.title,
+      fontSize: 32,
+      fontWeight: "bold",
+      color: "#000000",
+      textAlign: "center",
+      width: 400,
+      height: 50,
+    })
+
+    // Add date
+    const formattedDate = new Date(entry.date).toLocaleDateString()
+    handleAddElement("text", canvasWidth / 2 - 100, 170, {
+      text: formattedDate,
+      fontSize: 14,
+      color: "#666666",
+      textAlign: "center",
+      width: 200,
+      height: 25,
+    })
+
+    // Add status
+    handleAddElement("text", canvasWidth / 2 - 50, 210, {
+      text: entry.status.toUpperCase(),
+      fontSize: 12,
+      fontWeight: "bold",
+      color: entry.status === "published" ? "#10B981" : "#F59E0B",
+      textAlign: "center",
+      width: 100,
+      height: 25,
+    })
+
+    // Add content paragraphs
+    const paragraphs = entry.content.split("\n").filter((p: string) => p.trim())
+    let yPosition = 280
+
+    paragraphs.forEach((paragraph: string) => {
+      if (paragraph.trim()) {
+        handleAddElement("text", 100, yPosition, {
+          text: paragraph.trim(),
+          fontSize: 16,
+          color: "#333333",
+          lineHeight: 1.6,
+          width: canvasWidth - 200,
+          height: Math.max(60, Math.ceil(paragraph.length / 80) * 25),
+        })
+        yPosition += Math.max(80, Math.ceil(paragraph.length / 80) * 30)
+      }
+    })
+  }
+
   return (
     <div className="h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white flex flex-col overflow-hidden">
       <TopBar
@@ -278,11 +410,9 @@ export default function EditorPage() {
             <LeftSidebar
               pages={pages}
               currentPage={currentPage}
-              onPageChange={setCurrentPage}
+              onPageChange={handlePageChange}
               onCreatePage={handleCreatePage}
-              onAddElement={handleAIAddElement}
               projectId={projectId}
-              userEmail={userEmail}
             />
           </div>
         )}
@@ -314,10 +444,11 @@ export default function EditorPage() {
             {currentTool === "comment" ? (
               <RightSidebar comments={comments} onDeleteComment={handleDeleteComment} showComments={true} />
             ) : (
-              <PropertiesPanel 
-                selectedElement={selectedElement} 
-                pages={pages} 
+              <PropertiesPanel
+                selectedElement={selectedElement}
+                pages={pages}
                 onUpdateElement={handleUpdateElement}
+                onDeleteElement={handleDeleteElement}
                 projectId={projectId}
                 pageSlug={currentPage}
               />
@@ -325,7 +456,23 @@ export default function EditorPage() {
           </div>
         )}
       </div>
+      {/* CMS Mode Indicator */}
+      {isCmsMode && currentCmsEntry && (
+        <div className="fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          <div className="text-sm font-medium">CMS Mode</div>
+          <div className="text-xs opacity-90">{currentCmsEntry.title}</div>
+        </div>
+      )}
+
+      {/* CMS Loading Indicator */}
+      {cmsLoading && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-sm">Loading CMS entry...</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-        

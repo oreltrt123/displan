@@ -1,37 +1,20 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import {
-  FileText,
-  Folder,
-  ChevronDown,
-  ChevronRight,
-  Upload,
-  Eye,
-  EyeOff,
-  Monitor,
-  Smartphone,
-  Tablet,
-  X,
-  Palette,
-  Type,
-  Layout,
-  Sparkles,
-  Settings,
-  Loader2,
-  Check,
-  AlertCircle,
-} from "lucide-react"
+import { FileText, Folder, ChevronDown, ChevronRight, Upload, Eye, EyeOff, Monitor, Smartphone, Tablet, X, Palette, Type, Layout, Sparkles, Settings, Loader2, Check, AlertCircle, Trash2 } from 'lucide-react'
 import type { DisplanCanvasElement } from "../../lib/types/displan-canvas-types"
 import {
   displan_project_designer_css_update_element_new,
   displan_project_designer_css_update_template_element,
+  displan_project_designer_css_delete_element,
+  displan_project_designer_css_delete_template_element,
 } from "../../lib/actions/displan-canvas-actions-new"
 
 interface PropertiesPanelProps {
   selectedElement: DisplanCanvasElement | null
   pages: any[]
   onUpdateElement: (elementId: string, properties: any) => void
+  onDeleteElement: (elementId: string) => void
   projectId: string
   pageSlug: string
 }
@@ -40,11 +23,13 @@ export function PropertiesPanel({
   selectedElement,
   pages,
   onUpdateElement,
+  onDeleteElement,
   projectId,
   pageSlug,
 }: PropertiesPanelProps) {
   const [localElement, setLocalElement] = useState<DisplanCanvasElement | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [updateSuccess, setUpdateSuccess] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
   const [showLinkMenu, setShowLinkMenu] = useState(false)
@@ -53,6 +38,7 @@ export function PropertiesPanel({
   const [showFontMenu, setShowFontMenu] = useState(false)
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [showBgColorPicker, setShowBgColorPicker] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [expandedSections, setExpandedSections] = useState({
     content: true,
     typography: false,
@@ -88,6 +74,7 @@ export function PropertiesPanel({
       setLocalElement({ ...selectedElement })
       setUpdateError(null)
       setUpdateSuccess(false)
+      setShowDeleteConfirm(false)
     } else {
       setLocalElement(null)
     }
@@ -153,6 +140,51 @@ export function PropertiesPanel({
     },
     [localElement, onUpdateElement, projectId, pageSlug],
   )
+
+  // Handle element deletion
+  const handleDeleteElement = useCallback(async () => {
+    if (!localElement) return
+
+    setIsDeleting(true)
+    setUpdateError(null)
+
+    try {
+      let result
+
+      if (isTemplateElement(localElement.id)) {
+        // Handle template element deletion
+        console.log("Deleting template element:", localElement.id)
+        result = await displan_project_designer_css_delete_template_element(
+          projectId,
+          pageSlug,
+          localElement.id
+        )
+      } else {
+        // Handle regular element deletion
+        console.log("Deleting regular element:", localElement.id)
+        result = await displan_project_designer_css_delete_element(localElement.id)
+      }
+
+      console.log("Delete result:", result)
+
+      if (result.success) {
+        // Call the parent callback to remove element from canvas
+        onDeleteElement(localElement.id)
+        setShowDeleteConfirm(false)
+        
+        // Show success message briefly
+        setUpdateSuccess(true)
+        setTimeout(() => setUpdateSuccess(false), 2000)
+      } else {
+        setUpdateError(result.error || "Failed to delete element")
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      setUpdateError("Network error occurred during deletion")
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [localElement, onDeleteElement, projectId, pageSlug])
 
   const handlePropertyChange = useCallback(
     (property: string, value: any) => {
@@ -347,7 +379,7 @@ export function PropertiesPanel({
 
           {/* Status Indicators */}
           <div className="flex items-center space-x-1">
-            {isUpdating && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
+            {(isUpdating || isDeleting) && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
             {updateSuccess && <Check className="w-4 h-4 text-green-500" />}
             {updateError && <AlertCircle className="w-4 h-4 text-red-500" />}
           </div>
@@ -955,6 +987,54 @@ export function PropertiesPanel({
                     />
                   </div>
                 )}
+
+                {/* Delete Element Button */}
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <label className="block text-xs text-gray-700 dark:text-gray-300 mb-2">Element Actions</label>
+                  
+                  {!showDeleteConfirm ? (
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={isDeleting}
+                      className="w-full flex items-center justify-center px-3 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-400 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-3 h-3 mr-2" />
+                      Delete Element
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-400">
+                        Are you sure you want to delete this element? This action cannot be undone.
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleDeleteElement}
+                          disabled={isDeleting}
+                          className="flex-1 flex items-center justify-center px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isDeleting ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="w-3 h-3 mr-2" />
+                              Confirm Delete
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setShowDeleteConfirm(false)}
+                          disabled={isDeleting}
+                          className="flex-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

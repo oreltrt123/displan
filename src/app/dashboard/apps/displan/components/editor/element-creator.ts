@@ -1,6 +1,6 @@
 // Types for element creation
 export interface ElementRequest {
-  type: "button" | "text" | "heading" | "image" | "container"
+  type: "button" | "text" | "heading" | "image" | "container" | "contact" | "form" | "input"
   content?: string
   style?: {
     backgroundColor?: string
@@ -97,6 +97,12 @@ export function parseElementRequest(request: string): ElementRequest | null {
     type = "image"
   } else if (lowerRequest.includes("container") || lowerRequest.includes("box") || lowerRequest.includes("section")) {
     type = "container"
+  } else if (lowerRequest.includes("contact") && (lowerRequest.includes("form") || lowerRequest.includes("us"))) {
+    type = "contact"
+  } else if (lowerRequest.includes("form")) {
+    type = "form"
+  } else if (lowerRequest.includes("input") || lowerRequest.includes("field") || lowerRequest.includes("textbox")) {
+    type = "input"
   }
 
   // Extract content
@@ -131,6 +137,15 @@ export function parseElementRequest(request: string): ElementRequest | null {
         break
       case "container":
         content = ""
+        break
+      case "contact":
+        content = "Contact Us"
+        break
+      case "form":
+        content = "Form"
+        break
+      case "input":
+        content = "Input field"
         break
     }
   }
@@ -241,6 +256,15 @@ export function createElementFromRequest(request: ElementRequest): ElementSpec {
     case "container":
       elementType = "container-basic"
       break
+    case "contact":
+      elementType = "form-contact"
+      break
+    case "form":
+      elementType = "form-basic"
+      break
+    case "input":
+      elementType = "form-input"
+      break
   }
 
   // Create element specification
@@ -284,6 +308,22 @@ export function createElementFromRequest(request: ElementRequest): ElementSpec {
     if (!spec.width) spec.width = 400
     if (!spec.height) spec.height = 300
     if (!spec.borderRadius && spec.borderRadius !== 0) spec.borderRadius = 8
+  } else if (elementType === "form-contact") {
+    if (!spec.backgroundColor) spec.backgroundColor = "#ffffff" // White
+    if (!spec.width) spec.width = 400
+    if (!spec.height) spec.height = 450
+    if (!spec.borderRadius && spec.borderRadius !== 0) spec.borderRadius = 8
+  } else if (elementType === "form-basic") {
+    if (!spec.backgroundColor) spec.backgroundColor = "#ffffff" // White
+    if (!spec.width) spec.width = 400
+    if (!spec.height) spec.height = 300
+    if (!spec.borderRadius && spec.borderRadius !== 0) spec.borderRadius = 8
+  } else if (elementType === "form-input") {
+    if (!spec.width) spec.width = 300
+    if (!spec.height) spec.height = 40
+    if (!spec.borderRadius && spec.borderRadius !== 0) spec.borderRadius = 4
+    if (!spec.borderWidth) spec.borderWidth = 1
+    if (!spec.borderColor) spec.borderColor = "#d1d5db" // Gray border
   }
 
   return spec

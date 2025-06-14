@@ -90,7 +90,7 @@ export default function PasswordSettingsPage() {
         Password Protection
       </h2>
       <p className="sadawdsdawdsd112">
-        Secure your project with a password. Visitors will need to enter this password to view your site.
+        Please remember your password before continuing. At this stage, password recovery is not available, as the feature has not yet been implemented. It will be added in a future update. Until then, make sure to use a password you won’t forget. It can be simple and short—just enough to secure your site temporarily. Protect your site accordingly.
       </p>
 
       <div className="space-y-4">

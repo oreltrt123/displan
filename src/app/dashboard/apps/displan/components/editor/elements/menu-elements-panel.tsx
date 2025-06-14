@@ -18,16 +18,6 @@ export function MenuElementsPanel({ onAddElement, onBack }: MenuElementsPanelPro
     { id: "empty-4", name: "Data to enrich", preview: "/webbuild/empty-5.png" }, 
     { id: "empty-5", name: "Choose your DisPlan", preview: "/webbuild/empty-6.png" }, 
     { id: "empty-6", name: "Select filter", preview: "/webbuild/empty-699.png" }, 
-    { id: "empty-7", name: "Empty Menu Template 7", preview: "/webbuild/empty-7.png" }, 
-    { id: "empty-8", name: "Next Imges", preview: "/webbuild/next.png" }, 
-    { id: "empty-9", name: "View", preview: "/webbuild/9.png" }, 
-    { id: "empty-10", name: "View", preview: "/webbuild/10.png" }, 
-    { id: "empty-11", name: "Cursor", preview: "/webbuild/" }, 
-    { id: "empty-12", name: "Feedback", preview: "/webbuild/11.png" }, 
-    { id: "empty-13", name: "Uploader", preview: "/webbuild/12.png" }, 
-    { id: "empty-14", name: "InputShotcut", preview: "/webbuild/13.png" }, 
-    { id: "empty-15", name: "Plan", preview: "/webbuild/14.png" }, 
-    { id: "empty-16", name: "Loader", preview: "/webbuild/15.png" }, 
   ] 
 
   const handleAddMenu = (templateId: string) => { 

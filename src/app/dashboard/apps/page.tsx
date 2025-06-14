@@ -66,7 +66,7 @@ export default async function AppsPage() {
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
                   <Layout size={24} className="text-blue-400" />
                 </div>
-                <h2 className="app-title">DisPlan Editor</h2>
+                <h2 className="app-title">DisPlan Editor <span className="beta_span1r22e2">Beta</span></h2>
                 <p className="app-description">
                   Create beautiful websites with our intuitive builder. Choose between code or visual design.
                 </p>
@@ -84,7 +84,7 @@ export default async function AppsPage() {
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
                   <Layout size={24} className="text-blue-400" />
                 </div>
-                <h2 className="app-title">Website Builder Code</h2>
+                <h2 className="app-title">Website Builder Code <span className="beta_span1r22e2">Beta</span></h2>
                 <p className="app-description">
                   Create beautiful websites with our intuitive builder. Choose between code or visual design.
                 </p>
@@ -104,7 +104,7 @@ export default async function AppsPage() {
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
                   <Layout size={24} className="text-blue-400" />
                 </div>
-                <h2 className="app-title">DisPlan Bord</h2>
+                <h2 className="app-title">DisPlan Bord <span className="beta_span1r22e2">Beta</span></h2>
                 <p className="app-description">
                   The place where you can think about your designs
                 </p>
@@ -122,7 +122,7 @@ export default async function AppsPage() {
                 <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
                   <Layout size={24} className="text-blue-400" />
                 </div>
-                <h2 className="app-title">Convert HTML <span className="asfawgagasgawgasg">Beta</span></h2>
+                <h2 className="app-title">Convert HTML <span className="beta_span1r22e2">Beta</span></h2>
                 <p className="app-description">
                   Convert website to html 
                   <span className="asfawgagasgawgasg1">This is a trial version and may contain bugs or issues. Updates are on the way. We appreciate your understanding.</span>

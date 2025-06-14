@@ -11,11 +11,16 @@ export interface PublishedSiteData {
   custom_code: string | null
   elements: any[]
   is_published: boolean
+  canvas_width?: number
+  canvas_height?: number
+  owner_id: string
+  created_at: string
+  updated_at: string
 }
 
 export async function getPublishedSiteData(subdomain: string): Promise<PublishedSiteData | null> {
   try {
-    console.log("🔍 Fetching published site data for subdomain:", subdomain)
+    console.log("🔍 [FIXED] Fetching published site data for subdomain:", subdomain)
 
     const supabase = createClient()
 
@@ -27,33 +32,61 @@ export async function getPublishedSiteData(subdomain: string): Promise<Published
       .eq("is_published", true)
       .single()
 
-    console.log("📦 Project query result:", { project, projectError })
+    console.log("📦 [FIXED] Project query result:", {
+      project: project ? { id: project.id, name: project.name } : null,
+      projectError,
+    })
 
     if (projectError || !project) {
-      console.error("❌ Project not found:", projectError)
+      console.error("❌ [FIXED] Project not found:", projectError)
       return null
     }
 
-    // Get the canvas elements for the project
+    // FIXED: Get ALL canvas elements for the project (remove page filter)
+    console.log("🔍 [FIXED] Fetching elements for project ID:", project.id)
+
     const { data: elements, error: elementsError } = await supabase
       .from("displan_project_designer_css_canvas_elements")
       .select("*")
       .eq("project_id", project.id)
-      .eq("page_id", "home")
       .order("created_at", { ascending: true })
 
-    console.log("🧩 Elements query result:", {
-      elements,
+    console.log("🧩 [FIXED] Elements query result:", {
+      elements: elements ? elements.slice(0, 3) : null, // Show first 3 elements
       elementsError,
       elementsCount: elements?.length || 0,
+      elementTypes: elements?.map((e) => e.element_type) || [],
+      pageIds: [...new Set(elements?.map((e) => e.page_id) || [])],
     })
 
-    if (elementsError) {
-      console.error("❌ Error fetching elements:", elementsError)
-      return null
+    // ADDITIONAL DEBUG: Check if elements exist with different filters
+    if (!elements || elements.length === 0) {
+      console.log("🔍 [DEBUG] No elements found, checking with broader query...")
+
+      // Check if ANY elements exist for this project
+      const { data: allElements, error: allError } = await supabase
+        .from("displan_project_designer_css_canvas_elements")
+        .select("id, project_id, page_id, element_type")
+        .eq("project_id", project.id)
+
+      console.log("🔍 [DEBUG] All elements check:", {
+        allElements,
+        allError,
+        count: allElements?.length || 0,
+      })
+
+      // Check if project_id is correct type
+      console.log("🔍 [DEBUG] Project ID type check:", {
+        projectId: project.id,
+        projectIdType: typeof project.id,
+      })
     }
 
-    const siteData = {
+    if (elementsError) {
+      console.error("❌ [FIXED] Error fetching elements:", elementsError)
+    }
+
+    const siteData: PublishedSiteData = {
       id: project.id,
       name: project.name,
       description: project.description,
@@ -64,12 +97,23 @@ export async function getPublishedSiteData(subdomain: string): Promise<Published
       custom_code: project.custom_code,
       elements: elements || [],
       is_published: project.is_published,
+      canvas_width: project.canvas_width || 1200,
+      canvas_height: project.canvas_height || 800,
+      owner_id: project.owner_id,
+      created_at: project.created_at,
+      updated_at: project.updated_at,
     }
 
-    console.log("✅ Final site data:", siteData)
+    console.log("✅ [FIXED] Final site data:", {
+      siteName: siteData.name,
+      elementsCount: siteData.elements.length,
+      hasElements: siteData.elements.length > 0,
+      sampleElement: siteData.elements[0] || null,
+    })
+
     return siteData
   } catch (error) {
-    console.error("💥 Error getting published site data:", error)
+    console.error("💥 [FIXED] Error getting published site data:", error)
     return null
   }
 }

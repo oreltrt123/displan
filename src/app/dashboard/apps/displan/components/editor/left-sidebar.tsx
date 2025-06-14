@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Home, Plus, Folder, FileText, MessageSquare, Layers } from "lucide-react"
+import { Home, Plus, Folder, FileText, Database } from "lucide-react"
 import { ElementsPanel } from "./elements-panel"
 import { DisplanAI } from "./displan-ai"
 import { StripeSubscription } from "./stripe-subscription"
+import { CMSPanel } from "./cms-panel"
 
 interface DisplanProjectDesignerCssPage {
   id: string
@@ -13,16 +14,41 @@ interface DisplanProjectDesignerCssPage {
   is_folder: boolean
 }
 
+interface CMSCollection {
+  id: string
+  name: string
+  slug: string
+  entries_count: number
+}
+
+interface CMSEntry {
+  id: string
+  title: string
+  slug: string
+  date: string
+  status: "draft" | "published"
+  content: string
+  collection_id: string
+}
+
 interface LeftSidebarProps {
   pages: DisplanProjectDesignerCssPage[]
   currentPage: string
   onPageChange: (pageId: string) => void
   onCreatePage: (name: string, isFolder: boolean) => void
   onAddElement?: (elementType: string, x: number, y: number) => void
+  projectId: string
 }
 
-export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, onAddElement }: LeftSidebarProps) {
-  const [activeTab, setActiveTab] = useState<"pages" | "elements" | "ai">("pages")
+export function LeftSidebar({
+  pages,
+  currentPage,
+  onPageChange,
+  onCreatePage,
+  onAddElement,
+  projectId,
+}: LeftSidebarProps) {
+  const [activeTab, setActiveTab] = useState<"pages" | "elements" | "ai" | "cms">("pages")
   const [showPageMenu, setShowPageMenu] = useState(false)
   const [newPageName, setNewPageName] = useState("")
   const [showModal, setShowModal] = useState(false)
@@ -30,6 +56,14 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
   const [modalPageName, setModalPageName] = useState("")
   const [hasSubscription, setHasSubscription] = useState(false)
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(true)
+
+  // FIX: Initialize as empty array and ensure it stays an array
+  const [cmsCollections, setCmsCollections] = useState<CMSCollection[]>([])
+  const [showCmsPages, setShowCmsPages] = useState<{ [key: string]: boolean }>({})
+  const [cmsLoading, setCmsLoading] = useState(false)
+  const [cmsError, setCmsError] = useState<string | null>(null)
+  const [cmsEntries, setCmsEntries] = useState<{ [key: string]: CMSEntry[] }>({})
+  const [loadingEntries, setLoadingEntries] = useState<{ [key: string]: boolean }>({})
 
   // Check subscription status on component mount and when returning from Stripe
   useEffect(() => {
@@ -102,7 +136,42 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
     }
 
     checkSubscription()
-  }, [])
+    loadCmsCollections()
+  }, [projectId])
+
+  // FIX: Proper error handling and array validation
+  const loadCmsCollections = async () => {
+    setCmsLoading(true)
+    setCmsError(null)
+
+    try {
+      const response = await fetch(`/api/cms/collections?project_id=${projectId}`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      // FIX: Ensure we always set an array
+      if (Array.isArray(data)) {
+        setCmsCollections(data)
+      } else if (data && Array.isArray(data.collections)) {
+        setCmsCollections(data.collections)
+      } else if (data && data.success && Array.isArray(data.data)) {
+        setCmsCollections(data.data)
+      } else {
+        console.warn("CMS API returned non-array data:", data)
+        setCmsCollections([]) // Fallback to empty array
+      }
+    } catch (error) {
+      console.error("Failed to load CMS collections:", error)
+      setCmsError(error instanceof Error ? error.message : "Failed to load CMS collections")
+      setCmsCollections([]) // Ensure it's still an array on error
+    } finally {
+      setCmsLoading(false)
+    }
+  }
 
   const handleCreatePage = (isFolder: boolean) => {
     if (newPageName.trim()) {
@@ -141,6 +210,52 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
       }),
     )
+  }
+
+  const toggleCmsPages = async (collectionId: string) => {
+    const isCurrentlyOpen = showCmsPages[collectionId]
+
+    setShowCmsPages((prev) => ({
+      ...prev,
+      [collectionId]: !prev[collectionId],
+    }))
+
+    // If opening and we haven't loaded entries yet, load them
+    if (!isCurrentlyOpen && !cmsEntries[collectionId]) {
+      await loadCmsEntries(collectionId)
+    }
+  }
+
+  const loadCmsEntries = async (collectionId: string) => {
+    setLoadingEntries((prev) => ({ ...prev, [collectionId]: true }))
+
+    try {
+      const response = await fetch(`/api/cms/collections/${collectionId}/entries`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const entries = await response.json()
+
+      setCmsEntries((prev) => ({
+        ...prev,
+        [collectionId]: Array.isArray(entries) ? entries : [],
+      }))
+    } catch (error) {
+      console.error(`Failed to load entries for collection ${collectionId}:`, error)
+      setCmsEntries((prev) => ({
+        ...prev,
+        [collectionId]: [],
+      }))
+    } finally {
+      setLoadingEntries((prev) => ({ ...prev, [collectionId]: false }))
+    }
+  }
+
+  const handleCmsEntryClick = (entry: CMSEntry) => {
+    // Use a special prefix to distinguish CMS entries from regular pages
+    onPageChange(`cms-${entry.collection_id}-${entry.slug}`)
   }
 
   return (
@@ -186,6 +301,18 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
             <img className="dark:hidden" src="/components/editor/ai_light.png" alt="" />
             <img className="hidden dark:block" src="/components/editor/ai_dark.png" alt="" />
           </button>
+          <button
+            onClick={() => setActiveTab("cms")}
+            className={`Butyet_23REr ${
+              activeTab === "cms"
+                ? "bg-[#8888881A] text-gray-600"
+                : "text-gray-500 dark:text-gray-400 hover:bg-[#8888881A] hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+            title="CMS"
+          >
+            <img className="dark:hidden" src="/components/editor/cms_light.png" alt="" />
+            <img className="hidden dark:block" src="/components/editor/database_dark.png" alt="" />
+          </button>
         </div>
 
         {/* Main Content Area */}
@@ -205,17 +332,11 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
 
                     {showPageMenu && (
                       <div className="menu_container12123_d">
-                        <button
-                          onClick={() => openModal("page")}
-                          className="menu_item"
-                        >
+                        <button onClick={() => openModal("page")} className="menu_item">
                           <FileText className="w-4 h-4 mr-2" />
                           New Page
                         </button>
-                        <button
-                          onClick={() => openModal("folder")}
-                          className="menu_item"
-                        >
+                        <button onClick={() => openModal("folder")} className="menu_item">
                           <Folder className="w-4 h-4 mr-2" />
                           New Folder
                         </button>
@@ -242,8 +363,8 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
                         onClick={() => onPageChange(page.slug)}
                         className={`flex items-center p-3 cursor-pointer transition-colors ${
                           currentPage === page.slug
-                          ? "bg-[#8888881A] text-gray-700 dark:border-blue-800"
-                          : "hover:bg-[#8888881A] text-gray-700 dark:text-gray-300"
+                            ? "bg-[#8888881A] text-gray-700 dark:border-blue-800"
+                            : "hover:bg-[#8888881A] text-gray-700 dark:text-gray-300"
                         }`}
                       >
                         {page.is_folder ? <Folder className="w-4 h-4 mr-3" /> : <FileText className="w-4 h-4 mr-3" />}
@@ -255,6 +376,87 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
                         )}
                       </div>
                     ))}
+
+                    {/* CMS Pages Section - FIX: Added proper error handling and loading states */}
+                    {cmsLoading && (
+                      <div className="flex items-center p-3 text-gray-500">
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-3"></div>
+                        <span className="text-sm">Loading CMS collections...</span>
+                      </div>
+                    )}
+
+                    {cmsError && (
+                      <div className="flex items-center p-3 text-red-500">
+                        <span className="text-sm">Error: {cmsError}</span>
+                        <button onClick={loadCmsCollections} className="ml-2 text-xs underline hover:no-underline">
+                          Retry
+                        </button>
+                      </div>
+                    )}
+
+                    {/* FIX: Added Array.isArray check as extra safety */}
+                    {!cmsLoading &&
+                      !cmsError &&
+                      Array.isArray(cmsCollections) &&
+                      cmsCollections.map((collection) => (
+                        <div key={collection.id}>
+                          <div
+                            onClick={() => toggleCmsPages(collection.id)}
+                            className="flex items-center p-3 cursor-pointer transition-colors hover:bg-[#8888881A] text-gray-700 dark:text-gray-300"
+                          >
+                            <Database className="w-4 h-4 mr-3" />
+                            <span className="text-sm font-medium flex-1">{collection.name}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500 bg-[#8888881A] px-2 py-1 rounded">
+                              {collection.entries_count}
+                            </span>
+                          </div>
+                          {showCmsPages[collection.id] && (
+                            <div className="ml-6">
+                              {loadingEntries[collection.id] ? (
+                                <div className="flex items-center p-2 text-gray-500">
+                                  <div className="w-3 h-3 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-2"></div>
+                                  <span className="text-xs">Loading entries...</span>
+                                </div>
+                              ) : cmsEntries[collection.id] && cmsEntries[collection.id].length > 0 ? (
+                                cmsEntries[collection.id].map((entry) => (
+                                  <div
+                                    key={entry.id}
+                                    onClick={() => handleCmsEntryClick(entry)}
+                                    className={`flex items-center p-2 cursor-pointer transition-colors hover:bg-[#8888881A] ${
+                                      currentPage === `cms-${entry.collection_id}-${entry.slug}`
+                                        ? "bg-[#8888881A] text-gray-700 dark:text-gray-200"
+                                        : "text-gray-600 dark:text-gray-400"
+                                    }`}
+                                  >
+                                    <FileText className="w-3 h-3 mr-2" />
+                                    <span className="text-xs flex-1">{entry.title}</span>
+                                    <span
+                                      className={`text-xs px-1 py-0.5 rounded ${
+                                        entry.status === "published"
+                                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                      }`}
+                                    >
+                                      {entry.status}
+                                    </span>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="flex items-center p-2 text-gray-500">
+                                  <span className="text-xs">No entries found</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                    {/* Show message when no CMS collections */}
+                    {!cmsLoading && !cmsError && Array.isArray(cmsCollections) && cmsCollections.length === 0 && (
+                      <div className="flex items-center p-3 text-gray-500">
+                        <span className="text-sm">No CMS collections found</span>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : activeTab === "elements" ? (
@@ -262,16 +464,26 @@ export function LeftSidebar({ pages, currentPage, onPageChange, onCreatePage, on
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 Elements_dw22er">Elements</h2>
                   <ElementsPanel onAddElement={onAddElement} />
                 </div>
+              ) : activeTab === "cms" ? (
+                <div>
+                  <CMSPanel onCollectionUpdate={loadCmsCollections} projectId={projectId} />
+                </div>
               ) : (
                 // AI Panel
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 Elements_dw22er">AI Assistant</h2>
                   {isCheckingSubscription ? (
                     <div className="flex items-center justify-center h-32">
                       <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin"></div>
                     </div>
                   ) : hasSubscription ? (
-                    <DisplanAI />
+                    <div className="min-h-screen bg-[#8888881A] dark:bg-[#1D1D1D] p-4">
+                      <div className="max-w-md mx-auto">
+                        <h1 className="text-2xl font-bold mb-4">AI Chat Demo</h1>
+                        <div className="h-[800px]">
+                          <DisplanAI />
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <StripeSubscription onSubscriptionSuccess={handleSubscriptionSuccess} />
                   )}

@@ -155,7 +155,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const additionalMembersCount = teamMembers.length - 4
 
   return (
-    <div className="w-full min-h-screen text-white bg-black relative">
+    <div className="w-full min-h-screen text-white bg-background relative">
       <DashboardNavbar hasProfile={hasProfile} />
       <main className="container mx-auto px-4 py-8">
         <Link href="/dashboard" className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6">
@@ -163,12 +163,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           Back to Dashboard
         </Link>
 
-        <div className="bg-white/5 rounded-xl border border-white/10 shadow-sm overflow-hidden">
+        <div className="bg-[#8888881A] rounded-xl border border-[#8888881A] shadow-sm overflow-hidden">
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <GitBranch size={24} className="text-blue-400" />
-                <h1 className="text-2xl font-bold">{project.name}</h1>
+                <h1 className="text-2xl font-bold text-black dark:text-white">{project.name}</h1>
                 {project.visibility === "private" ? (
                   <Lock size={16} className="text-white/60" />
                 ) : (
@@ -177,7 +177,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="text-sm text-white/60 flex items-center gap-1">
+                <span className="text-sm text-black dark:text-white flex items-center gap-1">
                   <Clock size={14} />
                   Created {formatDate(project.created_at)}
                 </span>
@@ -191,19 +191,19 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
                 <Link
                   href={`/dashboard/project/${params.id}/settings`}
-                  className="px-3 py-1.5 text-sm tracking-tight no-underline bg-white/10 font-medium rounded-lg text-white hover:bg-white/20 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 text-sm tracking-tight no-underline bg-[#8888881A] font-medium rounded-lg text-black dark:text-white flex items-center gap-1"
                 >
                   <Settings size={14} />
                   Settings
                 </Link>
 
-                <Link
+                {/* <Link
                   href={`/dashboard/project/${params.id}/download`}
-                  className="px-3 py-1.5 text-sm tracking-tight no-underline bg-white/10 font-medium rounded-lg text-white hover:bg-white/20 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 text-sm tracking-tight no-underline bg-[#8888881A] font-medium rounded-lg text-black dark:text-white flex items-center gap-1"
                 >
                   <Download size={14} />
                   Download
-                </Link>
+                </Link> */}
               </div>
             </div>
 
@@ -262,7 +262,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               {isOwner && (
                 <Link
                   href={`/dashboard/project/${params.id}/collaborators`}
-                  className="ml-3 text-sm text-white/70 hover:text-white flex items-center gap-1"
+                  className="ml-3 text-sm text-black dark:text-white hover:text-white flex items-center gap-1"
                 >
                   <Users size={14} />
                   {collaborators && collaborators.length > 0 ? "Manage collaborators" : "Add collaborators"}
@@ -273,11 +273,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium">Files</h2>
+              <h2 className="text-lg font-medium text-black dark:text-white">Files</h2>
               <div className="flex items-center gap-2">
                 <Link
                   href={`/dashboard/project/${params.id}/add-file`}
-                  className="px-3 py-1.5 text-sm tracking-tight no-underline bg-green-500/20 font-medium rounded-lg text-green-400 hover:bg-green-500/30 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 text-sm tracking-tight no-underline bg-green-500/20 font-medium rounded-lg text-green-400 flex items-center gap-1"
                 >
                   <PlusCircle size={14} />
                   New File
@@ -290,11 +290,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-white/10">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-white/70">Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-white/70 hidden md:table-cell">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-black dark:text-white">Name</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-black dark:text-white hidden md:table-cell">
                         Last updated
                       </th>
-                      <th className="text-right py-3 px-4 text-sm font-medium text-white/70"></th>
+                      <th className="text-right py-3 px-4 text-sm font-medium text-black dark:text-white"></th>
                     </tr>
                   </thead>
                   <tbody>

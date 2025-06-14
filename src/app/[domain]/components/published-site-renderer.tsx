@@ -1,19 +1,49 @@
 "use client"
 
+import type React from "react"
 import { useEffect, useState } from "react"
-import type { PublishedSiteData } from "../lib/get-published-site"
-import ClickSelect from "../../dashboard/apps/displan/components/editor/canvas/user-search"
-import UserSearch from "../../dashboard/apps/displan/components/editor/canvas/click-select"
-import ImageCarousel from "../../dashboard/apps/displan/components/editor/canvas/carousel"
-import Cursor from "../../dashboard/apps/displan/components/editor/canvas/cursor"
-import View from "../../dashboard/apps/displan/components/editor/canvas/view"
-import Feedback from "../../dashboard/apps/displan/components/editor/canvas/feedback"
-import Plan from "../../dashboard/apps/displan/components/editor/canvas/plan"
-import Uploader from "../../dashboard/apps/displan/components/editor/canvas/file-uploader"
-import AnimatedValue from "../../dashboard/apps/displan/components/editor/canvas/slider"
-import InputShotcut from "../../dashboard/apps/displan/components/editor/canvas/input-shotcut"
-import Loader from "../../dashboard/apps/displan/components/editor/canvas/loader"
-import Template from "../../dashboard/apps/displan/components/editor/canvas/template"
+import { createClient } from "@supabase/supabase-js"
+
+export interface PublishedSiteData {
+  id: string
+  name: string
+  description: string | null
+  subdomain: string
+  favicon_light_url: string | null
+  favicon_dark_url: string | null
+  social_preview_url: string | null
+  custom_code: string | null
+  elements: CanvasElement[]
+  is_published: boolean
+  canvas_width?: number
+  canvas_height?: number
+  owner_id: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CanvasElement {
+  id: string
+  project_id: string
+  page_id: string
+  element_type: string
+  content: string | null
+  x_position: number
+  y_position: number
+  width: number
+  height: number
+  font_size: number | null
+  font_weight: string | null
+  text_color: string | null
+  background_color: string | null
+  border_radius: number | null
+  border_width: number | null
+  border_color: string | null
+  text_align: string | null
+  z_index: number | null
+  created_at: string
+  updated_at: string
+}
 
 interface PublishedSiteRendererProps {
   siteData: PublishedSiteData
@@ -21,630 +51,629 @@ interface PublishedSiteRendererProps {
 
 export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) {
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [templateContent, setTemplateContent] = useState<{ [key: string]: string }>({})
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Initialize Supabase client
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+  )
+
+  console.log("🎨 PublishedSiteRenderer received data:", {
+    siteName: siteData.name,
+    elementsCount: siteData.elements?.length || 0,
+    elements: siteData.elements,
+    subdomain: siteData.subdomain,
+  })
 
   useEffect(() => {
-    // Set the page title to the project name
+    // Set the page title and favicon
     document.title = siteData.name || `${siteData.subdomain} - Built with DisPlan`
-  }, [siteData.name, siteData.subdomain])
 
-  useEffect(() => {
-    // Detect user's preferred color scheme
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    setIsDarkMode(mediaQuery.matches)
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches)
-    }
-
-    mediaQuery.addEventListener("change", handleChange)
-    return () => mediaQuery.removeEventListener("change", handleChange)
-  }, [])
-
-  useEffect(() => {
-    // Set the favicon based on dark/light mode
-    const favicon = isDarkMode ? siteData.favicon_dark_url : siteData.favicon_light_url
-    if (favicon) {
-      const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement
-      if (link) {
-        link.href = favicon
+    // Set favicon if available
+    if (siteData.favicon_light_url) {
+      const favicon = document.querySelector("link[rel*='icon']") as HTMLLinkElement
+      if (favicon) {
+        favicon.href = siteData.favicon_light_url
       } else {
-        const newLink = document.createElement("link")
-        newLink.rel = "icon"
-        newLink.href = favicon
-        document.head.appendChild(newLink)
+        const newFavicon = document.createElement("link")
+        newFavicon.rel = "icon"
+        newFavicon.href = siteData.favicon_light_url
+        document.head.appendChild(newFavicon)
       }
     }
-  }, [isDarkMode, siteData.favicon_dark_url, siteData.favicon_light_url])
 
-  useEffect(() => {
-    // Inject custom code if present
-    if (siteData.custom_code) {
-      const customCodeContainer = document.getElementById("custom-code-container")
-      if (customCodeContainer) {
-        customCodeContainer.innerHTML = siteData.custom_code
+    // Load template content
+    loadTemplateContent()
+  }, [siteData])
 
-        // Execute any script tags in the custom code
-        const scripts = customCodeContainer.querySelectorAll("script")
-        scripts.forEach((script) => {
-          const newScript = document.createElement("script")
-          newScript.textContent = script.textContent
-          document.head.appendChild(newScript)
-          document.head.removeChild(newScript)
-        })
+  // Load template content from database
+  const loadTemplateContent = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      // Load template content using the function we created
+      const { data, error } = await supabase.rpc("template_canvas_name_v232_load_r23", {
+        project_id_param: siteData.id,
+        page_slug_param: "home",
+      })
+
+      if (error) {
+        console.error("Error loading template content:", error)
+        setError("Failed to load template content")
+      } else if (data?.success) {
+        setTemplateContent(data.content || {})
+        console.log("✅ Template content loaded:", data.content)
       }
+    } catch (err) {
+      console.error("Error loading template content:", err)
+      setError("Failed to load template content")
+    } finally {
+      setIsLoading(false)
     }
-  }, [siteData.custom_code])
+  }
 
-  const renderMenuTemplate = (templateId: string) => {
-    switch (templateId) {
-      case "template-1":
-        return (
-          <div className="bg-white py-24 sm:py-32">
-            <div className="mx-auto grid max-w-7xl gap-20 px-6 lg:px-8 xl:grid-cols-3">
-              <div className="max-w-xl">
-                <h2 className="text-3xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-4xl">
-                  Meet our leadership
-                </h2>
-                <p className="mt-6 text-lg/8 text-gray-600">
-                  We're a dynamic group of individuals who are passionate about what we do and dedicated to delivering
-                  the best results for our clients.
-                </p>
-              </div>
-              <ul role="list" className="grid gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-16 xl:col-span-2">
-                <li>
-                  <div className="flex items-center gap-x-6">
-                    <img
-                      className="size-[35px] rounded-full"
-                      src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
-                      alt=""
-                    />
-                    <div>
-                      <h3 className="text-base/7 font-semibold tracking-tight text-gray-900">Test Name</h3>
-                      <p className="text-sm/6 font-semibold text-indigo-600">Co-Founder / CEO</p>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        )
+  // Render individual canvas element
+  const renderElement = (element: CanvasElement) => {
+    console.log("🎯 Rendering element:", {
+      id: element.id,
+      type: element.element_type,
+      position: { x: element.x_position, y: element.y_position },
+      size: { width: element.width, height: element.height },
+      content: element.content?.substring(0, 50) + "...",
+    })
 
-      case "template-2":
-        return (
-          <section className="relative isolate overflow-hidden bg-white px-6 py-24 sm:py-32 lg:px-8">
-            <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,var(--color-indigo-100),white)] opacity-20"></div>
-            <div className="absolute inset-y-0 right-1/2 -z-10 mr-16 w-[200%] origin-bottom-left skew-x-[-30deg] bg-white shadow-xl ring-1 shadow-indigo-600/10 ring-indigo-50 sm:mr-28 lg:mr-0 xl:mr-16 xl:origin-center"></div>
-            <div className="mx-auto max-w-2xl lg:max-w-4xl">
-              <img className="mx-auto h-12" src="/logo_light_mode.png" alt="" />
-              <figure className="mt-10">
-                <blockquote className="text-center text-xl/8 font-semibold text-gray-900 sm:text-2xl/9">
-                  <p>
-                    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo expedita voluptas culpa sapiente
-                    alias molestiae. Numquam corrupti in laborum sed rerum et corporis."
-                  </p>
-                </blockquote>
-                <figcaption className="mt-10">
-                  <img
-                    className="mx-auto size-10 rounded-full"
-                    src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
-                    alt=""
-                  />
-                  <div className="mt-4 flex items-center justify-center space-x-3 text-base">
-                    <div className="font-semibold text-gray-900">Test Name</div>
-                    <svg viewBox="0 0 2 2" width="3" height="3" aria-hidden="true" className="fill-gray-900">
-                      <circle cx="1" cy="1" r="1" />
-                    </svg>
-                    <div className="text-gray-600">CEO of Workcation</div>
-                  </div>
-                </figcaption>
-              </figure>
-            </div>
-          </section>
-        )
+    // Handle menu templates differently
+    if (element.element_type.startsWith("menu-")) {
+      return renderMenuTemplate(element)
+    }
 
-      case "empty-0":
-        return (
-          <div className="bg-white py-24 sm:py-32">
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
-              <div className="mx-auto max-w-2xl lg:mx-0">
-                <h2 className="text-4xl font-semibold tracking-tight text-pretty text-gray-900 sm:text-5xl">
-                  From the blog
-                </h2>
-                <p className="mt-2 text-lg/8 text-gray-600">Learn how to grow your business with our expert advice.</p>
-              </div>
-              <div className="mx-auto mt-10 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 border-t border-gray-200 pt-10 sm:mt-16 sm:pt-16 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-                <article className="flex max-w-xl flex-col items-start justify-between">
-                  <div className="flex items-center gap-x-4 text-xs">
-                    <time dateTime="2020-03-16" className="text-gray-500">
-                      Mar 16, 2020
-                    </time>
-                    <a
-                      href="#"
-                      className="relative z-10 rounded-full bg-gray-50 px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-100"
-                    >
-                      Marketing
-                    </a>
-                  </div>
-                  <div className="group relative">
-                    <h3 className="mt-3 text-lg/6 font-semibold text-gray-900 group-hover:text-gray-600">
-                      <a href="#">
-                        <span className="absolute inset-0"></span>
-                        Boost your conversion rate
-                      </a>
-                    </h3>
-                    <p className="mt-5 line-clamp-3 text-sm/6 text-gray-600">
-                      Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid
-                      explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto
-                      corrupti dicta.
-                    </p>
-                  </div>
-                  <div className="relative mt-8 flex items-center gap-x-4">
-                    <img
-                      src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
-                      alt=""
-                      className="size-10 rounded-full bg-gray-50"
-                    />
-                    <div className="text-sm/6">
-                      <p className="font-semibold text-gray-900">
-                        <a href="#">
-                          <span className="absolute inset-0"></span>
-                          Test Name
-                        </a>
-                      </p>
-                      <p className="text-gray-600">Co-Founder / CTO</p>
-                    </div>
-                  </div>
-                </article>
-              </div>
-            </div>
-          </div>
-        )
+    // Common styles for positioned elements
+    const elementStyle: React.CSSProperties = {
+      position: "absolute",
+      left: `${element.x_position || 0}px`,
+      top: `${element.y_position || 0}px`,
+      width: `${element.width || 200}px`,
+      height: `${element.height || 50}px`,
+      zIndex: element.z_index || 1,
+      fontSize: element.font_size ? `${element.font_size}px` : "16px",
+      fontWeight: element.font_weight || "normal",
+      color: element.text_color || "#000000",
+      backgroundColor: element.background_color || "transparent",
+      textAlign: (element.text_align as any) || "left",
+      borderRadius: element.border_radius ? `${element.border_radius}px` : "0px",
+      borderWidth: element.border_width ? `${element.border_width}px` : "0px",
+      borderColor: element.border_color || "transparent",
+      borderStyle: element.border_width ? "solid" : "none",
+      display: "flex",
+      alignItems: "center",
+      justifyContent:
+        element.text_align === "center" ? "center" : element.text_align === "right" ? "flex-end" : "flex-start",
+      padding: "8px",
+      boxSizing: "border-box",
+      overflow: "hidden",
+      wordWrap: "break-word",
+    }
 
-      case "empty-1":
+    // Render based on element type
+    switch (element.element_type) {
+      case "text":
         return (
-          <div className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
+          <div key={element.id} style={elementStyle}>
             <div
-              className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-              aria-hidden="true"
-            >
-              <div
-                className="relative left-1/2 -z-10 aspect-1155/678 w-144.5 max-w-none -translate-x-1/2 rotate-30 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-40rem)] sm:w-288.75"
-                style={{
-                  clipPath:
-                    "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-                }}
-              ></div>
-            </div>
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-4xl font-semibold tracking-tight text-balance text-gray-900 sm:text-5xl">
-                Contact sales
-              </h2>
-              <p className="mt-2 text-lg/8 text-gray-600">
-                Aute magna irure deserunt veniam aliqua magna enim voluptate.
-              </p>
-            </div>
-            <form action="#" method="POST" className="mx-auto mt-16 max-w-xl sm:mt-20">
-              <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="first-name" className="block text-sm/6 font-semibold text-gray-900">
-                    First name
-                  </label>
-                  <div className="mt-2.5">
-                    <input
-                      type="text"
-                      name="first-name"
-                      id="first-name"
-                      autoComplete="given-name"
-                      className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="last-name" className="block text-sm/6 font-semibold text-gray-900">
-                    Last name
-                  </label>
-                  <div className="mt-2.5">
-                    <input
-                      type="text"
-                      name="last-name"
-                      id="last-name"
-                      autoComplete="family-name"
-                      className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-10">
-                <button
-                  type="submit"
-                  className="block w-full rounded-md bg-indigo-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  Let's talk
-                </button>
-              </div>
-            </form>
+              dangerouslySetInnerHTML={{
+                __html: element.content || "Text Element",
+              }}
+            />
           </div>
         )
 
-      case "empty-2":
+      case "button":
         return (
-          <div className="relative isolate flex items-center gap-x-6 overflow-hidden bg-gray-50 px-6 py-2.5 sm:px-3.5 sm:before:flex-1">
-            <div
-              className="absolute top-1/2 left-[max(-7rem,calc(50%-52rem))] -z-10 -translate-y-1/2 transform-gpu blur-2xl"
-              aria-hidden="true"
-            >
-              <div
-                className="aspect-577/310 w-144.25 bg-linear-to-r from-[#ff80b5] to-[#9089fc] opacity-30"
-                style={{
-                  clipPath:
-                    "polygon(74.8% 41.9%, 97.2% 73.2%, 100% 34.9%, 92.5% 0.4%, 87.5% 0%, 75% 28.6%, 58.5% 54.6%, 50.1% 56.8%, 46.9% 44%, 48.3% 17.4%, 24.7% 53.9%, 0% 27.9%, 11.9% 74.2%, 24.9% 54.1%, 68.6% 100%, 74.8% 41.9%)",
-                }}
-              ></div>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <p className="text-sm/6 text-gray-900">
-                <strong className="font-semibold">DisPlan 2025</strong>
-                <svg viewBox="0 0 2 2" className="mx-2 inline size-0.5 fill-current" aria-hidden="true">
-                  <circle cx="1" cy="1" r="1" />
-                </svg>
-                Join us in Denver from June 7 – 9 to see what's coming next.
-              </p>
-              <a
-                href="#"
-                className="flex-none rounded-full bg-gray-900 px-3.5 py-1 text-sm font-semibold text-white shadow-xs hover:bg-gray-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
-              >
-                Register now <span aria-hidden="true">&rarr;</span>
-              </a>
-            </div>
-            <div className="flex flex-1 justify-end">
-              <button type="button" className="-m-3 p-3 focus-visible:-outline-offset-4">
-                <span className="sr-only">Dismiss</span>
-                <svg className="size-5 text-gray-900" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                </svg>
-              </button>
-            </div>
+          <button
+            key={element.id}
+            style={{
+              ...elementStyle,
+              cursor: "pointer",
+              border: element.border_width
+                ? `${element.border_width}px solid ${element.border_color}`
+                : "1px solid #ccc",
+              backgroundColor: element.background_color || "#f0f0f0",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.8"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1"
+            }}
+          >
+            {element.content || "Button"}
+          </button>
+        )
+
+      case "image":
+        return (
+          <div key={element.id} style={elementStyle}>
+            <img
+              src={element.content || "/placeholder.svg?height=200&width=200"}
+              alt="Image"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: element.border_radius ? `${element.border_radius}px` : "0px",
+              }}
+              onError={(e) => {
+                e.currentTarget.src = "/placeholder.svg?height=200&width=200"
+              }}
+            />
           </div>
         )
 
-      case "empty-3":
+      case "heading":
         return (
-          <div className="bg-gray-50 py-24 sm:py-32">
-            <div className="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
-              <h2 className="text-center text-base/7 font-semibold text-indigo-600">Deploy faster</h2>
-              <p className="mx-auto mt-2 max-w-lg text-center text-4xl font-semibold tracking-tight text-balance text-gray-950 sm:text-5xl">
-                Everything you need to deploy your app
-              </p>
-              <div className="mt-10 grid gap-4 sm:mt-16 lg:grid-cols-3 lg:grid-rows-2">
-                <div className="relative lg:row-span-2">
-                  <div className="absolute inset-px rounded-lg bg-white lg:rounded-l-4xl"></div>
-                  <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)] lg:rounded-l-[calc(2rem+1px)]">
-                    <div className="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
-                      <p className="mt-2 text-lg font-medium tracking-tight text-gray-950 max-lg:text-center">
-                        Mobile friendly
-                      </p>
-                      <p className="mt-2 max-w-lg text-sm/6 text-gray-600 max-lg:text-center">
-                        Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="pointer-events-none absolute inset-px rounded-lg shadow-sm ring-1 ring-black/5 lg:rounded-l-4xl"></div>
-                </div>
-              </div>
-            </div>
+          <div key={element.id} style={elementStyle}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "inherit",
+                fontWeight: "inherit",
+                color: "inherit",
+              }}
+              dangerouslySetInnerHTML={{
+                __html: element.content || "Heading",
+              }}
+            />
           </div>
         )
 
-      case "empty-4":
+      case "paragraph":
         return (
-          <div className="bg-white">
-            <header className="absolute inset-x-0 top-0 z-50">
-              <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
-                <div className="flex lg:flex-1">
-                  <a href="#" className="-m-1.5 p-1.5">
-                    <span className="sr-only">Your Company</span>
-                    <img
-                      className="h-8 w-auto"
-                      src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
-                      alt=""
-                    />
-                  </a>
-                </div>
-                <div className="hidden lg:flex lg:gap-x-12">
-                  <a href="#" className="text-sm/6 font-semibold text-gray-900">
-                    Product
-                  </a>
-                  <a href="#" className="text-sm/6 font-semibold text-gray-900">
-                    Features
-                  </a>
-                  <a href="#" className="text-sm/6 font-semibold text-gray-900">
-                    Marketplace
-                  </a>
-                  <a href="#" className="text-sm/6 font-semibold text-gray-900">
-                    Company
-                  </a>
-                </div>
-                <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-                  <a href="#" className="text-sm/6 font-semibold text-gray-900">
-                    Log in <span aria-hidden="true">&rarr;</span>
-                  </a>
-                </div>
-              </nav>
-            </header>
-
-            <div className="relative isolate px-6 pt-14 lg:px-8">
-              <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-                <div className="text-center">
-                  <h1 className="text-5xl font-semibold tracking-tight text-balance text-gray-900 sm:text-7xl">
-                    Data to enrich your online business
-                  </h1>
-                  <p className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8">
-                    Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt
-                    amet fugiat veniam occaecat.
-                  </p>
-                  <div className="mt-10 flex items-center justify-center gap-x-6">
-                    <a
-                      href="#"
-                      className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      Get started
-                    </a>
-                    <a href="#" className="text-sm/6 font-semibold text-gray-900">
-                      Learn more <span aria-hidden="true">→</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case "empty-5":
-        return (
-          <div className="relative isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
-            <div className="mx-auto max-w-4xl text-center">
-              <h2 className="text-base/7 font-semibold text-indigo-600">Pricing</h2>
-              <p className="mt-2 text-5xl font-semibold tracking-tight text-balance text-gray-900 sm:text-6xl">
-                Choose your DisPlan plan for you
-              </p>
-            </div>
-            <p className="mx-auto mt-6 max-w-2xl text-center text-lg font-medium text-pretty text-gray-600 sm:text-xl/8">
-              Choose an affordable plan that's packed with the best features for engaging your audience, creating
-              customer loyalty, and driving sales.
-            </p>
-            <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-2">
-              <div className="rounded-3xl rounded-t-3xl bg-white/60 p-8 ring-1 ring-gray-900/10 sm:mx-8 sm:rounded-b-none sm:p-10 lg:mx-0 lg:rounded-tr-none lg:rounded-bl-3xl">
-                <h3 className="text-base/7 font-semibold text-indigo-600">Hobby</h3>
-                <p className="mt-4 flex items-baseline gap-x-2">
-                  <span className="text-5xl font-semibold tracking-tight text-gray-900">$29</span>
-                  <span className="text-base text-gray-500">/month</span>
-                </p>
-                <p className="mt-6 text-base/7 text-gray-600">
-                  The perfect plan if you're just getting started with our product.
-                </p>
-                <a
-                  href="#"
-                  className="mt-8 block rounded-md px-3.5 py-2.5 text-center text-sm font-semibold text-indigo-600 ring-1 ring-indigo-200 ring-inset hover:ring-indigo-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:mt-10"
-                >
-                  Get started today
-                </a>
-              </div>
-              <div className="relative rounded-3xl bg-gray-900 p-8 shadow-2xl ring-1 ring-gray-900/10 sm:p-10">
-                <h3 className="text-base/7 font-semibold text-indigo-400">Enterprise</h3>
-                <p className="mt-4 flex items-baseline gap-x-2">
-                  <span className="text-5xl font-semibold tracking-tight text-white">$99</span>
-                  <span className="text-base text-gray-400">/month</span>
-                </p>
-                <p className="mt-6 text-base/7 text-gray-300">Dedicated support and infrastructure for your company.</p>
-                <a
-                  href="#"
-                  className="mt-8 block rounded-md bg-indigo-500 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-xs hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 sm:mt-10"
-                >
-                  Get started today
-                </a>
-              </div>
-            </div>
-          </div>
-        )
-
-      // For editor-specific templates (empty-6 through empty-15, template_11),
-      // render placeholder content instead of trying to import editor components
-  case "empty-6":
-        return (
-          <div className="p-8">
-              <UserSearch />
-          </div>
-        )
-
-      case "empty-7":
-        return (
-          <div className="p-8">
-              <ClickSelect />
-          </div>
-        )
-
-      case "empty-8":
-        return (
-          <div className="p-8">
-              <ImageCarousel />
-          </div>
-        )
-
-      case "empty-9":
-        return (
-          <div className="">
-              <View />
-          </div>
-        )
-
-      case "empty-10":
-        return (
-          <div className="">
-              <AnimatedValue />
-          </div>
-        )
-
-      case "empty-11":
-        return (
-          <div className="">
-              <Cursor />
-          </div>
-        )
-
-      case "empty-12":
-        return (
-          <div className="">
-              <Feedback />
-          </div>
-        )
-
-      case "empty-13":
-        return (
-          <div className="p-8">
-              <Uploader />
-          </div>
-        )
-
-      case "empty-14":
-        return (
-          <div className="p-8">
-              <InputShotcut />
-          </div>
-        )
-
-      case "empty-15":
-        return (
-          <div className="p-8">
-              <Plan />
-          </div>
-        )
-      case "empty-16":
-        return (
-          <div className="p-8">
-              <Loader />
-          </div>
-        )
-
-      case "template_11":
-        return (
-          <div className="">
-              <Template />
-          </div>
-        )
-        return (
-          <div className="w-full h-64 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Interactive Component</h3>
-              <p className="text-sm text-gray-500">This component is available in the editor</p>
-            </div>
+          <div key={element.id} style={elementStyle}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: "inherit",
+                fontWeight: "inherit",
+                color: "inherit",
+                lineHeight: "1.5",
+              }}
+              dangerouslySetInnerHTML={{
+                __html: element.content || "Paragraph text",
+              }}
+            />
           </div>
         )
 
       default:
         return (
-          <div className="w-full h-64 bg-white border border-gray-200 rounded flex items-center justify-center">
-            <span className="text-sm text-gray-500">Template {templateId}</span>
+          <div key={element.id} style={elementStyle}>
+            <div style={{ textAlign: "center", color: "#666" }}>{element.content || element.element_type}</div>
           </div>
         )
     }
   }
 
-  const renderElement = (element: any) => {
-    // For menu templates, render them as full-width sections
-    if (element.element_type.startsWith("menu-")) {
-      const templateId = element.element_type.replace("menu-", "")
-      return (
-        <div key={element.id} className="w-full">
-          {renderMenuTemplate(templateId)}
-        </div>
-      )
+  // Render menu templates as full-width sections
+  const renderMenuTemplate = (element: CanvasElement) => {
+    const templateId = element.element_type.replace("menu-", "")
+    const templateKey = `${templateId}_content`
+    const content = templateContent[templateKey] || element.content || ""
+
+    console.log("🍔 Rendering menu template:", {
+      templateId,
+      templateKey,
+      content: content.substring(0, 50) + "...",
+    })
+
+    // Base template styles
+    const templateStyle: React.CSSProperties = {
+      width: "100%",
+      minHeight: "80px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: "16px 32px",
+      backgroundColor: element.background_color || "#ffffff",
+      borderBottom: "1px solid #e5e7eb",
+      position: "relative",
+      zIndex: element.z_index || 10,
     }
 
-    // For other elements (text, buttons), use absolute positioning
-    if (element.element_type.startsWith("text-")) {
-      return (
-        <div
-          key={element.id}
-          className="absolute"
-          style={{
-            left: element.x_position,
-            top: element.y_position,
-            width: element.width,
-            height: element.height,
-          }}
-        >
-          <div className={`displan-${element.element_type} select-none`}>{element.content}</div>
-        </div>
-      )
-    }
+    // Render different menu templates
+    switch (templateId) {
+      case "header-1":
+        return (
+          <header key={element.id} style={templateStyle}>
+            <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
+              <div
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: element.text_color || "#000000",
+                }}
+              >
+                {content || "Logo"}
+              </div>
+              <nav style={{ display: "flex", gap: "24px" }}>
+                <a
+                  href="#"
+                  style={{
+                    color: element.text_color || "#000000",
+                    textDecoration: "none",
+                    fontSize: "16px",
+                  }}
+                >
+                  Home
+                </a>
+                <a
+                  href="#"
+                  style={{
+                    color: element.text_color || "#000000",
+                    textDecoration: "none",
+                    fontSize: "16px",
+                  }}
+                >
+                  About
+                </a>
+                <a
+                  href="#"
+                  style={{
+                    color: element.text_color || "#000000",
+                    textDecoration: "none",
+                    fontSize: "16px",
+                  }}
+                >
+                  Services
+                </a>
+                <a
+                  href="#"
+                  style={{
+                    color: element.text_color || "#000000",
+                    textDecoration: "none",
+                    fontSize: "16px",
+                  }}
+                >
+                  Contact
+                </a>
+              </nav>
+            </div>
+            <button
+              style={{
+                backgroundColor: "#3b82f6",
+                color: "white",
+                padding: "8px 16px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              Get Started
+            </button>
+          </header>
+        )
 
-    if (element.element_type.startsWith("button-")) {
-      return (
-        <div
-          key={element.id}
-          className="absolute"
-          style={{
-            left: element.x_position,
-            top: element.y_position,
-            width: element.width,
-            height: element.height,
-          }}
-        >
-          <button
-            className={`displan-${element.element_type} select-none cursor-pointer`}
-            onClick={() => {
-              if (element.link_url) {
-                window.open(element.link_url, "_blank")
-              }
+      case "header-2":
+        return (
+          <header
+            key={element.id}
+            style={{
+              ...templateStyle,
+              backgroundColor: element.background_color || "#1f2937",
+              color: element.text_color || "#ffffff",
             }}
           >
-            {element.content}
-          </button>
-        </div>
-      )
-    }
+            <div
+              style={{
+                fontSize: "20px",
+                fontWeight: "600",
+                color: element.text_color || "#ffffff",
+              }}
+            >
+              {content || "Brand"}
+            </div>
+            <nav style={{ display: "flex", gap: "32px", alignItems: "center" }}>
+              <a
+                href="#"
+                style={{
+                  color: element.text_color || "#ffffff",
+                  textDecoration: "none",
+                  fontSize: "16px",
+                }}
+              >
+                Products
+              </a>
+              <a
+                href="#"
+                style={{
+                  color: element.text_color || "#ffffff",
+                  textDecoration: "none",
+                  fontSize: "16px",
+                }}
+              >
+                Solutions
+              </a>
+              <a
+                href="#"
+                style={{
+                  color: element.text_color || "#ffffff",
+                  textDecoration: "none",
+                  fontSize: "16px",
+                }}
+              >
+                Pricing
+              </a>
+              <button
+                style={{
+                  backgroundColor: "#10b981",
+                  color: "white",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                Sign Up
+              </button>
+            </nav>
+          </header>
+        )
 
-    if (element.element_type.startsWith("image-")) {
-      return (
-        <div
-          key={element.id}
-          className="absolute"
-          style={{
-            left: element.x_position,
-            top: element.y_position,
-            width: element.width,
-            height: element.height,
-          }}
-        >
-          <img
-            src={element.content || "/placeholder.svg"}
-            alt="Element"
-            className="w-full h-full object-cover select-none"
-          />
-        </div>
-      )
-    }
+      case "hero-1":
+        return (
+          <section
+            key={element.id}
+            style={{
+              ...templateStyle,
+              minHeight: "400px",
+              flexDirection: "column",
+              justifyContent: "center",
+              textAlign: "center",
+              backgroundColor: element.background_color || "#f9fafb",
+              padding: "80px 32px",
+            }}
+          >
+            <h1
+              style={{
+                fontSize: "48px",
+                fontWeight: "bold",
+                color: element.text_color || "#111827",
+                marginBottom: "24px",
+                maxWidth: "800px",
+              }}
+            >
+              {content || "Welcome to Our Amazing Platform"}
+            </h1>
+            <p
+              style={{
+                fontSize: "20px",
+                color: "#6b7280",
+                marginBottom: "32px",
+                maxWidth: "600px",
+              }}
+            >
+              Build, deploy, and scale your applications with ease using our powerful tools and services.
+            </p>
+            <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
+              <button
+                style={{
+                  backgroundColor: "#3b82f6",
+                  color: "white",
+                  padding: "12px 24px",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                }}
+              >
+                Get Started
+              </button>
+              <button
+                style={{
+                  backgroundColor: "transparent",
+                  color: "#374151",
+                  padding: "12px 24px",
+                  borderRadius: "8px",
+                  border: "2px solid #d1d5db",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                }}
+              >
+                Learn More
+              </button>
+            </div>
+          </section>
+        )
 
-    return null
+      case "footer-1":
+        return (
+          <footer
+            key={element.id}
+            style={{
+              ...templateStyle,
+              backgroundColor: element.background_color || "#111827",
+              color: element.text_color || "#ffffff",
+              padding: "48px 32px 24px",
+              flexDirection: "column",
+              gap: "32px",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gap: "32px",
+                width: "100%",
+                maxWidth: "1200px",
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px" }}>{content || "Company"}</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <a href="#" style={{ color: "#9ca3af", textDecoration: "none" }}>
+                    About Us
+                  </a>
+                  <a href="#" style={{ color: "#9ca3af", textDecoration: "none" }}>
+                    Careers
+                  </a>
+                  <a href="#" style={{ color: "#9ca3af", textDecoration: "none" }}>
+                    Contact
+                  </a>
+                </div>
+              </div>
+              <div>
+                <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px" }}>Products</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <a href="#" style={{ color: "#9ca3af", textDecoration: "none" }}>
+                    Features
+                  </a>
+                  <a href="#" style={{ color: "#9ca3af", textDecoration: "none" }}>
+                    Pricing
+                  </a>
+                  <a href="#" style={{ color: "#9ca3af", textDecoration: "none" }}>
+                    API
+                  </a>
+                </div>
+              </div>
+              <div>
+                <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px" }}>Support</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <a href="#" style={{ color: "#9ca3af", textDecoration: "none" }}>
+                    Help Center
+                  </a>
+                  <a href="#" style={{ color: "#9ca3af", textDecoration: "none" }}>
+                    Documentation
+                  </a>
+                  <a href="#" style={{ color: "#9ca3af", textDecoration: "none" }}>
+                    Status
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div
+              style={{
+                borderTop: "1px solid #374151",
+                paddingTop: "24px",
+                textAlign: "center",
+                color: "#9ca3af",
+                fontSize: "14px",
+              }}
+            >
+              © 2024 {siteData.name}. All rights reserved.
+            </div>
+          </footer>
+        )
+
+      default:
+        return (
+          <div
+            key={element.id}
+            style={{
+              ...templateStyle,
+              backgroundColor: element.background_color || "#f3f4f6",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "600",
+                  color: element.text_color || "#111827",
+                  marginBottom: "8px",
+                }}
+              >
+                {templateId.toUpperCase()} Template
+              </h2>
+              <p style={{ color: "#6b7280", fontSize: "16px" }}>{content || "Template content will appear here"}</p>
+            </div>
+          </div>
+        )
+    }
   }
 
   // Separate menu templates from other elements
-  const menuElements = siteData.elements.filter((el: any) => el.element_type.startsWith("menu-"))
-  const otherElements = siteData.elements.filter((el: any) => !el.element_type.startsWith("menu-"))
+  const menuElements = siteData.elements.filter((el: CanvasElement) => el.element_type.startsWith("menu-"))
+  const otherElements = siteData.elements.filter((el: CanvasElement) => !el.element_type.startsWith("menu-"))
+
+  console.log("🎨 Rendering elements:", {
+    menuElements: menuElements.length,
+    otherElements: otherElements.length,
+    totalElements: siteData.elements.length,
+  })
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading site...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">⚠️ Error</div>
+          <p className="text-gray-600">{error}</p>
+          <button
+            onClick={loadTemplateContent}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Custom Code Container */}
-      <div id="custom-code-container"></div>
+      {/* Custom CSS from project */}
+      {siteData.custom_code && <style dangerouslySetInnerHTML={{ __html: siteData.custom_code }} />}
 
-      {/* Site Content - Render exactly like the canvas */}
+      {/* Site Content */}
       <div className="relative">
         {/* Render menu templates as stacked full-width sections */}
-        <div className="w-full">{menuElements.map(renderElement)}</div>
+        <div className="w-full">
+          {menuElements.sort((a, b) => (a.y_position || 0) - (b.y_position || 0)).map(renderElement)}
+        </div>
 
-        {/* Render other elements with absolute positioning in a container */}
-        <div className="relative " style={{ minHeight: "800px", width: "100%" }}>
-          {otherElements.map(renderElement)}
+        {/* Render other elements with absolute positioning */}
+        <div
+          className="relative"
+          style={{
+            minHeight: `${siteData.canvas_height || 800}px`,
+            width: "100%",
+            maxWidth: `${siteData.canvas_width || 1200}px`,
+            margin: "0 auto",
+            position: "relative",
+          }}
+        >
+          {otherElements.length > 0
+            ? otherElements.map(renderElement)
+            : !menuElements.length && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center p-8 bg-gray-50 border border-gray-200 rounded-lg">
+                    <h2 className="text-xl font-bold text-gray-800 mb-2">Welcome to {siteData.name}</h2>
+                    <p className="text-gray-600">This site is under construction.</p>
+                  </div>
+                </div>
+              )}
         </div>
       </div>
 
@@ -654,11 +683,40 @@ export function PublishedSiteRenderer({ siteData }: PublishedSiteRendererProps) 
           href="https://displan.design"
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-black text-white px-3 py-1 rounded-full text-xs hover:bg-gray-800 transition-colors"
+          className="bg-black text-white px-3 py-1 rounded-full text-xs hover:bg-gray-800 transition-colors shadow-lg"
         >
           Built with DisPlan
         </a>
       </div>
+
+      {/* SEO Meta Tags */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            // Set meta description
+            const metaDescription = document.querySelector('meta[name="description"]');
+            if (metaDescription) {
+              metaDescription.setAttribute('content', '${siteData.description || `${siteData.name} - Built with DisPlan`}');
+            } else {
+              const meta = document.createElement('meta');
+              meta.name = 'description';
+              meta.content = '${siteData.description || `${siteData.name} - Built with DisPlan`}';
+              document.head.appendChild(meta);
+            }
+            
+            // Set Open Graph tags
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle) {
+              ogTitle.setAttribute('content', '${siteData.name}');
+            } else {
+              const meta = document.createElement('meta');
+              meta.setAttribute('property', 'og:title');
+              meta.content = '${siteData.name}';
+              document.head.appendChild(meta);
+            }
+          `,
+        }}
+      />
     </div>
   )
 }

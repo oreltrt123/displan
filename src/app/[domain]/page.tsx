@@ -19,10 +19,14 @@ export default async function DomainPage({ params }: DomainPageProps) {
     notFound()
   }
 
-  // Get the published site data
+  // Get the published site data using our new function
   const siteData = await getPublishedSiteData(domain)
 
-  console.log("📊 Site data received:", siteData)
+  console.log("📊 Site data received:", {
+    found: !!siteData,
+    elementsCount: siteData?.elements?.length || 0,
+    siteName: siteData?.name,
+  })
 
   if (!siteData) {
     console.log("❌ No site data found, returning 404")

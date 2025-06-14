@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import type { EditableTemplateElement, TextEditingState } from "../../types/canvas-types"
 import { generateElementStyles } from "../../utils/canvas-utils"
 import { TemplateRenderer } from "../../templates/template-renderer"
-import { DisplanCanvasElement } from '../../lib/types/displan-canvas-types'
+import { DisplanCanvasElement } from "../../lib/types/displan-canvas-types"
 
 interface ElementRendererProps {
   element: DisplanCanvasElement
@@ -99,6 +99,8 @@ export function ElementRenderer({
           onTextChange={onTextChange}
           onTextEditKeyDown={onTextEditKeyDown}
           editInputRef={editInputRef}
+          projectId={projectId}
+          pageSlug="main" // You might want to get this from props or context
         />
       </div>
     )

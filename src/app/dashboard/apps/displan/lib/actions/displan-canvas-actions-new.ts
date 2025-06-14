@@ -569,3 +569,56 @@ export async function displan_project_designer_css_get_element_styles(elementId:
     return { success: false, error: "Failed to get element styles", data: null }
   }
 }
+
+
+
+
+
+// New delete functions
+export async function displan_project_designer_css_delete_element(elementId: string) {
+  try {
+    const supabase = createClient()
+
+    // Call the PostgreSQL delete function
+    const { data, error } = await supabase.rpc("delete_element_by_id", {
+      element_id_param: elementId,
+    })
+
+    if (error) {
+      console.error("Error deleting element:", error)
+      return { success: false, error: error.message }
+    }
+
+    return data || { success: true, message: "Element deleted successfully" }
+  } catch (error) {
+    console.error("Server error deleting element:", error)
+    return { success: false, error: "Server error occurred during deletion" }
+  }
+}
+
+export async function displan_project_designer_css_delete_template_element(
+  projectId: string,
+  pageSlug: string,
+  templateElementId: string,
+) {
+  try {
+    const supabase = createClient()
+
+    // Call the PostgreSQL delete function for template elements
+    const { data, error } = await supabase.rpc("delete_template_element_by_id", {
+      project_id_param: projectId,
+      page_slug_param: pageSlug,
+      template_element_id_param: templateElementId,
+    })
+
+    if (error) {
+      console.error("Error deleting template element:", error)
+      return { success: false, error: error.message }
+    }
+
+    return data || { success: true, message: "Template element deleted successfully" }
+  } catch (error) {
+    console.error("Server error deleting template element:", error)
+    return { success: false, error: "Server error occurred during template element deletion" }
+  }
+}

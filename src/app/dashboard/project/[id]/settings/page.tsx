@@ -21,6 +21,7 @@ import {
   Terminal,
   ExternalLink,
 } from "lucide-react"
+import "@/styles/sidebar_settings_editor.css"
 
 interface ProjectFile {
   id: string
@@ -376,8 +377,8 @@ export default function ProjectSettingsPage({ params }: ProjectSettingsPageProps
   }
 
   return (
-    <div className="w-full min-h-screen text-white bg-black relative">
-      <header className="w-full border-b border-white/10">
+    <div className="w-full min-h-screen text-white bg-background relative">
+      <header className="w-full border-b border-[#8888881A]">
         <div className="container mx-auto px-4 py-4 flex items-center">
           <Link href="/dashboard" className="text-xl font-bold tracking-tighter text-white">
             DisPlan
@@ -395,7 +396,7 @@ export default function ProjectSettingsPage({ params }: ProjectSettingsPageProps
             Back to Project
           </Link>
 
-          <div className="bg-white/5 rounded-xl p-6 border border-white/10 shadow-sm">
+          <div className="bg-white/5 rounded-xl p-6 border border-[#8888881A] shadow-sm">
             <div className="flex items-center gap-3 mb-6">
               <Settings size={24} className="text-blue-400" />
               <h1 className="text-2xl font-bold">Project Settings</h1>
@@ -431,8 +432,8 @@ export default function ProjectSettingsPage({ params }: ProjectSettingsPageProps
                       type="text"
                       value={formData.name}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                      className="r2552esf25_252trewt3er"
+                      />
                   </div>
 
                   <div>
@@ -445,8 +446,8 @@ export default function ProjectSettingsPage({ params }: ProjectSettingsPageProps
                       rows={3}
                       value={formData.description}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                      className="r2552esf25_252trewt3er"
+                   />
                   </div>
 
                   <div>
