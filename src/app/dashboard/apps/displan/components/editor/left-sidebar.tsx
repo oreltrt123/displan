@@ -6,6 +6,7 @@ import { ElementsPanel } from "./elements-panel"
 import { DisplanAI } from "./displan-ai"
 import { StripeSubscription } from "./stripe-subscription"
 import { CMSPanel } from "./cms-panel"
+import { NavigatorPanel } from "./navigator-panel"
 
 interface DisplanProjectDesignerCssPage {
   id: string
@@ -20,7 +21,18 @@ interface CMSCollection {
   slug: string
   entries_count: number
 }
-
+interface LeftSidebarProps {
+  pages: DisplanProjectDesignerCssPage[]
+  currentPage: string
+  onPageChange: (pageId: string) => void
+  onCreatePage: (name: string, isFolder: boolean) => void
+  onAddElement?: (elementType: string, x: number, y: number) => void
+  projectId: string
+  canvasElements?: any[]
+  onElementVisibilityToggle?: (elementId: string, visible: boolean) => void
+  onElementSelect?: (elementId: string) => void
+  userEmail?: string
+}
 interface CMSEntry {
   id: string
   title: string
@@ -47,8 +59,11 @@ export function LeftSidebar({
   onCreatePage,
   onAddElement,
   projectId,
+  canvasElements = [],
+  onElementVisibilityToggle,
+  onElementSelect,
 }: LeftSidebarProps) {
-  const [activeTab, setActiveTab] = useState<"pages" | "elements" | "ai" | "cms">("pages")
+  const [activeTab, setActiveTab] = useState<"pages" | "elements" | "ai" | "cms" | "navigator">("elements")
   const [showPageMenu, setShowPageMenu] = useState(false)
   const [newPageName, setNewPageName] = useState("")
   const [showModal, setShowModal] = useState(false)
@@ -261,10 +276,10 @@ export function LeftSidebar({
   return (
     <>
       <div
-        className="w-[300px] bg-white dark:bg-black dark:border-gray-900 h-full overflow-hidden flex"
+        className="w-[300px] bg-white dark:bg-black  h-full overflow-hidden flex"
         style={{ minWidth: "400px", maxWidth: "400px" }}
       >
-        <div className="w-12 sdadwdsdawdsd flex flex-col border-r border-gray-200 dark:border-gray-800">
+        <div className="w-12 sdadwdsdawdsd flex flex-col border-r border-[#8888881A] dark:border-[#1D1D1D]">
           <button
             onClick={() => setActiveTab("elements")}
             className={`Butyet_23REr ${
@@ -289,7 +304,19 @@ export function LeftSidebar({
             <img className="dark:hidden" src="/components/editor/folders_light.png" alt="" />
             <img className="hidden dark:block" src="/components/editor/folders_dark.png" alt="" />
           </button>
-          <button
+           <button
+            onClick={() => setActiveTab("navigator")}
+            className={`Butyet_23REr ${
+              activeTab === "navigator"
+                ? "bg-[#8888881A] text-gray-600"
+                : "text-gray-500 dark:text-gray-400 hover:bg-[#8888881A] hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+            title="NavigatorPanel"
+          >
+            <img className="dark:hidden" src="/components/editor/navigator_light.png" alt="" />
+            <img className="hidden dark:block" src="/components/editor/navigator_dark.png" alt="" />
+          </button>
+                    <button
             onClick={() => setActiveTab("ai")}
             className={`Butyet_23REr ${
               activeTab === "ai"
@@ -467,6 +494,15 @@ export function LeftSidebar({
               ) : activeTab === "cms" ? (
                 <div>
                   <CMSPanel onCollectionUpdate={loadCmsCollections} projectId={projectId} />
+                </div>
+                ) : activeTab === "navigator" ? (
+                <div>
+                  <NavigatorPanel
+                  elements={canvasElements}
+                  currentPage={currentPage}
+                  onElementVisibilityToggle={onElementVisibilityToggle}
+                  onElementSelect={onElementSelect}
+                />
                 </div>
               ) : (
                 // AI Panel

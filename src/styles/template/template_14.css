@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+    --green: hsl(75, 94%, 57%);
+    --white: hsl(0, 0%, 100%);
+    --grey300: hsl(0, 0%, 60%);
+    --grey400: hsl(0, 0%, 40%);
+    --grey700: hsl(0, 0%, 20%);
+    --grey800: hsl(0, 0%, 12%);
+    --grey900: hsl(0, 0%, 8%);
+}
+
+body {
+    background-color: var(--grey900);
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.card {
+    height: auto;
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-self: center;
+    background-color: var(--grey800);
+    border-radius: 0.5em;
+}
+.content {
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+    text-align: center;
+    margin: 10%;
+}
+.content > .asfasfawfgagwgwg {
+    border-radius: 50%;
+    height: 62px;
+    width: 62px;
+    position: relative;
+    top: -10px;
+    align-self: center;
+}
+
+.title {
+    font-family: "Inter", Arial, Helvetica, sans-serif;
+    color: var(--white);
+    font-size: 1.25em;
+    font-weight: 400;
+    margin-bottom: 5px;
+    position: relative;
+    top: 7px;
+}
+
+.location {
+    font-family: "Inter", Arial, Helvetica, sans-serif;
+    color: var(--green);
+    font-size: 0.75em;
+    font-weight: 600;
+    justify-self: end;
+    margin: 0;
+    position: relative;
+    left: -44px;
+}
+
+.description {
+    font-family: "Inter", Arial, Helvetica, sans-serif;
+    color: var(--grey300);
+    font-size: 0.75em;
+    font-weight: 300;
+    padding-top: 1em;
+    position: relative;
+    top: -17px;
+}
+
+.social {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 1rem;
+margin-bottom: 10%;
+width: 80%;
+border: none;
+border-radius: 0.25rem;
+color: var(--white);
+font-family: "Inter", Arial, Helvetica, sans-serif;
+font-size: 0.75rem;
+font-weight: 500;
+padding: 0.5rem;
+position: relative;
+left: 36px;
+}
+
+.safafwfawfrewr3434 {
+width: 80%;
+border: none;
+border-radius: 0.25rem; 
+color: var(--white); 
+font-family: "Inter", Arial, Helvetica, sans-serif; 
+font-size: 0.75 rem; 
+font-weight: 500; 
+background-color: var(--grey700); 
+padding: 0.5rem; 
+text-align: center; 
+text-decoration: none;
+}
+.safafwfawfrewr3434:hover { 
+color: var(--grey900); 
+background-color: var(--green); 
+font-weight: 600;
+}

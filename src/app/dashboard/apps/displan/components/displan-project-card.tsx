@@ -6,7 +6,6 @@ import type { DisplanProjectDesignerCssProject } from "../lib/types/displan-type
 import { formatDistanceToNow } from "date-fns"
 import {
   ExternalLink,
-  Crown,
   MoreVertical,
   Trash2,
   Settings,
@@ -15,10 +14,13 @@ import {
   Lock,
   Eye,
   EyeOff,
+  FolderOpen,
+  ArrowRight,
 } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { createClient } from "@supabase/supabase-js"
 import { displan_project_designer_css_get_project_settings } from "../lib/actions/displan-project-settings-actions"
+import { displan_folders_fetch_all, displan_project_move_to_folder } from "../lib/actions/displan-project-actions"
 import "../../../../../styles/sidebar_settings_editor.css"
 
 interface DisplanProjectCardProps {
@@ -26,14 +28,33 @@ interface DisplanProjectCardProps {
   viewMode: "grid" | "list"
   onOpenProject: (projectId: string) => void
   onProjectDeleted?: (projectId: string) => void
+  onProjectMoved?: (projectId: string) => void
 }
 
-export function DisplanProjectCard({ project, viewMode, onOpenProject, onProjectDeleted }: DisplanProjectCardProps) {
+interface Folder {
+  id: string
+  name: string
+  owner_id: string
+  created_at: string
+  updated_at: string
+}
+
+export function DisplanProjectCard({
+  project,
+  viewMode,
+  onOpenProject,
+  onProjectDeleted,
+  onProjectMoved,
+}: DisplanProjectCardProps) {
   const [userPlan, setUserPlan] = useState<"free" | "pro" | "loading">("loading")
   const [showDropdown, setShowDropdown] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showMoveModal, setShowMoveModal] = useState(false)
   const [showNotification, setShowNotification] = useState(false)
+  const [isMoving, setIsMoving] = useState(false)
+  const [folders, setFolders] = useState<Folder[]>([])
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
 
   // Password protection states
   const [showPasswordModal, setShowPasswordModal] = useState(false)
@@ -55,6 +76,7 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
   useEffect(() => {
     checkUserPlan()
     loadProjectSettings()
+    loadFolders()
 
     // Listen for subscription changes
     const handleStorageChange = (e: StorageEvent) => {
@@ -81,6 +103,18 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
       }
     }
   }, [])
+
+  // Load folders for move functionality
+  const loadFolders = async () => {
+    try {
+      const result = await displan_folders_fetch_all()
+      if (result.success) {
+        setFolders(result.data)
+      }
+    } catch (error) {
+      console.error("Failed to load folders:", error)
+    }
+  }
 
   // Load project settings to check for password protection
   const loadProjectSettings = async () => {
@@ -210,8 +244,20 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
     setShowDeleteModal(true)
   }
 
+  const openMoveModal = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowDropdown(false)
+    setShowMoveModal(true)
+    setSelectedFolderId(null)
+  }
+
   const closeDeleteModal = () => {
     setShowDeleteModal(false)
+  }
+
+  const closeMoveModal = () => {
+    setShowMoveModal(false)
+    setSelectedFolderId(null)
   }
 
   const handleDeleteProject = async () => {
@@ -279,37 +325,50 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
     }
   }
 
+  const handleMoveProject = async () => {
+    if (selectedFolderId === undefined) return
+
+    setIsMoving(true)
+
+    try {
+      const result = await displan_project_move_to_folder(project.id, selectedFolderId)
+
+      if (result.success) {
+        // Close modal after a brief delay to show loading state
+        setTimeout(() => {
+          setShowMoveModal(false)
+          setIsMoving(false)
+          setSelectedFolderId(null)
+
+          // Show success notification
+          setShowNotification(true)
+
+          // Auto-dismiss notification after 5 seconds
+          notificationTimeoutRef.current = setTimeout(() => {
+            setShowNotification(false)
+          }, 5000)
+
+          // Notify parent component that project was moved
+          if (onProjectMoved) {
+            onProjectMoved(project.id)
+          }
+        }, 1000)
+      } else {
+        alert(`Failed to move project: ${result.error}`)
+        setIsMoving(false)
+      }
+    } catch (error) {
+      console.error("Unexpected error moving project:", error)
+      alert(`Failed to move project: ${error instanceof Error ? error.message : "Unknown error"}`)
+      setIsMoving(false)
+    }
+  }
+
   const handleProjectSettings = (e: React.MouseEvent) => {
     e.stopPropagation()
     setShowDropdown(false)
     // Navigate to project settings
     window.location.href = `/dashboard/apps/displan/editor/${project.id}/settings`
-  }
-
-  // Render plan badge (keeping original code but not using it in render)
-  const renderPlanBadge = () => {
-    if (userPlan === "loading") {
-      return (
-        <div className="badge_b1arctdq clickable_csx2rjz plans_p10t7dc2 loadingSite">
-          <span className="badge_b1arctdq_loading_span_text">Loading...</span>
-        </div>
-      )
-    }
-
-    if (userPlan === "pro") {
-      return (
-        <div className="badge_b1arctdq clickable_csx2rjz plans_p10t7dc2 proSite">
-          <Crown className="w-3 h-3 mr-1 text-white" />
-          <span className="badge_b1arctdq_pro_span_text">Pro</span>
-        </div>
-      )
-    }
-
-    return (
-      <div className="badge_b1arctdq clickable_csx2rjz plans_p10t7dc2 freeSite">
-        <span className="badge_b1arctdq_free_span_text">Free</span>
-      </div>
-    )
   }
 
   // Render three-dot menu
@@ -322,13 +381,14 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
 
         {showDropdown && (
           <div className="menu_container">
+             <button onClick={openMoveModal} className="menu_item">
+              <span className="">Move</span>
+            </button>
             <button onClick={handleProjectSettings} className="menu_item">
-              <Settings className="w-4 h-4 mr-2" />
-              <span className="rb5cx25_2">Project Settings</span>
+              <span className="">Project Settings</span>
             </button>
             <button onClick={openDeleteModal} disabled={isDeleting} className="menu_item">
-              <Trash2 className="w-4 h-4 mr-2" />
-              <span className="rb5cx25_23">Delete Project</span>
+              <span className="">Delete Project</span>
             </button>
           </div>
         )}
@@ -410,6 +470,87 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
     )
   }
 
+  // Move project modal
+  const renderMoveModal = () => {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-black bg-opacity-50" onClick={!isMoving ? closeMoveModal : undefined}></div>
+        <div className="bg_13_fsdf_delete relative z-10 w-full max-w-md mx-4">
+          <div className="flex items-center space-x-2 mb-4">
+            <FolderOpen className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <h3 className="settings_nav_section_title122323">Move ({project.name})</h3>
+          </div>
+          <hr className="fsdfadsgesgdg121" />
+
+          <div className="space-y-4">
+            {isMoving ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                <Loader2 className="w-8 h-8 text-white animate-spin mb-2" />
+                <span className="Text_span_css_codecss">Moving project...</span>
+              </div>
+            ) : (
+              <>
+                <span className="Text_span_css_codecss1212">
+                  Select the folder where you want to move this project:
+                </span>
+
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {/* All folder option */}
+                  <button
+                    onClick={() => setSelectedFolderId(null)}
+                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                      selectedFolderId === null
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <FolderOpen className="w-4 h-4" />
+                      <span className="Text_span_css_codecss">All</span>
+                      {selectedFolderId === null && <ArrowRight className="w-4 h-4 ml-auto text-blue-500" />}
+                    </div>
+                  </button>
+
+                  {/* User folders */}
+                  {folders.map((folder) => (
+                    <button
+                      key={folder.id}
+                      onClick={() => setSelectedFolderId(folder.id)}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        selectedFolderId === folder.id
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                          : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <FolderOpen className="w-4 h-4" />
+                        <span className="Text_span_css_codecss">{folder.name}</span>
+                        {selectedFolderId === folder.id && <ArrowRight className="w-4 h-4 ml-auto text-blue-500" />}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex space-x-3">
+                  <button onClick={closeMoveModal} className="button_edit_projectsfdafgfwf12_dfdd_none">
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleMoveProject}
+                    disabled={selectedFolderId === undefined}
+                    className="button_edit_project_r22232_Bu"
+                  >
+                    Move
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Delete confirmation modal
   const renderDeleteModal = () => {
     return (
@@ -457,7 +598,9 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
     return (
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black dark:bg-white text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50 animate-fade-in-up">
         <CheckCircle className="w-5 h-5 text-green-400" />
-        <span className="text-white dark:text-black">Project successfully deleted</span>
+        <span className="text-white dark:text-black">
+          {showMoveModal || isMoving ? "Project successfully moved" : "Project successfully deleted"}
+        </span>
       </div>
     )
   }
@@ -472,6 +615,7 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
               {projectPassword && <Lock className="w-3 h-3 absolute top-1 right-1 text-gray-600" />}
             </div>
             <div>
+            {renderMenuButton()}
               <div className="flex items-center space-x-2">
                 <h3 className="font-medium text-gray-900">{project.name}</h3>
                 {projectPassword && <Lock className="w-4 h-4 text-gray-500" />}
@@ -491,7 +635,6 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            {renderMenuButton()}
             <button
               onClick={handleOpenProject}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -502,6 +645,7 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
         </div>
         {showPasswordModal && renderPasswordModal()}
         {showDeleteModal && renderDeleteModal()}
+        {showMoveModal && renderMoveModal()}
         {showNotification && renderNotification()}
       </>
     )
@@ -509,7 +653,7 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
 
   return (
     <>
-      <div className="rounded-lg bg-background p-4 hover:shadow-md transition-shadow relative">
+      <div className="rounded-lg p-4 transition-shadow relative dasdawdasdawdd">
         <div onClick={handleOpenProject}>
           <div className="relative">
             {project.social_preview_url ? (
@@ -522,7 +666,7 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
               <div className="thumbnailContainerDark"></div>
             )}
             {projectPassword && (
-              <div className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1">
+              <div className="absolute top-2 left-[8px] bg-black bg-opacity-50 rounded-full p-1">
                 <Lock className="w-4 h-4 text-white" />
               </div>
             )}
@@ -530,7 +674,6 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
           <div className="space-y-2 _dddddd1_project">
             <div className="flex items-center space-x-2">
               <h3 className="text-sm Text_css_project_simple">{project.name}</h3>
-              {projectPassword && <Lock className="w-3 h-3 text-gray-500" />}
             </div>
             <p className="Text_css_project_simple_p">
               Last updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}
@@ -550,6 +693,7 @@ export function DisplanProjectCard({ project, viewMode, onOpenProject, onProject
       </div>
       {showPasswordModal && renderPasswordModal()}
       {showDeleteModal && renderDeleteModal()}
+      {showMoveModal && renderMoveModal()}
       {showNotification && renderNotification()}
     </>
   )

@@ -50,9 +50,7 @@ export function CanvasUI({
               className={`absolute ${isNew ? "scale-125 bg-blue-500 rounded-full p-1" : "scale-100"}`}
               style={{ left: comment.x_position, top: comment.y_position }}
             >
-              <MessageCircle
-                className={`w-4 h-4 fill-current ${isNew ? "text-white" : "text-gray-900 dark:text-white"}`}
-              />
+            <img width="20" height="20" src="/components/editor/comments_light.png" alt="" />
             </div>
           )
         })}

@@ -371,20 +371,13 @@ export default function BackgroundSettingsModal({
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="bg_13_fsdf max-w-6xl max-h-[90vh] w-full overflow-hidden">
-        <div className="flex items-center justify-between mb-4 text_simple_css_code1">
-          <h3 className="text-white text_simple_css_code">Background Settings</h3>
-          <button onClick={onClose} className="text-gray-300 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
         <div className="flex flex-col h-full">
           {/* Tabs */}
-          <div className="flex mb-4 border-b border-gray-700">
+          <div className="flex mb-4 border-b border-[#8888881A]">
             <button
               onClick={() => handleTabChange(0)}
               className={`flex items-center px-4 py-2 text-sm ${
-                activeTab === 0 ? "text-white border-b-2 border-blue-500" : "text-gray-300 hover:text-white"
+                activeTab === 0 ? "text-white border-b-2 border-[#8888881A]" : "text-gray-300 hover:text-white"
               }`}
             >
               <Palette className="w-4 h-4 mr-2" />
@@ -393,7 +386,7 @@ export default function BackgroundSettingsModal({
             <button
               onClick={() => handleTabChange(1)}
               className={`flex items-center px-4 py-2 text-sm ${
-                activeTab === 1 ? "text-white border-b-2 border-blue-500" : "text-gray-300 hover:text-white"
+                activeTab === 1 ? "text-white border-b-2 border-[#8888881A]" : "text-gray-300 hover:text-white"
               }`}
             >
               <Wand2 className="w-4 h-4 mr-2" />
@@ -402,7 +395,7 @@ export default function BackgroundSettingsModal({
             <button
               onClick={() => handleTabChange(2)}
               className={`flex items-center px-4 py-2 text-sm ${
-                activeTab === 2 ? "text-white border-b-2 border-blue-500" : "text-gray-300 hover:text-white"
+                activeTab === 2 ? "text-white border-b-2 border-[#8888881A]" : "text-gray-300 hover:text-white"
               }`}
             >
               <ImageIcon className="w-4 h-4 mr-2" />
@@ -411,7 +404,7 @@ export default function BackgroundSettingsModal({
             <button
               onClick={() => handleTabChange(3)}
               className={`flex items-center px-4 py-2 text-sm ${
-                activeTab === 3 ? "text-white border-b-2 border-blue-500" : "text-gray-300 hover:text-white"
+                activeTab === 3 ? "text-white border-b-2 border-[#8888881A]" : "text-gray-300 hover:text-white"
               }`}
             >
               <Video className="w-4 h-4 mr-2" />
@@ -420,7 +413,7 @@ export default function BackgroundSettingsModal({
             <button
               onClick={() => handleTabChange(4)}
               className={`flex items-center px-4 py-2 text-sm ${
-                activeTab === 4 ? "text-white border-b-2 border-blue-500" : "text-gray-300 hover:text-white"
+                activeTab === 4 ? "text-white border-b-2 border-[#8888881A]" : "text-gray-300 hover:text-white"
               }`}
             >
               <span className="mr-2">GIF</span>
@@ -428,7 +421,7 @@ export default function BackgroundSettingsModal({
             </button>
           </div>
 
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 overflow-hidden asdawfwff">
             {/* Left panel - Options */}
             <div className="w-2/3 pr-4 overflow-y-auto">
               {/* Color Panel */}
@@ -971,8 +964,8 @@ export default function BackgroundSettingsModal({
             </div>
           </div>
 
-          <div className="flex justify-end mt-6 pt-4 border-t border-gray-700">
-            <button onClick={onClose} className="button_edit_projectsfdafgfwf12_dfdd_none mr-3">
+          <div className="flex justify-end mt-6 pt-4 border-t border-[#8888881A] asdawfwff">
+            <button onClick={onClose} className="button_edit_projectsfdafgfwf12_dfdd_none121414 mr-3">
               Cancel
             </button>
             <button onClick={handleApply} className="button_edit_projectsfdafgfwf12_dfdd">

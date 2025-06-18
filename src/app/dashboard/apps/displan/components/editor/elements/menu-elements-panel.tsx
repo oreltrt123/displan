@@ -18,6 +18,7 @@ export function MenuElementsPanel({ onAddElement, onBack }: MenuElementsPanelPro
     { id: "empty-4", name: "Data to enrich", preview: "/webbuild/empty-5.png" }, 
     { id: "empty-5", name: "Choose your DisPlan", preview: "/webbuild/empty-6.png" }, 
     { id: "empty-6", name: "Select filter", preview: "/webbuild/empty-699.png" }, 
+    { id: "empty-7", name: "Select filter", preview: "/webbuild/empty-699.png" }, 
   ] 
 
   const handleAddMenu = (templateId: string) => { 

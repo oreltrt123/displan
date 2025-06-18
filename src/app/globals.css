@@ -58,6 +58,12 @@
     --chart-5: 340 75% 55%;
   }
 }
+::selection {
+  background-color: #8888881A;
+}
+.dark ::selection {
+  background-color: #5f5f5f52; /* Slightly more visible in dark mode */
+}
 
 @layer base {
   * {

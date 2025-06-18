@@ -277,7 +277,7 @@ export function TopBar({
 
   return (
     <>
-      <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4">
+      <div className="h-12 bg-white dark:bg-black flex items-center justify-between px-4 border border-[#8888881A] dark:border-[#1D1D1D]">
         <div className="flex items-center gap-3">
           {/* Logo/Site Logo */}
           <button

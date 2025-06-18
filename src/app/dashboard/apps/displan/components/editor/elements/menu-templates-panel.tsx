@@ -9,7 +9,10 @@ interface MenuElementsPanelProps {
 
 export function MenuTemplatesPanel({ onAddElement, onBack }: MenuElementsPanelProps) {
   const menuTemplates = [
-    { id: "template_11", name: "Eldora UI is more", preview: "/webbuild/16.png" },
+    { id: "template_11", name: "Dirtny", preview: "/webbuild/17.png" },
+    { id: "template_12", name: "UI website", preview: "/webbuild/18.png" },
+    { id: "template_13", name: "UI website - Open-Source Web Template", preview: "/webbuild/19.png" },
+    { id: "template_14", name: "UI website - Open-Source Web Template", preview: "/webbuild/19.png" },
   ] 
 
   const handleAddMenu = (templateId: string) => { 

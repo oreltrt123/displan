@@ -78,6 +78,7 @@ export default function Canvas({
 
   // Sync elements with local state
   useEffect(() => {
+    console.log("Canvas: Syncing elements", elements.length)
     state.setLocalElements(elements)
   }, [elements, state.setLocalElements])
 
@@ -164,6 +165,7 @@ export default function Canvas({
   // AI element addition handler
   const handleAIAddElement = useCallback(
     (elementType: string, x: number, y: number, properties: any = {}) => {
+      console.log("Canvas: AI adding element", elementType, x, y, properties)
       if (onAddElement) {
         onAddElement(elementType, x, y, properties)
       }
@@ -209,8 +211,10 @@ export default function Canvas({
     ? otherElements.filter((el) => !el.device_type || el.device_type === previewDevice)
     : otherElements
 
+  console.log("Canvas: Rendering", state.localElements.length, "total elements,", visibleElements.length, "visible")
+
   return (
-    <div className="flex-1 bg-[#8888881A] dark:bg-[#1D1D1D] p-8 overflow-hidden relative">
+    <div className="flex-1 bg-[#8888881A] dark:bg-[#1D1D1D] p-8 overflow-hidden relative asfsffwsfafw">
       <CanvasStyles customCode={customCode} />
 
       <div

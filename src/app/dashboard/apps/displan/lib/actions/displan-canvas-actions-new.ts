@@ -43,6 +43,8 @@ export async function displan_project_designer_css_fetch_elements_new(projectId:
       return { success: false, error: "User not authenticated", data: [] }
     }
 
+    console.log("Fetching elements for project:", projectId, "page:", pageSlug)
+
     const { data, error } = await supabase
       .from(TABLE_NAME)
       .select("*")
@@ -55,6 +57,7 @@ export async function displan_project_designer_css_fetch_elements_new(projectId:
       return { success: false, error: error.message, data: [] }
     }
 
+    console.log("Fetched elements:", data?.length || 0)
     return { success: true, data: data || [], error: null }
   } catch (error) {
     console.error("Server error:", error)
@@ -82,6 +85,8 @@ export async function displan_project_designer_css_add_element_new(
       console.error("Authentication error:", authError)
       return { success: false, error: "User not authenticated", data: null }
     }
+
+    console.log("Adding element:", { projectId, pageSlug, elementType, x, y, properties })
 
     // Default properties based on element type
     let content = properties?.content || ""
@@ -117,6 +122,7 @@ export async function displan_project_designer_css_add_element_new(
       fontSize = properties?.font_size || 14
       fontWeight = properties?.font_weight || "medium"
     } else if (elementType.startsWith("menu-")) {
+      content = properties?.content || `Menu Template ${elementType.replace("menu-", "")}`
       width = properties?.width || 1200
       height = properties?.height || 400
     }
@@ -127,8 +133,8 @@ export async function displan_project_designer_css_add_element_new(
       page_slug: pageSlug,
       element_type: elementType,
       content,
-      x_position: x,
-      y_position: y,
+      x_position: Math.round(x),
+      y_position: Math.round(y),
       width,
       height,
       width_type: properties?.width_type || "fixed",
@@ -141,12 +147,18 @@ export async function displan_project_designer_css_add_element_new(
       z_index: properties?.z_index || 0,
       font_size: fontSize,
       font_weight: fontWeight,
+      font_family: properties?.font_family || "Inter, sans-serif",
       text_align: properties?.text_align || "left",
+      line_height: properties?.line_height || 1.5,
+      letter_spacing: properties?.letter_spacing || 0,
+      text_decoration: properties?.text_decoration || "none",
+      text_transform: properties?.text_transform || "none",
       background_color: properties?.background_color || null,
       text_color: properties?.text_color || null,
+      border_color: properties?.border_color || null,
       border_radius: properties?.border_radius || 0,
       border_width: properties?.border_width || 0,
-      border_color: properties?.border_color || null,
+      border_style: properties?.border_style || "solid",
       padding_top: properties?.padding_top || 8,
       padding_right: properties?.padding_right || 16,
       padding_bottom: properties?.padding_bottom || 8,
@@ -155,11 +167,38 @@ export async function displan_project_designer_css_add_element_new(
       margin_right: properties?.margin_right || 0,
       margin_bottom: properties?.margin_bottom || 0,
       margin_left: properties?.margin_left || 0,
+      transform_rotate: properties?.transform_rotate || 0,
+      transform_scale_x: properties?.transform_scale_x || 1.0,
+      transform_scale_y: properties?.transform_scale_y || 1.0,
+      transform_skew_x: properties?.transform_skew_x || 0,
+      transform_skew_y: properties?.transform_skew_y || 0,
+      link_url: properties?.link_url || null,
+      link_page: properties?.link_page || null,
+      link_target: properties?.link_target || "_self",
       is_template_element: properties?.is_template_element || false,
       template_element_id: properties?.template_element_id || null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      box_shadow_x: properties?.box_shadow_x || 0,
+      box_shadow_y: properties?.box_shadow_y || 0,
+      box_shadow_blur: properties?.box_shadow_blur || 0,
+      box_shadow_spread: properties?.box_shadow_spread || 0,
+      box_shadow_color: properties?.box_shadow_color || null,
+      display_type: properties?.display_type || "block",
+      flex_direction: properties?.flex_direction || "row",
+      justify_content: properties?.justify_content || "flex-start",
+      align_items: properties?.align_items || "stretch",
+      flex_wrap: properties?.flex_wrap || "nowrap",
+      position_type: properties?.position_type || "static",
+      top_position: properties?.top_position || null,
+      right_position: properties?.right_position || null,
+      bottom_position: properties?.bottom_position || null,
+      left_position: properties?.left_position || null,
+      overflow_x: properties?.overflow_x || "visible",
+      overflow_y: properties?.overflow_y || "visible",
+      custom_css: properties?.custom_css || null,
+      custom_classes: properties?.custom_classes || null,
     }
+
+    console.log("Inserting element into database:", newElement)
 
     const { data, error } = await supabase.from(TABLE_NAME).insert([newElement]).select().single()
 
@@ -167,6 +206,8 @@ export async function displan_project_designer_css_add_element_new(
       console.error("Error adding element:", error)
       return { success: false, error: error.message, data: null }
     }
+
+    console.log("Element added successfully:", data)
 
     // Revalidate the path to update the UI
     revalidatePath(`/dashboard/apps/displan/editor/${projectId}`)
@@ -197,17 +238,17 @@ export async function displan_project_designer_css_update_element_new(elementId:
     // Check if this is a template element
     if (isTemplateElement(elementId)) {
       console.log("This is a template element, using special handling")
-      
+
       // For template elements, we'll just return success with the updated properties
       // The actual update will be handled by the canvas component
-      return { 
-        success: true, 
-        data: { 
-          id: elementId, 
+      return {
+        success: true,
+        data: {
+          id: elementId,
           ...properties,
-          updated_at: new Date().toISOString()
-        }, 
-        error: null 
+          updated_at: new Date().toISOString(),
+        },
+        error: null,
       }
     }
 
@@ -217,225 +258,39 @@ export async function displan_project_designer_css_update_element_new(elementId:
       return { success: false, error: "Invalid element ID", data: null }
     }
 
-    // Use the database function to update properties with proper type casting
-    const { data, error } = await supabase.rpc("update_canvas_element_properties", {
-      element_id: elementId,
-      properties: properties,
+    // Prepare update data - only include defined properties
+    const updateData: any = {}
+    Object.keys(properties).forEach((key) => {
+      if (properties[key] !== undefined) {
+        updateData[key] = properties[key]
+      }
     })
+
+    // Add updated timestamp
+    updateData.updated_at = new Date().toISOString()
+
+    console.log("Update data:", updateData)
+
+    // Update the element directly
+    const { data, error } = await supabase.from(TABLE_NAME).update(updateData).eq("id", elementId).select().single()
 
     if (error) {
       console.error("Error updating element:", error)
       return { success: false, error: error.message, data: null }
     }
 
-    // Get the updated element
-    const { data: updatedElement, error: fetchError } = await supabase
-      .from(TABLE_NAME)
-      .select("*")
-      .eq("id", elementId)
-      .single()
-
-    if (fetchError) {
-      console.error("Error fetching updated element:", fetchError)
-      return { success: false, error: fetchError.message, data: null }
-    }
+    console.log("Element updated successfully:", data)
 
     // Get project ID for revalidation
-    const projectId = updatedElement.project_id
+    const projectId = data.project_id
 
     // Revalidate the path to update the UI
     revalidatePath(`/dashboard/apps/displan/editor/${projectId}`)
 
-    return { success: true, data: updatedElement, error: null }
+    return { success: true, data, error: null }
   } catch (error) {
     console.error("Server error:", error)
     return { success: false, error: "Failed to update element", data: null }
-  }
-}
-
-// Update template element properties
-export async function displan_project_designer_css_update_template_element(
-  projectId: string,
-  pageSlug: string,
-  templateElementId: string,
-  elementType: string,
-  properties: any,
-) {
-  try {
-    const supabase = createClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      console.error("Authentication error:", authError)
-      return { success: false, error: "User not authenticated", data: null }
-    }
-
-    console.log("Updating template element:", templateElementId, "with properties:", properties)
-
-    // First, check if this template element already exists in the database
-    const { data: existingElement, error: fetchError } = await supabase
-      .from(TABLE_NAME)
-      .select("*")
-      .eq("project_id", projectId)
-      .eq("page_slug", pageSlug)
-      .eq("template_element_id", templateElementId)
-      .maybeSingle()
-
-    if (fetchError) {
-      console.error("Error checking for existing template element:", fetchError)
-      return { success: false, error: fetchError.message, data: null }
-    }
-
-    let result;
-    
-    if (existingElement) {
-      // Update existing template element
-      console.log("Updating existing template element in database")
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .update({
-          content: properties.content !== undefined ? properties.content : existingElement.content,
-          background_color: properties.background_color !== undefined ? properties.background_color : existingElement.background_color,
-          text_color: properties.text_color !== undefined ? properties.text_color : existingElement.text_color,
-          border_radius: properties.border_radius !== undefined ? properties.border_radius : existingElement.border_radius,
-          border_width: properties.border_width !== undefined ? properties.border_width : existingElement.border_width,
-          border_color: properties.border_color !== undefined ? properties.border_color : existingElement.border_color,
-          font_size: properties.font_size !== undefined ? properties.font_size : existingElement.font_size,
-          font_weight: properties.font_weight !== undefined ? properties.font_weight : existingElement.font_weight,
-          font_family: properties.font_family !== undefined ? properties.font_family : existingElement.font_family,
-          text_align: properties.text_align !== undefined ? properties.text_align : existingElement.text_align,
-          opacity: properties.opacity !== undefined ? properties.opacity : existingElement.opacity,
-          visible: properties.visible !== undefined ? properties.visible : existingElement.visible,
-          cursor: properties.cursor !== undefined ? properties.cursor : existingElement.cursor,
-          animation: properties.animation !== undefined ? properties.animation : existingElement.animation,
-          transform_rotate: properties.transform_rotate !== undefined ? properties.transform_rotate : existingElement.transform_rotate,
-          transform_scale_x: properties.transform_scale_x !== undefined ? properties.transform_scale_x : existingElement.transform_scale_x,
-          transform_scale_y: properties.transform_scale_y !== undefined ? properties.transform_scale_y : existingElement.transform_scale_y,
-          link_url: properties.link_url !== undefined ? properties.link_url : existingElement.link_url,
-          link_page: properties.link_page !== undefined ? properties.link_page : existingElement.link_page,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", existingElement.id)
-        .select()
-        .single()
-
-      if (error) {
-        console.error("Error updating template element:", error)
-        return { success: false, error: error.message, data: null }
-      }
-      
-      result = data;
-    } else {
-      // Create new template element entry
-      console.log("Creating new template element in database")
-      const newElement = {
-        id: uuidv4(),
-        project_id: projectId,
-        page_slug: pageSlug,
-        element_type: elementType,
-        template_element_id: templateElementId,
-        is_template_element: true,
-        content: properties.content || "Template Element",
-        x_position: properties.x_position || 0,
-        y_position: properties.y_position || 0,
-        width: properties.width || 200,
-        height: properties.height || 50,
-        width_type: properties.width_type || "fixed",
-        height_type: properties.height_type || "fixed",
-        background_color: properties.background_color || null,
-        text_color: properties.text_color || null,
-        border_radius: properties.border_radius || 0,
-        border_width: properties.border_width || 0,
-        border_color: properties.border_color || null,
-        font_size: properties.font_size || 16,
-        font_weight: properties.font_weight || "400",
-        font_family: properties.font_family || "Inter, sans-serif",
-        text_align: properties.text_align || "left",
-        opacity: properties.opacity || 1.0,
-        visible: properties.visible !== undefined ? properties.visible : true,
-        cursor: properties.cursor || "default",
-        animation: properties.animation || "none",
-        transform_rotate: properties.transform_rotate || 0,
-        transform_scale_x: properties.transform_scale_x || 1.0,
-        transform_scale_y: properties.transform_scale_y || 1.0,
-        link_url: properties.link_url || null,
-        link_page: properties.link_page || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .insert([newElement])
-        .select()
-        .single()
-
-      if (error) {
-        console.error("Error creating template element:", error)
-        return { success: false, error: error.message, data: null }
-      }
-      
-      result = data;
-    }
-
-    // Revalidate the path to update the UI
-    revalidatePath(`/dashboard/apps/displan/editor/${projectId}`)
-
-    return { success: true, data: result, error: null }
-  } catch (error) {
-    console.error("Server error:", error)
-    return { success: false, error: "Failed to update template element", data: null }
-  }
-}
-
-// Get template element styles
-export async function displan_project_designer_css_get_template_element_styles(
-  projectId: string,
-  pageSlug: string,
-  templateElementId: string,
-) {
-  try {
-    const supabase = createClient()
-
-    // First check if we have a stored version of this template element
-    const { data: existingElement, error: fetchError } = await supabase
-      .from(TABLE_NAME)
-      .select("*")
-      .eq("project_id", projectId)
-      .eq("page_slug", pageSlug)
-      .eq("template_element_id", templateElementId)
-      .maybeSingle()
-
-    if (fetchError) {
-      console.error("Error fetching template element styles:", fetchError)
-      return { success: false, error: fetchError.message, data: null }
-    }
-
-    if (existingElement) {
-      return { success: true, data: existingElement, error: null }
-    }
-
-    // If no stored version exists, return default empty data
-    return { 
-      success: true, 
-      data: {
-        template_element_id: templateElementId,
-        content: null,
-        background_color: null,
-        text_color: null,
-        font_size: null,
-        font_weight: null,
-        font_family: null,
-        text_align: null
-      }, 
-      error: null 
-    }
-  } catch (error) {
-    console.error("Server error:", error)
-    return { success: false, error: "Failed to get template element styles", data: null }
   }
 }
 
@@ -453,10 +308,15 @@ export async function displan_project_designer_css_save_canvas_new(projectId: st
       return { success: false, error: "User not authenticated", data: null }
     }
 
+    console.log("Saving canvas for project:", projectId, "page:", pageSlug)
+
     // Update the last_saved timestamp for the project
     const { error } = await supabase
       .from("displan_project_designer_css_projects")
-      .update({ last_saved: new Date().toISOString() })
+      .update({
+        last_saved: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", projectId)
       .eq("owner_id", user.id)
 
@@ -464,6 +324,8 @@ export async function displan_project_designer_css_save_canvas_new(projectId: st
       console.error("Error saving canvas:", error)
       return { success: false, error: error.message, data: null }
     }
+
+    console.log("Canvas saved successfully")
 
     // Revalidate the path to update the UI
     revalidatePath(`/dashboard/apps/displan/editor/${projectId}`)
@@ -488,6 +350,8 @@ export async function displan_project_designer_css_delete_element_new(elementId:
       console.error("Authentication error:", authError)
       return { success: false, error: "User not authenticated", data: null }
     }
+
+    console.log("Deleting element:", elementId)
 
     // Check if this is a template element
     if (isTemplateElement(elementId)) {
@@ -523,6 +387,8 @@ export async function displan_project_designer_css_delete_element_new(elementId:
       return { success: false, error: error.message, data: null }
     }
 
+    console.log("Element deleted successfully")
+
     // Revalidate the path to update the UI
     revalidatePath(`/dashboard/apps/displan/editor/${projectId}`)
 
@@ -530,95 +396,5 @@ export async function displan_project_designer_css_delete_element_new(elementId:
   } catch (error) {
     console.error("Server error:", error)
     return { success: false, error: "Failed to delete element", data: null }
-  }
-}
-
-// Get element with CSS styles
-export async function displan_project_designer_css_get_element_styles(elementId: string) {
-  try {
-    const supabase = createClient()
-
-    // Check if this is a template element
-    if (isTemplateElement(elementId)) {
-      return { success: true, data: { element: null, cssStyles: "" }, error: null }
-    }
-
-    // Validate UUID for regular elements
-    if (!isValidUUID(elementId)) {
-      console.error("Invalid UUID:", elementId)
-      return { success: false, error: "Invalid element ID", data: null }
-    }
-
-    const { data: element, error } = await supabase.from(TABLE_NAME).select("*").eq("id", elementId).single()
-
-    if (error) {
-      console.error("Error fetching element:", error)
-      return { success: false, error: error.message, data: null }
-    }
-
-    return {
-      success: true,
-      data: {
-        element,
-        cssStyles: "",
-      },
-      error: null,
-    }
-  } catch (error) {
-    console.error("Server error:", error)
-    return { success: false, error: "Failed to get element styles", data: null }
-  }
-}
-
-
-
-
-
-// New delete functions
-export async function displan_project_designer_css_delete_element(elementId: string) {
-  try {
-    const supabase = createClient()
-
-    // Call the PostgreSQL delete function
-    const { data, error } = await supabase.rpc("delete_element_by_id", {
-      element_id_param: elementId,
-    })
-
-    if (error) {
-      console.error("Error deleting element:", error)
-      return { success: false, error: error.message }
-    }
-
-    return data || { success: true, message: "Element deleted successfully" }
-  } catch (error) {
-    console.error("Server error deleting element:", error)
-    return { success: false, error: "Server error occurred during deletion" }
-  }
-}
-
-export async function displan_project_designer_css_delete_template_element(
-  projectId: string,
-  pageSlug: string,
-  templateElementId: string,
-) {
-  try {
-    const supabase = createClient()
-
-    // Call the PostgreSQL delete function for template elements
-    const { data, error } = await supabase.rpc("delete_template_element_by_id", {
-      project_id_param: projectId,
-      page_slug_param: pageSlug,
-      template_element_id_param: templateElementId,
-    })
-
-    if (error) {
-      console.error("Error deleting template element:", error)
-      return { success: false, error: error.message }
-    }
-
-    return data || { success: true, message: "Template element deleted successfully" }
-  } catch (error) {
-    console.error("Server error deleting template element:", error)
-    return { success: false, error: "Server error occurred during template element deletion" }
   }
 }
