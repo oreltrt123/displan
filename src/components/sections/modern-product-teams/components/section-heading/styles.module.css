@@ -1,0 +1,41 @@
+/* Container grid setup */
+.top__container {
+	@apply grid grid-cols-4 md:grid-cols-12 gap-6 mb-12;
+}
+
+/* Heading container grid placement */
+.top__container .heading {
+	@apply col-start-1 col-end-5 md:col-end-13 lg:col-end-7;
+}
+
+/* Heading H2 styles, including color for light/dark modes */
+.top__container .heading h2 {
+	@apply text-balance text-[40px] sm:text-[56px] leading-[44px] sm:leading-[1.1] font-medium tracking-[-0.015em] sm:tracking-[-0.0325em];
+	font-variation-settings: 'opsz' 28;
+	color: var(--color-text-primary); /* fallback for light mode */
+}
+
+/* Dark mode text color override */
+@media (prefers-color-scheme: dark) {
+	.top__container .heading h2 {
+		color: white;
+	}
+}
+
+/* Description container grid placement */
+.top__container .description {
+	@apply col-start-1 col-end-5 md:col-end-9 lg:col-start-7 lg:col-end-13 self-end;
+}
+
+/* Description paragraph styling */
+.top__container .description p {
+	@apply text-balance text-[17px] leading-[24.5px] font-medium;
+	color: var(--color-text-tertiary);
+}
+
+/* Dark mode text color override for description paragraph */
+@media (prefers-color-scheme: dark) {
+	.top__container .description p {
+		color: #ddd; /* lighter tertiary color for dark mode */
+	}
+}

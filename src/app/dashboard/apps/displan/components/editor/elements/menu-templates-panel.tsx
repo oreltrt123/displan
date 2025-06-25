@@ -12,7 +12,9 @@ export function MenuTemplatesPanel({ onAddElement, onBack }: MenuElementsPanelPr
     { id: "template_11", name: "Dirtny", preview: "/webbuild/17.png" },
     { id: "template_12", name: "UI website", preview: "/webbuild/18.png" },
     { id: "template_13", name: "UI website - Open-Source Web Template", preview: "/webbuild/19.png" },
-    { id: "template_14", name: "UI website - Open-Source Web Template", preview: "/webbuild/19.png" },
+    { id: "template_14", name: "Link profile", preview: "/webbuild/20.png" },
+    { id: "template_15", name: "Link profile", preview: "/webbuild/21.png" },
+    { id: "template_16", name: "Scroll animation", preview: "/webbuild/22.png" },
   ] 
 
   const handleAddMenu = (templateId: string) => { 

@@ -1,3 +1,7 @@
+<img width="1512" alt="builder-screenshot" src="https://files.catbox.moe/7cgcgw.png">
+<br /><br />
+
+<section align="center">
 Welcome to DisPlan – your gateway to a world of innovation, collaboration, and powerful digital tools. On our platform, you’ll find a wide range of features designed to support your creative and professional needs.
 
 DisPlan offers applications that allow you to purchase websites, manage design boards, plan and organize projects, and even generate website code in HTML. Whether you're coding a site from scratch or utilizing built-in tools, our platform is designed to make the process seamless and efficient.
@@ -31,3 +35,16 @@ We also provide seamless integration with major media libraries so that you have
 Finally, our platform is developed using the advanced TypeScript programming language, which allows us to write more robust, scalable, and secure code. TypeScript’s static typing, modern tooling, and developer-friendly features ensure that we can build high-quality applications that grow with your needs.
 
 DisPlan is not just a platform—it’s a powerful ecosystem designed to bring your ideas to life and take you to the next level.
+</section>
+<br /><br />
+
+## Learning Resources
+
+- [Blog](https://displan.design/blog)
+- [Documentation](https://displan.design/docs/)
+
+## Social Media
+
+- [Twitter](https://twitter.com/displan)
+- [Youtube](https://www.youtube.com/@displan)
+- [Discord soon](https://displan.us/community)

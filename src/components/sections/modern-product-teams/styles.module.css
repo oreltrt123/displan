@@ -1,0 +1,10 @@
+.modern__product__teams {
+	@apply py-12 sm:py-[160px] isolate;
+	/* background: linear-gradient(
+		180deg,
+		transparent,
+		rgba(97, 106, 115, 0.12) 40%,
+		rgba(97, 106, 115, 0.12) 60%,
+		rgba(97, 106, 115, 0)
+	); */
+}

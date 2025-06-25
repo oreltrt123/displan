@@ -226,7 +226,7 @@ export function TopBar({
             {/* Logo/Site Logo */}
             <button
               onClick={handleLogoClick}
-              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#8888881A] transition-colors asfasfawfasffw"
+              className="flex items-center justify-center w-6 h-6 rounded-md hover:bg-[#8888881A] transition-colors asfasfawfasffw"
               title="Open command palette"
             >
               <img src="/components/editor/logo_editor.png" alt="" />
@@ -239,7 +239,18 @@ export function TopBar({
               </button>
             )}
           </div>
-
+        {isPreviewMode && onChangePreviewMode && (
+          <div className="">
+            <ResponsiveControls
+              previewMode={previewMode}
+              onChangePreviewMode={onChangePreviewMode}
+              canvasWidth={canvasWidth}
+              canvasHeight={canvasHeight}
+              onCanvasWidthChange={onCanvasWidthChange || (() => {})}
+              onCanvasHeightChange={onCanvasHeightChange || (() => {})}
+            />
+          </div>
+        )}
           <div className="flex gap-2">
             <button onClick={onSave} disabled={isSaving} className="button_edit_project_r222323A" title="Save">
               <Save className="w-4 h-4" />
@@ -259,18 +270,6 @@ export function TopBar({
             </button>
           </div>
         </div>
-        {isPreviewMode && onChangePreviewMode && (
-          <div className="w-full bg-background border-t border-gray-200 dark:border-gray-800">
-            <ResponsiveControls
-              previewMode={previewMode}
-              onChangePreviewMode={onChangePreviewMode}
-              canvasWidth={canvasWidth}
-              canvasHeight={canvasHeight}
-              onCanvasWidthChange={onCanvasWidthChange || (() => {})}
-              onCanvasHeightChange={onCanvasHeightChange || (() => {})}
-            />
-          </div>
-        )}
       </div>
     )
   }
@@ -282,11 +281,11 @@ export function TopBar({
           {/* Logo/Site Logo */}
           <button
             onClick={handleLogoClick}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#8888881A] transition-colors asfasfawfasffw"
+            className="flex items-center justify-center w-10 h-13 rounded-md transition-colors asfasfawfasffw"
             title="Open command palette"
           >
-            <img className="dark:hidden" src="/components/editor/logo_editor_light.png" alt="" />
-            <img className="hidden dark:block" src="/components/editor/logo_editor_dark.png" alt="" />
+            <img className="dark:hidden" src="/components/editor/logo_light.png" alt="" />
+            <img className="hidden dark:block" src="/components/editor/logo_dark.png" alt="" />
           </button>
         </div>
 

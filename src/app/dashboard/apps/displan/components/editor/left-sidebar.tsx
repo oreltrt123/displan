@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react"
 import { Home, Plus, Folder, FileText, Database } from "lucide-react"
 import { ElementsPanel } from "./elements-panel"
-import { DisplanAI } from "./displan-ai"
+import { DisplanAIEnhanced } from "./displan-ai"
 import { StripeSubscription } from "./stripe-subscription"
 import { CMSPanel } from "./cms-panel"
-import { NavigatorPanel } from "./navigator-panel"
+import { NavigatorPanelHierarchical } from "./navigator-panel"
 
 interface DisplanProjectDesignerCssPage {
   id: string
@@ -497,7 +497,7 @@ export function LeftSidebar({
                 </div>
                 ) : activeTab === "navigator" ? (
                 <div>
-                  <NavigatorPanel
+                  <NavigatorPanelHierarchical
                   elements={canvasElements}
                   currentPage={currentPage}
                   onElementVisibilityToggle={onElementVisibilityToggle}
@@ -516,7 +516,7 @@ export function LeftSidebar({
                       <div className="max-w-md mx-auto">
                         <h1 className="text-2xl font-bold mb-4">AI Chat Demo</h1>
                         <div className="h-[800px]">
-                          <DisplanAI />
+                          <DisplanAIEnhanced />
                         </div>
                       </div>
                     </div>

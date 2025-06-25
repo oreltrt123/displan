@@ -124,8 +124,8 @@ export default async function AppsPage() {
                 </div>
                 <h2 className="app-title">Convert HTML <span className="beta_span1r22e2">Beta</span></h2>
                 <p className="app-description">
-                  Convert website to html 
-                  <span className="asfawgagasgawgasg1">This is a trial version and may contain bugs or issues. Updates are on the way. We appreciate your understanding.</span>
+                  Convert any website to HTML with up-to-date formatting and weekly updates. Fully compatible and always optimized.
+                  {/* <span className="asfawgagasgawgasg1">This is a trial version and may contain bugs or issues. Updates are on the way. We appreciate your understanding.</span> */}
                 </p>
                 <div className="app-actions">
                   <Link href="/dashboard/apps/convert" className="app-learn-more">
@@ -134,6 +134,31 @@ export default async function AppsPage() {
                 </div>
               </div>
             </div>
+
+           <div className="app-card">
+  <div className="app-card-content">
+    <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
+      <Layout size={24} className="text-blue-400" />
+    </div>
+    <h2 className="app-title">
+      FitLog web <span className="beta_span1r22e2">Beta</span>
+    </h2>
+    <p className="app-description">
+      With FitLog, you can diet, build muscle, set fitness goals, and plan your week — all in one place.
+    </p>
+    <div className="app-actions">
+      <a
+        href="https://fitlog.displan.design"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="app-learn-more"
+      >
+        Get started <ArrowRight size={16} className="ml-1" />
+      </a>
+    </div>
+  </div>
+</div>
+
           </section>
         </div>
       </main>

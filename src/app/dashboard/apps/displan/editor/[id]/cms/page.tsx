@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { Plus, Search, Edit, Trash2, Database, ArrowLeft, FileText } from "lucide-react"
+import { Plus, Edit, Trash2, Database, ArrowLeft, FileText } from "lucide-react"
+import { RichTextEditor } from "../../../components/editor/rich-text-editor"
 import "@/styles/sidebar_settings_editor.css"
 
 interface CMSEntry {
@@ -23,10 +24,17 @@ interface CMSCollection {
   entries_count: number
 }
 
-export default function CMSPage() {
+interface Page {
+  id: string
+  name: string
+  slug: string
+}
+
+export default function CMSPageEnhanced() {
   const [collections, setCollections] = useState<CMSCollection[]>([])
   const [selectedCollection, setSelectedCollection] = useState<string>("")
   const [entries, setEntries] = useState<CMSEntry[]>([])
+  const [pages, setPages] = useState<Page[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [showCreateCollection, setShowCreateCollection] = useState(false)
@@ -34,7 +42,7 @@ export default function CMSPage() {
   const [showEditEntry, setShowEditEntry] = useState(false)
   const [newCollectionName, setNewCollectionName] = useState("")
   const [currentEntry, setCurrentEntry] = useState<CMSEntry | null>(null)
-
+ 
   const router = useRouter()
   const params = useParams()
   const projectId = params.id as string
@@ -42,6 +50,7 @@ export default function CMSPage() {
   useEffect(() => {
     if (projectId) {
       loadCollections()
+      loadPages()
     }
   }, [projectId])
 
@@ -60,6 +69,18 @@ export default function CMSPage() {
       console.error("Failed to load collections:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadPages = async () => {
+    try {
+      const response = await fetch(`/api/pages?project_id=${projectId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setPages(data)
+      }
+    } catch (error) {
+      console.error("Failed to load pages:", error)
     }
   }
 
@@ -150,6 +171,7 @@ export default function CMSPage() {
         setShowCreateEntry(false)
         setShowEditEntry(false)
         setCurrentEntry(null)
+        loadCollections() // Refresh to update entry counts
       }
     } catch (error) {
       console.error("Failed to save entry:", error)
@@ -163,6 +185,7 @@ export default function CMSPage() {
       const response = await fetch(`/api/cms/entries/${entryId}`, { method: "DELETE" })
       if (response.ok) {
         setEntries(entries.filter((entry) => entry.id !== entryId))
+        loadCollections() // Refresh to update entry counts
       }
     } catch (error) {
       console.error("Failed to delete entry:", error)
@@ -195,22 +218,52 @@ export default function CMSPage() {
               <h2 className="text-lg font-semibold">CMS</h2>
             </div>
 
+            {/* Collections and their entries */}
             <div className="space-y-2 mb-4">
               {collections.map((collection) => (
-                <div
-                  key={collection.id}
-                  onClick={() => {
-                    setSelectedCollection(collection.id)
-                    loadEntries(collection.id)
-                  }}
-                  className={`settings-nav-button ${
-                    selectedCollection === collection.id ? "bg-[rgb(0,153,255)] text-white" : "text-gray-300"
-                  }`}
-                >
-                      <Database className="settings-nav-icon" />
-                      <span className="settings-nav-text">{collection.name}</span>
-                    {/* <span className="text-xs bg-gray-600 px-2 py-1 rounded">{collection.entries_count}</span> */}
+                <div key={collection.id} className="space-y-1">
+                  {/* Collection header */}
+                  <div
+                    onClick={() => {
+                      setSelectedCollection(collection.id)
+                      loadEntries(collection.id)
+                    }}
+                    className={`settings-nav-button ${
+                      selectedCollection === collection.id ? "bg-[rgb(0,153,255)] text-white" : "text-gray-300"
+                    }`}
+                  >
+                    <Database className="settings-nav-icon" />
+                    <span className="settings-nav-text">{collection.name}</span>
+                    <span className="text-xs bg-gray-600 px-2 py-1 rounded">{collection.entries_count}</span>
                   </div>
+
+                  {/* Show entries for selected collection */}
+                  {selectedCollection === collection.id && (
+                    <div className="ml-4 space-y-1">
+                      {entries.map((entry) => (
+                        <div
+                          key={entry.id}
+                          onClick={() => {
+                            // Navigate to the canvas with this specific entry
+                            const entryPageId = `cms-${collection.slug}-${entry.slug}`
+                            router.push(`/dashboard/apps/displan/editor/${projectId}?page=${entryPageId}`)
+                          }}
+                          className="settings-nav-button text-sm cursor-pointer hover:bg-[#8888881A] p-2 rounded"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          <span className="truncate">{entry.title}</span>
+                          <span
+                            className={`text-xs px-1 py-0.5 rounded ml-auto ${
+                              entry.status === "published" ? "bg-green-600" : "bg-yellow-600"
+                            }`}
+                          >
+                            {entry.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
 
@@ -228,7 +281,7 @@ export default function CMSPage() {
                 className="settings-nav-button w-full flex items-center justify-center px-4 py-2 bg-[rgb(0,153,255)] text-white rounded-lg"
               >
                 <Plus className="settings-nav-icon" />
-              <span className="settings-nav-text">New Entry</span>
+                <span className="settings-nav-text">New Entry</span>
               </button>
             )}
           </div>
@@ -268,10 +321,18 @@ export default function CMSPage() {
                 <table className="w-full">
                   <thead className="bg-[#8888881A]">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase">Title</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-black dark:text-white uppercase">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700">
@@ -335,12 +396,9 @@ export default function CMSPage() {
       {showCreateCollection && (
         <div className="r2552esf25 bg-black bg-opacity-50">
           <div className="r2552esf25_2r">
-              <button
-                onClick={() => setShowCreateCollection(false)}
-                className="SFAGWGASGCancel"
-              >
+            <button onClick={() => setShowCreateCollection(false)} className="SFAGWGASGCancel">
               <img className="SFAGWGASGCancel2" src="/components/editor/close.png" alt="" />
-              </button>
+            </button>
             <h3 className="text-lg font-medium text-white mb-4">Create New Collection</h3>
             <input
               type="text"
@@ -366,81 +424,87 @@ export default function CMSPage() {
 
       {/* Create/Edit Entry Modal */}
       {(showCreateEntry || showEditEntry) && currentEntry && (
-        <div className="r2552esf25">
-          <div className="r2552esf25_2r">
-            <h3 className="text-lg font-medium text-white mb-4">
-              {showCreateEntry ? "Create New Entry" : "Edit Entry"}
-               <button
+        <div className="r2552esf25 bg-black bg-opacity-50">
+          <div className="r2552esf25_2r25252">
+            <div className="flex items-center justify-between p-6 border-b border-[#8888881A]">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                {showCreateEntry ? "Create New Entry" : "Edit Entry"}
+              </h3>
+              <button
                 onClick={() => {
                   setShowCreateEntry(false)
                   setShowEditEntry(false)
                   setCurrentEntry(null)
                 }}
-                className="SFAGWGASGCancel"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                <img className="SFAGWGASGCancel2" src="/components/editor/close.png" alt="" />
+                <img className="w-6 h-6" src="/components/editor/close.png" alt="Close" />
               </button>
-            </h3>
+            </div>
 
-            <div className="space-y-4">
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
-                <input
-                  type="text"
-                  value={currentEntry.title}
-                  onChange={(e) => setCurrentEntry({ ...currentEntry, title: e.target.value })}
-                  className="r2552esf25_252trewt3er"
-                  placeholder="Enter title..."
-                />
-              </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-6">
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                  <input
+                    type="text"
+                    value={currentEntry.title}
+                    onChange={(e) => setCurrentEntry({ ...currentEntry, title: e.target.value })}
+                    className="r2552esf25_252trewt3er"
+                    placeholder="Enter title..."
+                  />
+                </div>
 
-              {/* Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Date</label>
-                <input
-                  type="date"
-                  value={currentEntry.date}
-                  onChange={(e) => setCurrentEntry({ ...currentEntry, date: e.target.value })}
-                  className="r2552esf25_252trewt3er"
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
+                    <input
+                      type="date"
+                      value={currentEntry.date}
+                      onChange={(e) => setCurrentEntry({ ...currentEntry, date: e.target.value })}
+                      className="r2552esf25_252trewt3er"
+                    />
+                  </div>
 
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
-                <select
-                  value={currentEntry.status}
-                  onChange={(e) =>
-                    setCurrentEntry({ ...currentEntry, status: e.target.value as "draft" | "published" })
-                  }
-                  className="r2552esf25_252trewt3er"
-                >
-                  <option value="draft" className="text-black">Draft</option>
-                  <option value="published" className="text-black">Published</option>
-                </select>
-              </div>
+                  {/* Status */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+                    <select
+                      value={currentEntry.status}
+                      onChange={(e) =>
+                        setCurrentEntry({ ...currentEntry, status: e.target.value as "draft" | "published" })
+                      }
+                      className="r2552esf25_252trewt3er"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                    </select>
+                  </div>
+                </div>
 
-              {/* Content */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Content</label>
-                <textarea
-                  value={currentEntry.content}
-                  onChange={(e) => setCurrentEntry({ ...currentEntry, content: e.target.value })}
-                  className="r2552esf25_252trewt3er"
-                  rows={10}
-                  placeholder="Write your content here..."
-                />
+                {/* Rich Text Content Editor */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</label>
+                  <RichTextEditor
+                    value={currentEntry.content}
+                    onChange={(content) => setCurrentEntry({ ...currentEntry, content })}
+                    placeholder="Write your content here..."
+                    projectId={projectId}
+                    pages={pages}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex space-x-3 mt-6">
+            <div className="flex justify-end gap-3 p-6 border-t border-[#8888881A]">
               <button
                 onClick={saveEntry}
                 disabled={!currentEntry.title.trim()}
-                className="flex-1 px-4 py-2 bg-[rgb(0,153,255)] text-white rounded-lg disabled:opacity-50 transition-colors"
+                className="px-4 py-2 bg-[rgb(0,153,255)] text-white rounded w-full"
               >
-                {showCreateEntry ? "Create" : "Save"}
+                {showCreateEntry ? "Create Entry" : "Save Changes"}
               </button>
             </div>
           </div>

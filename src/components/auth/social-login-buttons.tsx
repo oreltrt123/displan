@@ -9,7 +9,7 @@ const SocialLoginButtons: React.FC = () => {
   const handleOAuthLogin = async (provider: "google" | "github" | "discord") => {
     try {
       // Correct redirect path using NEXT_PUBLIC_APP_URL or fallback to localhost
-      const redirectHost = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/callback`
+      const redirectHost = `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider,

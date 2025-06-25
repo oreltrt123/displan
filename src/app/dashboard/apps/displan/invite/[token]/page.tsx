@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase-client"
 import { Loader2, User, CheckCircle, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import AuthModal from "@/components/auth-modal"
 
 interface InvitePageProps {
   params: {
@@ -20,6 +21,7 @@ export default function InvitePage({ params }: InvitePageProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [result, setResult] = useState<{ success: boolean; message: string; folderId?: string } | null>(null)
   const [user, setUser] = useState<any>(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   useEffect(() => {
     loadInvitation()
@@ -102,28 +104,19 @@ export default function InvitePage({ params }: InvitePageProps) {
     }
   }
 
-  const handleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.href,
-        },
-      })
-
-      if (error) {
-        console.error("Login error:", error)
-        alert("Failed to login: " + error.message)
-      }
-    } catch (error) {
-      console.error("Login error:", error)
-      alert("Failed to login")
-    }
+  const handleAuthSuccess = async () => {
+    // Refresh user data after successful authentication
+    await checkUser()
+    setShowAuthModal(false)
+    // Automatically proceed with accepting the invitation
+    setTimeout(() => {
+      handleAccept()
+    }, 500)
   }
 
   const handleAccept = async () => {
     if (!user) {
-      await handleLogin()
+      setShowAuthModal(true)
       return
     }
 
@@ -232,56 +225,65 @@ export default function InvitePage({ params }: InvitePageProps) {
   const role = invitation.role || "Editor"
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-        <div className="text-center mb-6">
-          <User className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">You're Invited!</h1>
-          <p className="text-gray-600">You've been invited to collaborate on the folder "{folderName}"</p>
-        </div>
+    <>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+          <div className="text-center mb-6">
+            <User className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">You're Invited!</h1>
+            <p className="text-gray-600">You've been invited to collaborate on the folder "{folderName}"</p>
+          </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-              {userEmail.charAt(0).toUpperCase()}
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                {userEmail.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">{userEmail}</p>
+                <p className="text-sm text-gray-500">Role: {role}</p>
+              </div>
             </div>
-            <div>
-              <p className="font-medium text-gray-900">{userEmail}</p>
-              <p className="text-sm text-gray-500">Role: {role}</p>
+          </div>
+
+          {!user && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-yellow-800">
+                You need to be logged in to accept this invitation. Click "Accept & Join" to sign in.
+              </p>
             </div>
-          </div>
+          )}
+
+          {isProcessing ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-6 h-6 animate-spin mr-2" />
+              <span>Processing invitation...</span>
+            </div>
+          ) : (
+            <div className="flex space-x-4">
+              <button
+                onClick={handleDecline}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Decline
+              </button>
+              <button
+                onClick={handleAccept}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {user ? "Accept & Join" : "Accept & Join"}
+              </button>
+            </div>
+          )}
         </div>
-
-        {!user && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-yellow-800">
-              You need to be logged in to accept this invitation. Click "Accept & Join" to login with Google.
-            </p>
-          </div>
-        )}
-
-        {isProcessing ? (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            <span>Processing invitation...</span>
-          </div>
-        ) : (
-          <div className="flex space-x-4">
-            <button
-              onClick={handleDecline}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
-            >
-              Decline
-            </button>
-            <button
-              onClick={handleAccept}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {user ? "Accept & Join" : "Login & Accept"}
-            </button>
-          </div>
-        )}
       </div>
-    </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+        redirectUrl={window.location.href}
+      />
+    </>
   )
 }

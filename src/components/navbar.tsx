@@ -108,7 +108,7 @@ export default function Navbar() {
       initial="hidden"
       animate="visible"
       // variants={navVariants}
-      className="fixed top-0 left-0 right-0 z-50 px-6 py-4 backdrop-blur-lg bg-white/80 dark:bg-background/80"
+      className="fixed top-0 left-0 right-0 z-50 px-6 py-4 backdrop-blur-lg bg-white dark:bg-background"
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-12">
@@ -130,6 +130,13 @@ export default function Navbar() {
               data-i18n="blog"
             >
               Blog
+            </Link>
+            <Link
+              href="/marketplace"
+              className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
+              data-i18n="marketplace"
+            >
+              MarketPlace
             </Link>
             <Link
               href="/about"
@@ -179,6 +186,14 @@ export default function Navbar() {
                       role="menuitem"
                     >
                       Dashboard
+                    </button>
+                  </Link>
+                  <Link href="/dashboard/template" onClick={() => setMenuOpen(false)}>
+                    <button
+                      className="menu_item"
+                      role="menuitem"
+                    >
+                      Creator Space
                     </button>
                   </Link>
                   <button

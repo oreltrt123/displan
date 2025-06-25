@@ -112,12 +112,8 @@ export function ResponsiveControls({
   }
 
   return (
-    <div className="flex items-center space-x-2 bg-background p-1">
+    <div className="">
       <div className="relative" ref={dropdownRef}>
-        <button className="button_edit_project_r224" onClick={() => setIsOpen(!isOpen)}>
-          <span className="capitalize">{previewMode}</span>
-          <ChevronDown className={cn("h-4 w-4 ml-1 transition-transform", isOpen ? "rotate-180" : "")} />
-        </button>
 
         {isOpen && (
           <div className="menu_container">
@@ -140,7 +136,12 @@ export function ResponsiveControls({
       </div>
 
       <div className="flex items-center space-x-2">
+                <button className="button_edit_project_r224" onClick={() => setIsOpen(!isOpen)}>
+          <span className="capitalize">{previewMode}</span>
+          <ChevronDown className={cn("h-4 w-4 ml-1 transition-transform", isOpen ? "rotate-180" : "")} />
+        </button>
         <div className="flex items-center">
+          
           <input
             type="text"
             value={widthInput}

@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { Tool, CanvasBackground, EditableTemplateElement } from "../types/canvas-types"
-import { DisplanCanvasElement } from '../lib/types/displan-canvas-types'
+import type { DisplanCanvasElement } from "../lib/types/displan-canvas-types"
 
 interface EventHandlersProps {
   currentTool: Tool
@@ -65,6 +65,17 @@ interface EventHandlersProps {
 
 export function useCanvasEventHandlers(props: EventHandlersProps) {
   const router = useRouter()
+  const [elementDragState, setElementDragState] = useState<{
+    isDragging: boolean
+    elementId: string | null
+    startPos: { x: number; y: number }
+    elementStartPos: { x: number; y: number }
+  }>({
+    isDragging: false,
+    elementId: null,
+    startPos: { x: 0, y: 0 },
+    elementStartPos: { x: 0, y: 0 },
+  })
 
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent) => {
@@ -92,6 +103,108 @@ export function useCanvasEventHandlers(props: EventHandlersProps) {
       props.setContextMenu,
     ],
   )
+
+  const handleElementMouseDown = useCallback(
+    (element: DisplanCanvasElement, e: React.MouseEvent) => {
+      if (props.isPreviewMode || props.currentTool !== "cursor") return
+
+      e.stopPropagation()
+
+      // Select the element
+      props.onSelectElement(element)
+      props.setSelectedElements([element.id])
+
+      // Start dragging
+      const canvasElement = props.canvasRef.current?.querySelector('[data-canvas="true"]') as HTMLElement
+      if (canvasElement) {
+        const rect = canvasElement.getBoundingClientRect()
+        const mouseX = e.clientX - rect.left
+        const mouseY = e.clientY - rect.top
+
+        setElementDragState({
+          isDragging: true,
+          elementId: element.id,
+          startPos: { x: mouseX, y: mouseY },
+          elementStartPos: { x: element.x_position, y: element.y_position },
+        })
+      }
+    },
+    [props.isPreviewMode, props.currentTool, props.onSelectElement, props.setSelectedElements, props.canvasRef],
+  )
+
+  const handleCanvasMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      // Handle canvas panning
+      if (props.currentTool === "hand" && props.isDragging) {
+        const newX = e.clientX - props.dragStart.x
+        const newY = e.clientY - props.dragStart.y
+        props.setCanvasPosition({ x: newX, y: newY })
+        return
+      }
+
+      // Handle element dragging
+      if (elementDragState.isDragging && elementDragState.elementId) {
+        const canvasElement = props.canvasRef.current?.querySelector('[data-canvas="true"]') as HTMLElement
+        if (canvasElement) {
+          const rect = canvasElement.getBoundingClientRect()
+          const mouseX = e.clientX - rect.left
+          const mouseY = e.clientY - rect.top
+
+          const deltaX = mouseX - elementDragState.startPos.x
+          const deltaY = mouseY - elementDragState.startPos.y
+
+          const newX = Math.max(0, elementDragState.elementStartPos.x + deltaX)
+          const newY = Math.max(0, elementDragState.elementStartPos.y + deltaY)
+
+          // Update element position locally for smooth dragging
+          props.setLocalElements((prevElements) =>
+            prevElements.map((el) =>
+              el.id === elementDragState.elementId ? { ...el, x_position: newX, y_position: newY } : el,
+            ),
+          )
+        }
+      }
+    },
+    [
+      props.currentTool,
+      props.isDragging,
+      props.dragStart,
+      props.setCanvasPosition,
+      elementDragState,
+      props.canvasRef,
+      props.setLocalElements,
+    ],
+  )
+
+  const handleCanvasMouseUp = useCallback(() => {
+    // Handle canvas panning
+    if (props.currentTool === "hand" && props.isDragging) {
+      props.setIsDragging(false)
+    }
+
+    // Handle element dragging
+    if (elementDragState.isDragging && elementDragState.elementId) {
+      const element = props.localElements.find((el) => el.id === elementDragState.elementId)
+      if (element) {
+        // Save the final position to the server
+        props.onMoveElement(element.id, element.x_position, element.y_position)
+      }
+
+      setElementDragState({
+        isDragging: false,
+        elementId: null,
+        startPos: { x: 0, y: 0 },
+        elementStartPos: { x: 0, y: 0 },
+      })
+    }
+  }, [
+    props.currentTool,
+    props.isDragging,
+    props.setIsDragging,
+    elementDragState,
+    props.localElements,
+    props.onMoveElement,
+  ])
 
   const handleCanvasMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -175,28 +288,16 @@ export function useCanvasEventHandlers(props: EventHandlersProps) {
     ],
   )
 
-  const handleCanvasMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (props.currentTool === "hand" && props.isDragging) {
-        const newX = e.clientX - props.dragStart.x
-        const newY = e.clientY - props.dragStart.y
-        props.setCanvasPosition({ x: newX, y: newY })
-      }
-    },
-    [props.currentTool, props.isDragging, props.dragStart, props.setCanvasPosition],
-  )
-
-  const handleCanvasMouseUp = useCallback(() => {
-    if (props.currentTool === "hand" && props.isDragging) {
-      props.setIsDragging(false)
-    }
-  }, [props.currentTool, props.isDragging, props.setIsDragging])
-
   const handleCanvasMouseLeave = useCallback(() => {
     if (props.currentTool === "hand" && props.isDragging) {
       props.setIsDragging(false)
     }
-  }, [props.currentTool, props.isDragging, props.setIsDragging])
+
+    // Stop element dragging if mouse leaves canvas
+    if (elementDragState.isDragging) {
+      handleCanvasMouseUp()
+    }
+  }, [props.currentTool, props.isDragging, props.setIsDragging, elementDragState, handleCanvasMouseUp])
 
   const handleElementClick = useCallback(
     (element: DisplanCanvasElement, e: React.MouseEvent) => {
@@ -458,6 +559,7 @@ export function useCanvasEventHandlers(props: EventHandlersProps) {
     handleCanvasMouseUp,
     handleCanvasMouseLeave,
     handleElementClick,
+    handleElementMouseDown,
     handleTextEditSubmit,
     handleContextMenuClick,
     handleBackgroundChange,
@@ -470,5 +572,6 @@ export function useCanvasEventHandlers(props: EventHandlersProps) {
     handleInputKeyDown,
     handleSubmitComment,
     handleCloseComment,
+    elementDragState,
   }
 }

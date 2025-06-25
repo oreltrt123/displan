@@ -345,7 +345,16 @@
   animation: slide-in-right 0.4s ease-out;
   animation-fill-mode: forwards;
 }
-
+.r2552esf25_2r25252 {
+  height: 100%;
+  background: #1D1D1D;
+  overflow-y: hidden; /* Hide scrollbar initially */
+  animation: slide-in-right 0.4s ease-out;
+  animation-fill-mode: forwards;
+}
+.r2552esf25_2r25252.show-scroll {
+  overflow-y: auto;
+}
 /* After animation, allow scrolling */
 .r2552esf25_2r.show-scroll {
   overflow-y: auto;
@@ -366,7 +375,11 @@
   outline: none;
   padding: 10px;
   width: 100%;
+  border: 1px solid #88888800;
   border-radius: 10px;
+}
+.r2552esf25_252trewt3er:focus {
+  border: 1px solid rgb(0, 153, 255);
 }
 .SFAGWGASGCancel {
   position: fixed;

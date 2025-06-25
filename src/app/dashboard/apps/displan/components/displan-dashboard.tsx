@@ -1,7 +1,8 @@
-"use client"
+
+  "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Grid, List, User, Folder, Plus, FolderPlus, Users, X, UserPlus, RefreshCw, Circle } from "lucide-react"
 import { DisplanProjectCard } from "./displan-project-card"
 import type { DisplanProjectDesignerCssProject, ViewMode } from "../lib/types/displan-types"
@@ -14,9 +15,7 @@ import {
   displan_folder_get_member_count,
   displan_folder_get_collaborators,
   displan_folder_create_invite_link,
-  displan_folder_get_user_role,
   displan_folder_remove_collaborator,
-  displan_folder_get_owner_info,
 } from "../lib/actions/displan-project-actions"
 import { supabase } from "@/lib/supabase-client"
 import "../../website-builder/designer/styles/button.css"
@@ -25,11 +24,14 @@ import "@/styles/sidebar_settings_editor.css"
 
 interface DisplanDashboardProps {
   initialProjects: DisplanProjectDesignerCssProject[]
+  userId: string
   currentFolderId?: string
 }
 
-export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDashboardProps) {
+export function DisplanDashboard({ initialProjects, userId, currentFolderId }: DisplanDashboardProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [projects, setProjects] = useState<DisplanProjectDesignerCssProject[]>(initialProjects)
   const [folders, setFolders] = useState<any[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(currentFolderId || null)
@@ -40,6 +42,9 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
   const [newFolderName, setNewFolderName] = useState("")
   const [isCreatingFolder, setIsCreatingFolder] = useState(false)
 
+  // Store consistent user ID in localStorage
+  const [consistentUserId, setConsistentUserId] = useState(userId)
+
   // Collaborators modal states
   const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false)
   const [collaboratorsTab, setCollaboratorsTab] = useState<"invite" | "members">("invite")
@@ -49,93 +54,88 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
   const [inviteRole, setInviteRole] = useState("Editor")
   const [searchMembers, setSearchMembers] = useState("")
   const [currentUserEmail, setCurrentUserEmail] = useState("")
-  const [currentUserId, setCurrentUserId] = useState("")
   const [isGeneratingLink, setIsGeneratingLink] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
-  const [isLoadingUser, setIsLoadingUser] = useState(true)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [isLoadingRole, setIsLoadingRole] = useState(false)
-  const [showPermissionModal, setShowPermissionModal] = useState(false)
-  const [folderOwnerEmail, setFolderOwnerEmail] = useState("")
+  const [userRole, setUserRole] = useState<string | null>("Admin")
+
+  // Template cloning states
+  const [isCloningTemplate, setIsCloningTemplate] = useState(false)
+  const [cloningMessage, setCloningMessage] = useState("")
+
+  // Initialize consistent user ID
+  useEffect(() => {
+    const initializeUserId = async () => {
+      try {
+        // Try to get real Supabase user first
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        if (user?.id) {
+          setConsistentUserId(user.id)
+          localStorage.setItem("displan_user_id", user.id)
+          return
+        }
+      } catch (error) {
+        console.log("No Supabase user, using fallback")
+      }
+
+      // Use consistent fallback ID
+      const storedUserId = localStorage.getItem("displan_user_id")
+      if (storedUserId) {
+        setConsistentUserId(storedUserId)
+      } else {
+        // Create new consistent ID and store it
+        const newUserId = `guest_user_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`
+        setConsistentUserId(newUserId)
+        localStorage.setItem("displan_user_id", newUserId)
+      }
+    }
+
+    initializeUserId()
+  }, [])
+
+  // Check for template cloning on page load
+  useEffect(() => {
+    const templateId = searchParams.get("clone_template")
+    if (templateId && consistentUserId) {
+      handleCloneTemplate(templateId)
+    }
+  }, [searchParams, consistentUserId])
+
+  // Update URL with consistent user ID
+  useEffect(() => {
+    if (consistentUserId) {
+      const currentId = searchParams.get("id")
+      if (currentId !== consistentUserId) {
+        const newUrl = selectedFolderId
+          ? `/dashboard/apps/displan/folder/${selectedFolderId}?id=${consistentUserId}`
+          : `/dashboard/apps/displan?id=${consistentUserId}`
+        router.replace(newUrl)
+      }
+    }
+  }, [consistentUserId, selectedFolderId, searchParams, router])
 
   useEffect(() => {
-    loadCurrentUser()
     loadFolders()
-    loadUserRole()
     if (selectedFolderId) {
       loadMemberCount()
       loadCollaborators()
-      loadFolderOwner()
     }
+    loadCurrentUserSimple()
+  }, [selectedFolderId])
 
-    // Update user activity every 30 seconds
-    const activityInterval = setInterval(() => {
-      updateUserActivity()
-    }, 30000)
-
-    // Mark user as offline when leaving
-    const handleBeforeUnload = () => {
-      if (currentUserId) {
-        navigator.sendBeacon("/api/mark-offline", JSON.stringify({ userId: currentUserId }))
-      }
-    }
-
-    window.addEventListener("beforeunload", handleBeforeUnload)
-
-    return () => {
-      clearInterval(activityInterval)
-      window.removeEventListener("beforeunload", handleBeforeUnload)
-    }
-  }, [selectedFolderId, currentUserId])
-
-  const updateUserActivity = async () => {
-    if (currentUserId && currentUserEmail) {
-      try {
-        await supabase.rpc("update_user_activity", {
-          p_user_id: currentUserId,
-          p_user_email: currentUserEmail,
-          p_activity_type: "dashboard_active",
-        })
-      } catch (error) {
-        console.error("Failed to update activity:", error)
-      }
-    }
-  }
-
-  const loadCurrentUser = async () => {
-    setIsLoadingUser(true)
+  const loadCurrentUserSimple = async () => {
     try {
       const {
         data: { user },
-        error,
       } = await supabase.auth.getUser()
-
-      console.log("Loading user:", { user: user?.email, error })
-
-      if (error) {
-        console.error("Error getting user:", error)
-        setIsLoadingUser(false)
-        return
-      }
-
       if (user?.email) {
         setCurrentUserEmail(user.email)
-        setCurrentUserId(user.id)
-        console.log("User loaded successfully:", user.email)
-
-        // Update activity on load
-        await supabase.rpc("update_user_activity", {
-          p_user_id: user.id,
-          p_user_email: user.email,
-          p_activity_type: "dashboard_load",
-        })
       } else {
-        console.log("No user email found")
+        setCurrentUserEmail(`user@example.com`)
       }
     } catch (error) {
-      console.error("Failed to get current user:", error)
-    } finally {
-      setIsLoadingUser(false)
+      setCurrentUserEmail(`user@example.com`)
     }
   }
 
@@ -174,35 +174,17 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
     }
   }
 
-  const loadFolderOwner = async () => {
-    if (!selectedFolderId) return
-    try {
-      const result = await displan_folder_get_owner_info(selectedFolderId)
-      if (result.success && result.data) {
-        // For now, we'll use the owner_id. You might want to fetch the actual email
-        setFolderOwnerEmail("Admin") // Placeholder
-      }
-    } catch (error) {
-      console.error("Failed to load folder owner:", error)
-    }
-  }
-
   const generateInviteLink = async () => {
     if (!selectedFolderId) return
     setIsGeneratingLink(true)
     try {
       const result = await displan_folder_create_invite_link(selectedFolderId, inviteRole)
       if (result.success) {
-        const fullLink = `${window.location.origin}/dashboard/apps/displan/invite/${result.data.invite_link}`
+        const fullLink = `${window.location.origin}/dashboard/apps/displan/invite/${result.data.invite_link}?id=${consistentUserId}`
         setInviteLink(fullLink)
-        console.log("Generated invite link:", fullLink)
-      } else {
-        console.error("Failed to generate invite link:", result.error)
-        alert("Failed to generate invite link: " + result.error)
       }
     } catch (error) {
       console.error("Failed to generate invite link:", error)
-      alert("Failed to generate invite link")
     } finally {
       setIsGeneratingLink(false)
     }
@@ -218,30 +200,100 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
     }
   }
 
+  // 🔥 NEW: Handle template cloning
+  const handleCloneTemplate = async (templateId: string) => {
+    console.log("🎨 Cloning template:", templateId)
+    setIsCloningTemplate(true)
+    setCloningMessage("Preparing template...")
+
+    try {
+      const userEmail = currentUserEmail || "user@example.com"
+
+      setCloningMessage("Cloning template data...")
+
+      const response = await fetch("/api/templates/clone", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          templateId,
+          userId: consistentUserId,
+          userEmail,
+          folderId: selectedFolderId,
+        }),
+      })
+
+      const result = await response.json()
+      console.log("🎨 Clone result:", result)
+
+      if (result.success) {
+        setCloningMessage("Template cloned successfully!")
+
+        // Refresh projects list to show the new cloned project
+        const refreshResult = await displan_project_designer_css_fetch_by_folder(selectedFolderId)
+        if (refreshResult.success) {
+          setProjects(refreshResult.data)
+        }
+
+        // Clear URL parameter
+        const newUrl = selectedFolderId
+          ? `/dashboard/apps/displan/folder/${selectedFolderId}?id=${consistentUserId}`
+          : `/dashboard/apps/displan?id=${consistentUserId}`
+        router.replace(newUrl)
+
+        // Show success message
+        setTimeout(() => {
+          setIsCloningTemplate(false)
+          setCloningMessage("")
+          alert(`Template "${result.project_name}" has been added to your projects!`)
+        }, 1000)
+      } else {
+        setIsCloningTemplate(false)
+        setCloningMessage("")
+        alert("Failed to clone template: " + result.error)
+      }
+    } catch (error) {
+      console.error("❌ Template cloning error:", error)
+      setIsCloningTemplate(false)
+      setCloningMessage("")
+      alert("Failed to clone template. Please try again.")
+    }
+  }
+
+  // FIXED: Immediate project creation with loading state and refresh
   const handleCreateProject = async () => {
     setIsCreating(true)
     try {
-      await displan_project_designer_css_create(selectedFolderId)
+      const result = await displan_project_designer_css_create(selectedFolderId)
+      if (result.success) {
+        // Immediately refresh projects list
+        const refreshResult = await displan_project_designer_css_fetch_by_folder(selectedFolderId)
+        if (refreshResult.success) {
+          setProjects(refreshResult.data)
+        }
+
+        // Show success feedback
+        setTimeout(() => {
+          setIsCreating(false)
+        }, 500) // Short delay to show success
+      } else {
+        setIsCreating(false)
+        alert("Failed to create project: " + result.error)
+      }
     } catch (error) {
       console.error("Failed to create project:", error)
       setIsCreating(false)
+      alert("Failed to create project")
     }
   }
 
   const handleSearch = async (term: string) => {
     setSearchTerm(term)
     if (term.trim() === "") {
-      // If no search term, load projects based on selected folder
-      if (selectedFolderId === null) {
-        const result = await displan_project_designer_css_fetch_by_folder(null)
-        if (result.success) {
-          setProjects(result.data)
-        }
-      } else {
-        const result = await displan_project_designer_css_fetch_by_folder(selectedFolderId)
-        if (result.success) {
-          setProjects(result.data)
-        }
+      const result = await displan_project_designer_css_fetch_by_folder(selectedFolderId)
+      if (result.success) {
+        setProjects(result.data)
       }
     } else {
       const result = await displan_project_designer_css_search(term)
@@ -251,17 +303,22 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
     }
   }
 
+  // FIXED: Instant folder navigation with immediate URL update
   const handleFolderSelect = async (folderId: string | null) => {
+    // Update state immediately
     setSelectedFolderId(folderId)
-    setSearchTerm("") // Clear search when switching folders
+    setSearchTerm("")
 
-    // Update URL
-    if (folderId === null) {
-      router.push("/dashboard/apps/displan")
-    } else {
-      router.push(`/dashboard/apps/displan/folder/${folderId}`)
-    }
+    // Update URL immediately
+    const newUrl =
+      folderId === null
+        ? `/dashboard/apps/displan?id=${consistentUserId}`
+        : `/dashboard/apps/displan/folder/${folderId}?id=${consistentUserId}`
 
+    // Use router.push for immediate navigation
+    router.push(newUrl)
+
+    // Load projects immediately
     try {
       const result = await displan_project_designer_css_fetch_by_folder(folderId)
       if (result.success) {
@@ -281,7 +338,7 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
       if (result.success) {
         setShowCreateFolderModal(false)
         setNewFolderName("")
-        await loadFolders() // Reload folders
+        await loadFolders()
       } else {
         alert(`Failed to create folder: ${result.error}`)
       }
@@ -294,7 +351,7 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
   }
 
   const handleOpenProject = (projectId: string) => {
-    router.push(`/dashboard/apps/displan/editor/${projectId}`)
+    router.push(`/dashboard/apps/displan/editor/${projectId}?id=${consistentUserId}`)
   }
 
   const handleProjectDeleted = (projectId: string) => {
@@ -302,7 +359,6 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
   }
 
   const handleProjectMoved = (projectId: string) => {
-    // Remove project from current view since it was moved
     setProjects(projects.filter((p) => p.id !== projectId))
   }
 
@@ -315,8 +371,8 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
   const openCollaboratorsModal = () => {
     if (selectedFolderId) {
       setShowCollaboratorsModal(true)
-      setInviteLink("") // Clear previous link
-      generateInviteLink() // Generate new link
+      setInviteLink("")
+      generateInviteLink()
     }
   }
 
@@ -324,35 +380,12 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
     collab.user_email.toLowerCase().includes(searchMembers.toLowerCase()),
   )
 
-  const loadUserRole = async () => {
-    if (!selectedFolderId) {
-      setUserRole("Admin") // User is admin of their own "All" folder
-      return
-    }
-
-    setIsLoadingRole(true)
-    try {
-      const result = await displan_folder_get_user_role(selectedFolderId)
-      if (result.success) {
-        setUserRole(result.role)
-      } else {
-        setUserRole(null)
-      }
-    } catch (error) {
-      console.error("Failed to load user role:", error)
-      setUserRole(null)
-    } finally {
-      setIsLoadingRole(false)
-    }
-  }
-
   const removeCollaborator = async (collaboratorId: string) => {
     if (!selectedFolderId) return
 
     try {
       const result = await displan_folder_remove_collaborator(selectedFolderId, collaboratorId)
       if (result.success) {
-        // Reload collaborators and member count
         await loadCollaborators()
         await loadMemberCount()
       } else {
@@ -362,16 +395,6 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
       console.error("Failed to remove collaborator:", error)
       alert("Failed to remove collaborator")
     }
-  }
-
-  const handleCreateProjectWithPermission = async () => {
-    // Check if user has permission to create projects
-    if (selectedFolderId && userRole === "Viewer") {
-      setShowPermissionModal(true)
-      return
-    }
-
-    await handleCreateProject()
   }
 
   const formatLastActivity = (lastActivity: string | null) => {
@@ -391,41 +414,6 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
     if (diffInDays < 7) return `${diffInDays}d ago`
 
     return activity.toLocaleDateString()
-  }
-
-  const renderPermissionModal = () => {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center z-50">
-        <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowPermissionModal(false)}></div>
-        <div className="bg_13_fsdf_delete relative z-10 w-full max-w-md mx-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <h3 className="settings_nav_section_title122323">Access Restricted</h3>
-          </div>
-          <hr className="fsdfadsgesgdg121" />
-
-          <div className="space-y-4">
-            <div className="text-center py-6">
-              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
-              </div>
-              <h4 className="Text_span_css_codecss mb-2">Viewer Access Only</h4>
-              <p className="Text_span_css_codecss1212 mb-4">
-                You cannot create any project in this workspace because you can only be a viewer. You can view and open
-                existing projects but you cannot create them or edit them.
-              </p>
-              <p className="text-sm text-gray-500">Contact the workspace admin to upgrade your permissions.</p>
-            </div>
-
-            <div className="flex justify-center">
-              <button onClick={() => setShowPermissionModal(false)} className="button_edit_project_r22232_Bu">
-                Got it
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   const renderCreateFolderModal = () => {
@@ -488,17 +476,11 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
   }
 
   const renderCollaboratorsModal = () => {
-    // Sort members: current user first, then admin, then others
     const sortedMembers = [...filteredCollaborators].sort((a, b) => {
-      // Current user first
       if (a.user_email === currentUserEmail) return -1
       if (b.user_email === currentUserEmail) return 1
-
-      // Admin second (if not current user)
       if (a.role === "Admin" && b.role !== "Admin") return -1
       if (b.role === "Admin" && a.role !== "Admin") return 1
-
-      // Then by email alphabetically
       return a.user_email.localeCompare(b.user_email)
     })
 
@@ -560,7 +542,7 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
                           onChange={(e) => {
                             setInviteRole(e.target.value)
                             if (inviteLink) {
-                              generateInviteLink() // Regenerate with new role
+                              generateInviteLink()
                             }
                           }}
                           className="button_edit_project_r222323A"
@@ -608,27 +590,23 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
                   </div>
 
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {/* Current user first */}
-                    {userRole && (
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-[#8888881A]">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                            {currentUserEmail ? currentUserEmail.charAt(0).toUpperCase() : "U"}
-                          </div>
-                          <div>
-                            <p className="Text_span_css_codecss">You</p>
-                            <p className="text-sm text-gray-400">
-                              {isLoadingUser ? "Loading..." : currentUserEmail || "No email found"}
-                            </p>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Circle className="w-2 h-2 fill-green-500 text-green-500" />
-                              <span className="text-xs text-green-400">Active now</span>
-                            </div>
+                    {/* Current user */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-[#8888881A]">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                          {currentUserEmail ? currentUserEmail.charAt(0).toUpperCase() : "U"}
+                        </div>
+                        <div>
+                          <p className="Text_span_css_codecss">You</p>
+                          <p className="text-sm text-gray-400">{currentUserEmail}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Circle className="w-2 h-2 fill-green-500 text-green-500" />
+                            <span className="text-xs text-green-400">Active now</span>
                           </div>
                         </div>
-                        <span className="Text_span_css_codecss">{userRole}</span>
                       </div>
-                    )}
+                      <span className="Text_span_css_codecss">{userRole}</span>
+                    </div>
 
                     {/* Other members */}
                     {sortedMembers
@@ -703,6 +681,24 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
     )
   }
 
+  // 🔥 NEW: Template cloning modal
+  const renderCloningModal = () => {
+    if (!isCloningTemplate) return null
+
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+        <div className="bg_13_fsdf_delete relative z-10 w-full max-w-md mx-4">
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <h3 className="settings_nav_section_title122323 mb-2">Cloning Template</h3>
+            <p className="Text_span_css_codecss1212 text-center">{cloningMessage}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header - Full Width */}
@@ -710,12 +706,20 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Workspace Button - Far Left */}
-
+            <div className="flex items-center space-x-4">
+              <h1 className="text-xl font-semibold">Workspace</h1>
+            </div>
 
             {/* Search - Center */}
             <div className="flex-1 max-w-lg mx-8">
               <div className="relative">
-                
+                <input
+                  type="text"
+                  placeholder="Search sites..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="input_field1asdw bg-[#8888881A] dark:bg-[#1D1D1D] w-full"
+                />
               </div>
             </div>
 
@@ -732,12 +736,15 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
                 </button>
               )}
 
-              <button
-                onClick={handleCreateProjectWithPermission}
-                disabled={isCreating}
-                className="button_edit_project_r222SDS"
-              >
-                {isCreating ? "Creating..." : "New Project"}
+              <button onClick={handleCreateProject} disabled={isCreating} className="button_edit_project_r222SDS">
+                {isCreating ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Creating...</span>
+                  </div>
+                ) : (
+                  "New Project"
+                )}
               </button>
             </div>
           </div>
@@ -750,19 +757,12 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
         <div className="settings-sidebar flex-shrink-0">
           <div className="settings-sidebar-content bg-background h-full">
             <nav className="settings-nav h-full overflow-y-auto">
-                <input
-                  type="text"
-                  placeholder="Search sites..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="input_field1asdw bg-[#8888881A] dark:bg-[#1D1D1D]"
-                />
               <div className="settings-nav-section">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="settings-nav-section-title">Folders</h3>
                   <button
                     onClick={() => setShowCreateFolderModal(true)}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                    className="p-1 hover:bg-[#8888881A] hoverdark:bg-[#1D1D1D] rounded"
                     title="Create new folder"
                   >
                     <Plus className="w-4 h-4" />
@@ -867,7 +867,7 @@ export function DisplanDashboard({ initialProjects, currentFolderId }: DisplanDa
       {/* Modals */}
       {showCreateFolderModal && renderCreateFolderModal()}
       {showCollaboratorsModal && renderCollaboratorsModal()}
-      {showPermissionModal && renderPermissionModal()}
+      {renderCloningModal()}
     </div>
   )
 }
