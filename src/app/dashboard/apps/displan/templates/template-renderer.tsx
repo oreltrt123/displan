@@ -21,7 +21,7 @@ import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1"
 import { stagger, useAnimate } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { createClient } from "@supabase/supabase-js"
-import GooeyNav from '@/components/ui/GooeyNav'
+import GooeyNav from '@/components/ui/gooeynav'
 import GlassIcons from '@/components/ui/GlassIcons'
 import {
   FiFileText,
