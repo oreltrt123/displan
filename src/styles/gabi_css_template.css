@@ -1,0 +1,163 @@
+header {
+  width: 100vw;
+  height: 10rem;
+  background-color: rgb(142, 145, 88, 0.5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: rgb(110, 112, 59) solid 0.1rem;
+}
+
+h1 {
+  color: rgb(254, 254, 107);
+  font-size: 3.5rem;
+  font-weight: 900;
+}
+
+nav {
+  height: 100%;
+  width: 50%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.links {
+  font-size: 2rem;
+  text-decoration: none;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  font-weight: 520;
+  color: rgb(254, 254, 107);
+  position: relative;
+  cursor: pointer;
+}
+
+#home::before {
+  position: absolute;
+  bottom: -0.2rem;
+  content: "";
+  width: 5.8rem;
+  height: 0.2rem;
+  background-color: rgb(254, 254, 107);
+  cursor: pointer;
+}
+
+#contant::before {
+  position: absolute;
+  left: 0;
+  bottom: -0.2rem;
+  content: "";
+  width: 0.00000000001rem;
+  height: 0.2rem;
+  background-color: rgb(254, 254, 107);
+  cursor: pointer;
+  transition-duration: 0.3s;
+}
+
+#contant:hover::before {
+  width: 9.7rem;
+}
+
+#about::before {
+  position: absolute;
+  bottom: -0.2rem;
+  left: 0;
+  content: "";
+  width: 0.00000000001rem;
+  height: 0.2rem;
+  background-color: rgb(254, 254, 107);
+  cursor: pointer;
+  transition-duration: 0.3s;
+}
+
+#about:hover::before {
+  width: 6.7rem;
+}
+
+#skills::before {
+  position: absolute;
+  bottom: -0.2rem;
+  content: "";
+  width: 0.000000000001rem;
+  height: 0.2rem;
+  background-color: rgb(254, 254, 107);
+  cursor: pointer;
+  transition-duration: 0.3s;
+}
+
+#skills:hover::before {
+  width: 5.8rem;
+}
+
+#experience::before {
+  position: absolute;
+  bottom: -0.2rem;
+  content: "";
+  width: 0.0000000000001rem;
+  height: 0.2rem;
+  background-color: rgb(254, 254, 107);
+  cursor: pointer;
+  transition-duration: 0.3s;
+}
+
+#experience:hover::before {
+  width: 11.1rem;
+}
+
+#menu {
+  display: none;
+}
+
+/* מסתירים את הניווט במסכים קטנים */
+@media (max-width: 1032px) {
+  nav {
+    display: none;
+    flex-direction: column;
+    background-color: rgba(0, 0, 0, 0.3); /* semi-transparent */
+    width: 100%;
+    position: absolute;
+    top: 10rem;
+    left: 0;
+    z-index: 999;
+    padding: 1rem 0;
+    height: calc(100% - 10.2rem);
+    backdrop-filter: blur(5px); /* This blurs only the background */
+    -webkit-backdrop-filter: blur(5px); /* For Safari */
+  }
+
+  /* מציגים את הניווט רק אם checkbox מסומן */
+  #menu-toggle:checked + #menu + nav {
+    display: flex;
+  }
+
+  #menu {
+    position: relative;
+    display: block;
+    font-size: 2.5rem;
+    color: rgb(254, 254, 107);
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    background: rgba(142, 145, 88, 0.5);
+    border-radius: 0.5rem;
+  }
+
+  #menu::before {
+    position: absolute;
+    bottom: 0.2rem;
+    left: 0s;
+    content: "";
+    width: 0rem;
+    height: 0.2rem;
+    background-color: rgb(254, 254, 107);
+    transition-duration: 0.3s;
+  }
+
+  #menu:hover::before {
+    width: 7.1rem;
+  }
+
+  #menu:active {
+    color: rgb(214, 214, 90);
+}
+}

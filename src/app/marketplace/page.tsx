@@ -1,29 +1,36 @@
 "use client"
 
+import type React from "react"
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Eye, ShoppingCart, Star, ExternalLink } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Search, Eye, ShoppingCart, Star, ExternalLink, ChevronDown, Grid3X3 } from "lucide-react"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import Navbar from "@/components/navbar"
+import "@/styles/sidebar_settings_editor.css"
+import "@/app/dashboard/apps/website-builder/designer/styles/button.css"
 
 interface Template {
   id: string
   creator_email: string
   creator_id: string
+  creator_name: string // NEW: Real creator name
   template_name: string
   short_description: string
   template_image_url: string
+  template_hover_image_url?: string // NEW: Hover image
   category: string
   tags: string[]
   price: number
   is_free: boolean
   view_count: number
   purchase_count: number
+  clone_count: number // NEW: Track clones
   rating: number
   created_at: string
   project_url: string
+  live_demo_url?: string // NEW: Published site URL
 }
 
 interface Category {
@@ -39,7 +46,19 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false) // NEW: Category dropdown
+
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+
+  // NEW: Read category from URL on component mount
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get("category")
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     loadMarketplace()
@@ -86,10 +105,46 @@ export default function MarketplacePage() {
     }
   }
 
+  // NEW: Handle category selection with URL update
+  const handleCategorySelect = (categoryName: string | null) => {
+    setSelectedCategory(categoryName)
+
+    // Update URL
+    const params = new URLSearchParams(searchParams.toString())
+    if (categoryName) {
+      // Convert category name to URL-friendly format (lowercase, replace spaces with hyphens)
+      const categorySlug = categoryName.toLowerCase().replace(/\s+/g, "")
+      params.set("category", categorySlug)
+    } else {
+      params.delete("category")
+    }
+
+    // Push new URL
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname
+    router.push(newUrl)
+  }
+
   const handleTemplateClick = (template: Template) => {
     console.log("🔍 Clicking template:", template.id)
-    // Navigate to template detail page
     router.push(`/marketplace/${template.id}`)
+  }
+
+  // 🔥 NEW: Handle template usage (cloning)
+  const handleUseTemplate = async (template: Template, event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (!template.is_free) {
+      alert("Purchase functionality coming soon!")
+      return
+    }
+
+    console.log("🎨 Using free template:", template.id)
+    // Get user ID from localStorage or generate one
+    const userId = localStorage.getItem("displan_user_id") || "user_" + Date.now()
+    localStorage.setItem("displan_user_id", userId)
+
+    // Redirect to dashboard with clone parameter
+    const dashboardUrl = `/dashboard/apps/displan?id=${userId}&clone_template=${template.id}`
+    router.push(dashboardUrl)
   }
 
   const getTemplateCountForCategory = (categoryName: string) => {
@@ -100,64 +155,98 @@ export default function MarketplacePage() {
     return templates.length
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
+      <Navbar />
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold mb-6">Template Marketplace</h1>
-            <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center">
+          <div className="market_place_ere32">
+            <h1 className="text-5xl font-bold mb-6">Marketplace</h1>
+            <p className="text_market_place_ere32">
               Discover and purchase amazing templates created by our community of talented designers
             </p>
-
-            <div className="max-w-lg mx-auto relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search for templates..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 py-3 text-lg bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-white/70"
-              />
-            </div>
+          </div>
+          <div className="max-w-lg mx-auto relative">
+            <input
+              type="text"
+              placeholder="Search articles..."
+              className="r2552esf25_252trewt3er12323232ewafser"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Category Filter */}
+        {/* Category Filter - ENHANCED */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Browse by Category</h2>
           <div className="flex flex-wrap gap-3">
-            <Button
-              variant={selectedCategory === null ? "default" : "outline"}
-              onClick={() => setSelectedCategory(null)}
-              className={selectedCategory === null ? "bg-pink-500 hover:bg-pink-600" : ""}
+            <button
+              onClick={() => handleCategorySelect(null)}
+              className={
+                selectedCategory === null ? "button_edit_project_marketplace_button" : "button_edit_project_marketplace"
+              }
+               style={{cursor: "default"}}
             >
               All Templates ({getTotalTemplateCount()})
-            </Button>
-            {categories.map((category) => {
+            </button>
+              <button
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className={
+                selectedCategory === null ? "button_edit_project_marketplace" : "button_edit_project_marketplace"
+              }
+              style={{cursor: "default"}}
+              >
+                <span>Templates</span>
+                {/* <ChevronDown className={`w-4 h-4 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} /> */}
+              </button>
+            {showCategoryDropdown && (
+              <div className="menu_container2323232323rer33">
+                {categories.map((category) => {
+                  const count = getTemplateCountForCategory(category.name)
+                  return (
+                    <button
+                      key={category.slug}
+                      onClick={() => {
+                        handleCategorySelect(category.name)
+                        setShowCategoryDropdown(false)
+                      }}
+                      className="menu_container2323232323rer33_item"
+                    >
+                      <span className="text-white">
+                        {category.icon} - <span className="text-white/70">{category.name}</span> - <span className="text-white/70">{count} templates</span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {categories.slice(0, 6).map((category) => {
               const count = getTemplateCountForCategory(category.name)
               return (
-                <Button
+                <button
                   key={category.slug}
-                  variant={selectedCategory === category.name ? "default" : "outline"}
-                  onClick={() => setSelectedCategory(category.name)}
-                  className={selectedCategory === category.name ? "bg-pink-500 hover:bg-pink-600" : ""}
+                  onClick={() => handleCategorySelect(category.name)}
+                  className={
+                    selectedCategory === category.name
+                      ? "button_edit_project_marketplace_button"
+                      : "button_edit_project_marketplace"
+                  }
+                      style={{cursor: "default"}}
+
                 >
-                  <span className="mr-2">{category.icon}</span>
+                  {/* <span className="mr-2">{category.icon}</span> */}
                   {category.name} ({count})
-                </Button>
+                </button>
               )
             })}
+            {categories.length > 6 && (
+              <button onClick={() => setShowCategoryDropdown(true)} className="button_edit_project_marketplace">
+                +{categories.length - 6} more
+              </button>
+            )}
           </div>
         </div>
 
@@ -165,19 +254,27 @@ export default function MarketplacePage() {
         {templates.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {templates.map((template) => (
-              <Card
-                key={template.id}
+              <div                 key={template.id}
                 className="overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer border-0 shadow-lg"
-                onClick={() => handleTemplateClick(template)}
-              >
-                {/* Template Image */}
+                onClick={() => handleTemplateClick(template)}>
+                {/* Template Image with Hover Effect */}
                 <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 relative overflow-hidden">
                   {template.template_image_url ? (
-                    <img
-                      src={template.template_image_url || "/placeholder.svg"}
-                      alt={template.template_name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
+                    <>
+                      <img
+                        src={template.template_image_url || "/placeholder.svg"}
+                        alt={template.template_name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      {/* NEW: Hover Image Effect */}
+                      {template.template_hover_image_url && (
+                        <img
+                          src={template.template_hover_image_url || "/placeholder.svg"}
+                          alt={`${template.template_name} hover`}
+                          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        />
+                      )}
+                    </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
                       <div className="text-center">
@@ -186,7 +283,6 @@ export default function MarketplacePage() {
                       </div>
                     </div>
                   )}
-
                   {/* Price Badge */}
                   <div className="absolute top-3 right-3">
                     <Badge
@@ -199,22 +295,23 @@ export default function MarketplacePage() {
                       {template.is_free ? "FREE" : `$${template.price}`}
                     </Badge>
                   </div>
-
-                  {/* Hover Overlay */}
+                  {/* Hover Overlay with Use Template Button */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <div className="text-center">
-                      <Button className="bg-white text-gray-900 hover:bg-gray-100 mb-2">
+                    <div className="text-center space-y-2">
+                      <Button
+                        className="bg-white text-gray-900 hover:bg-gray-100"
+                        onClick={(e) => handleUseTemplate(template, e)}
+                      >
                         <ExternalLink className="w-4 h-4 mr-2" />
+                        {template.is_free ? "Use Template" : "Buy Template"}
+                      </Button>
+                      <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
                         View Details
                       </Button>
-                      <p className="text-white text-sm">
-                        {template.is_free ? "Free to use" : `$${template.price} to purchase`}
-                      </p>
                     </div>
                   </div>
                 </div>
 
-                <CardContent className="p-6">
                   {/* Template Info */}
                   <div className="mb-4">
                     <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2 line-clamp-1">
@@ -225,7 +322,7 @@ export default function MarketplacePage() {
                     </p>
                   </div>
 
-                  {/* Stats */}
+                  {/* Stats - ENHANCED */}
                   <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
                     <span className="flex items-center">
                       <Eye className="w-4 h-4 mr-1" />
@@ -233,33 +330,33 @@ export default function MarketplacePage() {
                     </span>
                     <span className="flex items-center">
                       <ShoppingCart className="w-4 h-4 mr-1" />
-                      {template.purchase_count}
+                      {template.clone_count || template.purchase_count}
                     </span>
                     <span className="flex items-center">
                       <Star className="w-4 h-4 mr-1 fill-yellow-400 text-yellow-400" />
                       {template.rating.toFixed(1)}
                     </span>
                   </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between">
+                  {/* <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="text-xs">
                         {template.category}
                       </Badge>
                     </div>
-  {template.creator_email && template.creator_id && (
-    <a
-      href={`/profile/${template.creator_id}`}
-      onClick={(e) => e.stopPropagation()}
-      className="text-xs text-gray-500 dark:text-gray-400 hover:underline"
-    >
-      by {template.creator_email.split("@")[0]}
-    </a>
-  )}
-                  </div>
-                </CardContent>
-              </Card>
+                    <a
+                      href={`/profile/${template.creator_id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-gray-500 dark:text-gray-400 hover:underline flex items-center"
+                    >
+                      <div className="w-5 h-5 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center mr-1">
+                        <span className="text-white text-xs font-bold">
+                          {(template.creator_name || template.creator_email).charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      by {template.creator_name || template.creator_email.split("@")[0]}
+                    </a>
+                  </div> */}
+            </div>
             ))}
           </div>
         ) : (
@@ -277,7 +374,7 @@ export default function MarketplacePage() {
             <Button
               onClick={() => {
                 setSearchQuery("")
-                setSelectedCategory(null)
+                handleCategorySelect(null)
               }}
               variant="outline"
             >

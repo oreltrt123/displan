@@ -41,6 +41,11 @@ export function SettingsSidebar() {
       path: `/dashboard/apps/displan/editor/${projectId}/settings`,
     },
     {
+      title: "API keys",
+      icon: Settings,
+      path: `/dashboard/apps/displan/editor/${projectId}/settings/keys`,
+    },
+    {
       title: "Domains",
       icon: Globe,
       path: `/dashboard/apps/displan/editor/${projectId}/settings/domains`,

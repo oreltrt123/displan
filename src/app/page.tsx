@@ -1,21 +1,16 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { AiOutlineExclamationCircle } from "react-icons/ai"
-import { FaVolumeUp } from "react-icons/fa"
-import { FiSettings } from "react-icons/fi"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
-import Link from "next/link"
 import "../styles/navbar.css"
-import { LearnMore } from "@/components/learn-more";
-import { CARDS } from "@/components/content/cards";
+import { LearnMore } from "@/components/learn-more"
+import { CARDS } from "@/components/content/cards"
 import { LandingHero } from "@/components/content/landing-hero"
-import Hero from "@/components/hero-home";
-import Features from "@/components/features";
-import ModernProductTeams from '@/components/sections/modern-product-teams'
+import Hero from "@/components/hero-home"
+import Features from "@/components/features"
 import { Quote } from "@/components/demo"
-
+import { CookieConsent } from "@/components/cookie-consent"
 
 export default function HomePage() {
   const [showInfo, setShowInfo] = useState(false)
@@ -33,11 +28,13 @@ export default function HomePage() {
         setShowInfo(false)
       }
     }
+
     if (showInfo) {
       document.addEventListener("mousedown", handleClickOutside)
     } else {
       document.removeEventListener("mousedown", handleClickOutside)
     }
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
@@ -57,18 +54,29 @@ export default function HomePage() {
     // In a real app, you'd switch video source here
   }
 
+  const handleCookieAccept = () => {
+    // Optional: Add any additional logic when user accepts cookies
+    console.log("User accepted cookies")
+    // You could initialize analytics, ads, etc. here
+  }
+
   return (
     <div className="w-full min-h-screen bg-white dark:bg-background text-black dark:text-white relative">
       <Navbar />
+
       <main className="flex flex-col gap-20 items-center pt-32">
         <LandingHero />
       </main>
+
       <LearnMore cards={CARDS} />
       {/* <ModernProductTeams /> */}
       <Hero />
       <Features />
       <Quote />
       <Footer />
+
+      {/* Cookie Consent Banner */}
+      <CookieConsent onAccept={handleCookieAccept} />
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { DisplanAIEnhanced } from "./displan-ai"
 import { StripeSubscription } from "./stripe-subscription"
 import { CMSPanel } from "./cms-panel"
 import { NavigatorPanelHierarchical } from "./navigator-panel"
+import "@/styles/Button_eeree24de2Eeree2.css"
 
 interface DisplanProjectDesignerCssPage {
   id: string
@@ -276,8 +277,8 @@ export function LeftSidebar({
   return (
     <>
       <div
-        className="w-[300px] bg-white dark:bg-black  h-full overflow-hidden flex"
-        style={{ minWidth: "400px", maxWidth: "400px" }}
+        className="w-[360px] bg-white dark:bg-black  h-full overflow-hidden flex"
+        style={{ minWidth: "360px", maxWidth: "360px" }}
       >
         <div className="w-12 sdadwdsdawdsd flex flex-col border-r border-[#8888881A] dark:border-[#1D1D1D]">
           <button
@@ -304,7 +305,7 @@ export function LeftSidebar({
             <img className="dark:hidden" src="/components/editor/folders_light.png" alt="" />
             <img className="hidden dark:block" src="/components/editor/folders_dark.png" alt="" />
           </button>
-           <button
+           {/* <button
             onClick={() => setActiveTab("navigator")}
             className={`Butyet_23REr ${
               activeTab === "navigator"
@@ -315,7 +316,7 @@ export function LeftSidebar({
           >
             <img className="dark:hidden" src="/components/editor/navigator_light.png" alt="" />
             <img className="hidden dark:block" src="/components/editor/navigator_dark.png" alt="" />
-          </button>
+          </button> */}
                     <button
             onClick={() => setActiveTab("ai")}
             className={`Butyet_23REr ${
@@ -349,10 +350,11 @@ export function LeftSidebar({
               {activeTab === "pages" ? (
                 <>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white Elements_dw22er">Pages</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white Elements_dw22er" style={{fontSize: "14px", position: "relative", top: "-10px"}}>Pages</h2>
                     <button
                       onClick={() => setShowPageMenu(!showPageMenu)}
-                      className="w-8 h-8 bg-[#8888881A] rounded-lg text-center hover:bg-[#8888881A]  flex items-center justify-center transition-colors Elements_dw22er13"
+                      className="w-5 h-5 bg-[#8888881A] rounded-lg text-center hover:bg-[#8888881A]  flex items-center justify-center transition-colors Elements_dw22er13"
+                      style={{fontSize: "14px", position: "relative", top: "-2px"}}
                     >
                       <Plus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                     </button>
@@ -371,13 +373,13 @@ export function LeftSidebar({
                     )}
                   </div>
 
-                  <div className="h-full overflow-y-auto">
+                  <div className="h-full overflow-y-auto sfsfsfsfsfsfwerertwr242">
                     <div
                       onClick={() => onPageChange("home")}
-                      className={`flex items-center p-3 cursor-pointer transition-colors ${
+                      className={`Button_eeree24de2Eeree2 ${
                         currentPage === "home"
-                          ? "bg-[#8888881A] text-gray-700 dark:border-blue-800"
-                          : "hover:bg-[#8888881A] text-gray-700 dark:text-gray-300"
+                          ? "Button_eeree24de2Eeree2_active"
+                          : ""
                       }`}
                     >
                       <Home className="w-4 h-4 mr-3" />
@@ -388,10 +390,10 @@ export function LeftSidebar({
                       <div
                         key={page.id}
                         onClick={() => onPageChange(page.slug)}
-                        className={`flex items-center p-3 cursor-pointer transition-colors ${
+                        className={`Button_eeree24de2Eeree2 ${
                           currentPage === page.slug
-                            ? "bg-[#8888881A] text-gray-700 dark:border-blue-800"
-                            : "hover:bg-[#8888881A] text-gray-700 dark:text-gray-300"
+                            ? "Button_eeree24de2Eeree2_active"
+                            : ""
                         }`}
                       >
                         {page.is_folder ? <Folder className="w-4 h-4 mr-3" /> : <FileText className="w-4 h-4 mr-3" />}
@@ -481,14 +483,14 @@ export function LeftSidebar({
                     {/* Show message when no CMS collections */}
                     {!cmsLoading && !cmsError && Array.isArray(cmsCollections) && cmsCollections.length === 0 && (
                       <div className="flex items-center p-3 text-gray-500">
-                        <span className="text-sm">No CMS collections found</span>
+                        <span className="text-sm"></span>
                       </div>
                     )}
                   </div>
                 </>
               ) : activeTab === "elements" ? (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 Elements_dw22er">Elements</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white Elements_dw22er" style={{fontSize: "14px", position: "relative", top: "-10px"}}>Elements</h2>
                   <ElementsPanel onAddElement={onAddElement} />
                 </div>
               ) : activeTab === "cms" ? (

@@ -37,6 +37,7 @@
     "cmdk": "^1.0.4",
     "embla-carousel-react": "^8.5.2",
     "framer-motion": "^12.9.2",
+    "gsap": "^3.13.0",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.468.0",
     "motion": "^12.19.1",

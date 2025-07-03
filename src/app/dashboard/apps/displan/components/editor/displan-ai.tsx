@@ -867,11 +867,11 @@ Provide a helpful, friendly response that shows your expertise in web design and
             <Wand2 className="w-5 h-5 mr-2 text-purple-500" />
             AI Designer
           </h2>
-          <div className="flex items-center space-x-2">
+          {/* <div className="flex items-center space-x-2">
             <button onClick={handleSaveChat} className="dfsgsgdgsegeg" title="Save chat history to server">
               <span>Save</span>
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
 

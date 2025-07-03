@@ -96,16 +96,6 @@ export function TopBar({
       },
     },
     {
-      id: "files",
-      title: "Files",
-      icon: <File className="w-4 h-4" />,
-      action: () => {
-        // Add your file action here
-        console.log("Files clicked")
-        setIsCommandPaletteOpen(false)
-      },
-    },
-    {
       id: "project-settings",
       title: "Project Settings",
       icon: <Settings className="w-4 h-4" />,
@@ -284,8 +274,7 @@ export function TopBar({
             className="flex items-center justify-center w-10 h-13 rounded-md transition-colors asfasfawfasffw"
             title="Open command palette"
           >
-            <img className="dark:hidden" src="/components/editor/logo_light.png" alt="" />
-            <img className="hidden dark:block" src="/components/editor/logo_dark.png" alt="" />
+            <img className="" src="/logo_about.png" alt="" />
           </button>
         </div>
 

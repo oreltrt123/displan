@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import { createClient } from "../../../supabase/client"
 
 const SocialLoginButtons: React.FC = () => {
@@ -8,8 +8,7 @@ const SocialLoginButtons: React.FC = () => {
 
   const handleOAuthLogin = async (provider: "google" | "github" | "discord") => {
     try {
-      // Correct redirect path using NEXT_PUBLIC_APP_URL or fallback to localhost
-      const redirectHost = `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+      const redirectHost = `${window.location.origin}/dashboard`
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -37,29 +36,17 @@ const SocialLoginButtons: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-[10px]">
-        {/* Google Login */}
-        <button
-          onClick={() => handleOAuthLogin("google")}
-          className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none hover:bg-gray-50"
-        >
+        <button onClick={() => handleOAuthLogin("google")} className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] hover:bg-gray-50">
           <img src="/images/img_icons8google_1.svg" alt="Google icon" className="w-6 h-6 mr-2" />
           <span className="text-[12px] font-medium text-black">Sign in with Google</span>
         </button>
 
-        {/* Discord Login */}
-        <button
-          onClick={() => handleOAuthLogin("discord")}
-          className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none hover:bg-gray-50"
-        >
+        <button onClick={() => handleOAuthLogin("discord")} className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] hover:bg-gray-50">
           <img src="/images/discord-icon-svgrepo-com.svg" alt="Discord icon" className="w-6 h-6 mr-2" />
           <span className="text-[12px] font-medium text-black">Sign in with Discord</span>
         </button>
 
-        {/* GitHub Login */}
-        <button
-          onClick={() => handleOAuthLogin("github")}
-          className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] transition-colors duration-200 focus:outline-none hover:bg-gray-50"
-        >
+        <button onClick={() => handleOAuthLogin("github")} className="w-full flex items-center justify-center h-[32px] px-4 bg-transparent border border-[#d9d9d9] text-black rounded-[10px] hover:bg-gray-50">
           <img src="/images/github-142-svgrepo-com.svg" alt="GitHub icon" className="w-6 h-6 mr-2" />
           <span className="text-[12px] font-medium text-black">Sign in with GitHub</span>
         </button>

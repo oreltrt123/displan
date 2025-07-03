@@ -43,12 +43,13 @@ export default function DisPlanLanding() {
           <section className="relative h-screen w-full bg-[rgb(31,31,31)] text-black flex items-center justify-center">
              <Feature1   
       title="Build Smarter with DisPlan"
-      description="DisPlan is a free website builder powered by advanced AI, designed for everyone.
-Whether you're starting a business, portfolio, or blog, you can launch in minutes — no coding needed.
-Choose a layout, customize your design, and let AI handle the rest.
-Everything is included: hosting, templates, tools — completely free.
-Our goal is to make web creation simple, fast, and accessible to all.
-With DisPlan, your online presence is just a few clicks away."
+      description="DisPlan is a smart AI-powered website builder that lets you create any website or app simply by describing it in natural language. Unlike Wix, Webflow, or Framer, which are great for simple sites but limited for complex apps, DisPlan generates full front-end and back-end code instantly based on your instructions.
+
+With a powerful drag-and-drop graphic canvas and ready-made templates for social networks, dashboards, SaaS, and more, you can design, view, export, or publish your project in seconds. DisPlan is not just a design tool—it’s a complete development platform that makes building sophisticated, fully functional web apps easy and fast.
+
+Build smarter, build faster, and bring your ideas to life effortlessly with DisPlan.
+
+"
       imageSrc="/logo_about.png"
       imageAlt="placeholder hero"
       buttonPrimary={{

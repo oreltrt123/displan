@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation"
 import { createClient } from "../../supabase/server"
 import { revalidatePath } from "next/cache"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 
 export async function checkUserSubscription(userId: string): Promise<boolean> {
   try {
@@ -31,28 +33,42 @@ export async function signInAction(formData: FormData): Promise<void> {
   const password = formData.get("password") as string
 
   if (!email || !password) {
-    return redirectWithMessage("/sign-in", "Email and password are required")
+    redirect("/sign-in?error=Email and password are required")
   }
 
-  try {
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+  const cookieStore = cookies()
 
-    if (error) {
-      return redirectWithMessage("/sign-in", error.message)
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return cookieStore.get(name)?.value
+        },
+        set(name, value, options) {
+          cookieStore.set({ name, value, ...options })
+        },
+        remove(name, options) {
+          cookieStore.delete({ name, ...options })
+        },
+      },
     }
+  )
 
-    revalidatePath("/", "layout")
-    return redirect("/dashboard")
-  } catch (error) {
-    return redirectWithMessage("/sign-in", "Login failed. Please try again.")
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  if (error) {
+    redirect(`/sign-in?error=${encodeURIComponent(error.message)}`)
   }
+
+  // ✅ Everything OK — go to dashboard
+  redirect("/dashboard")
 }
 
-// FIXED: Simplified signUp without profile insertion
 export async function signUpAction(formData: FormData): Promise<void> {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
@@ -65,7 +81,6 @@ export async function signUpAction(formData: FormData): Promise<void> {
   try {
     const supabase = createClient()
 
-    // Just create the auth user - no profile table insertion
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -145,6 +160,7 @@ export async function resetPasswordAction(formData: FormData): Promise<void> {
     return redirectWithMessage("/reset-password", "Update failed. Try again.")
   }
 }
+
 export async function signInWithGoogleAction(): Promise<void> {
   const supabase = createClient()
   await supabase.auth.signInWithOAuth({

@@ -150,7 +150,7 @@ export function ResponsiveControls({
             onKeyDown={(e) => handleKeyDown(e, "width")}
             className="input_field2"
           />
-          <span className="input_field22">W</span>
+          <span className="input_field22 text-white">W</span>
         </div>
 
         <div className="flex items-center">
@@ -162,7 +162,7 @@ export function ResponsiveControls({
             onKeyDown={(e) => handleKeyDown(e, "height")}
             className="input_field2"
           />
-          <span className="input_field22">H</span>
+          <span className="input_field22 text-white">H</span>
         </div>
       </div>
     </div>

@@ -14,28 +14,24 @@ export async function middleware(req: NextRequest) {
 
   // Handle localhost development (including subdomains)
   if (hostname.includes("localhost")) {
-    // Check if it's a subdomain like mysite.localhost:3000
     const parts = hostname.split(".")
     if (parts.length > 1 && parts[0] !== "localhost") {
-      // This is a subdomain like mysite.localhost:3000
       const subdomain = parts[0]
       const newUrl = new URL(`/${subdomain}${url.pathname}`, req.url)
       return NextResponse.rewrite(newUrl)
     }
-    // Regular localhost - let it pass through normally
     return res
   }
 
-  // Check if this is a custom domain or a subdomain
+  // Check if this is the main domain
   const isMainDomain = hostname === "displan.design" || hostname === "www.displan.design"
 
-  // Skip subdomain handling for main domain
   if (isMainDomain) {
-    // Handle authentication for protected routes on main domain
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseKey) {
+      console.error("Missing Supabase environment variables")
       return res
     }
 
@@ -46,55 +42,37 @@ export async function middleware(req: NextRequest) {
             return req.cookies.get(name)?.value
           },
           set(name, value, options) {
-            req.cookies.set({
-              name,
-              value,
-              ...options,
-            })
-            res.cookies.set({
-              name,
-              value,
-              ...options,
-            })
+            req.cookies.set({ name, value, ...options })
+            res.cookies.set({ name, value, ...options })
           },
           remove(name, options) {
-            req.cookies.delete({
-              name,
-              ...options,
-            })
-            res.cookies.delete({
-              name,
-              ...options,
-            })
+            req.cookies.delete({ name, ...options })
+            res.cookies.delete({ name, ...options })
           },
         },
       })
 
-      await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      const path = req.nextUrl.pathname
       const protectedPaths = ["/dashboard", "/profile", "/project"]
-      const isProtectedPath = protectedPaths.some((prefix) => path.startsWith(prefix))
+      const isProtectedPath = protectedPaths.some((prefix) => url.pathname.startsWith(prefix))
 
-      if (isProtectedPath) {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session) {
-          const redirectUrl = new URL("/sign-in", req.url)
-          redirectUrl.searchParams.set("message", "Please sign in to access this page")
-          return NextResponse.redirect(redirectUrl)
-        }
+      if (isProtectedPath && !session) {
+        const redirectUrl = new URL("/sign-in", req.url)
+        redirectUrl.searchParams.set("message", "Please sign in to access this page")
+        return NextResponse.redirect(redirectUrl)
       }
     } catch (e) {
       console.error("Middleware error:", e)
+      return res
     }
 
     return res
   }
 
-  // For subdomains, extract the subdomain and rewrite to the [domain] route
+  // For subdomains, rewrite the path
   const subdomain = hostname.split(".")[0]
   const newUrl = new URL(`/${subdomain}${url.pathname}`, req.url)
   return NextResponse.rewrite(newUrl)

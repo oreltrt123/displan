@@ -1,7 +1,7 @@
 import { createClient } from "../../../../../supabase/server"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { MapPin, Briefcase, Heart, Calendar, ArrowLeft, Camera, Globe } from "lucide-react"
+import { MapPin, Briefcase, Heart, Calendar, ExternalLink } from "lucide-react"
 import FollowButton from "@/components/follow-button"
 import Image from "next/image"
 import DashboardNavbar from "@/components/dashboard-navbar"
@@ -12,17 +12,16 @@ interface ProfilePageProps {
   }
 }
 
-export default async function ProfilePage({ params }: ProfilePageProps) {
+export default async function ProfilePageEnhanced({ params }: ProfilePageProps) {
   const supabase = await createClient()
 
   // Get current user
   const {
     data: { session },
   } = await supabase.auth.getSession()
-
   const currentUser = session?.user
 
-  // Get profile data
+  // Get profile data with new fields
   const { data: profile, error } = await supabase.from("profiles").select("*").eq("user_id", params.id).single()
 
   if (error || !profile) {
@@ -71,9 +70,28 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const isOwnProfile = currentUser?.id === params.id
   const hasProfile = !!profile
 
+  // Get bio styling
+  const getBioStyle = () => {
+    const fontSize = profile.bio_font_size === "small" ? "14px" : profile.bio_font_size === "large" ? "18px" : "16px"
+    return {
+      fontSize,
+      fontWeight: profile.bio_is_bold ? "bold" : "normal",
+      fontStyle: profile.bio_is_italic ? "italic" : "normal",
+    }
+  }
+
+  // Social media links
+  const socialLinks = [
+    { name: "LinkedIn", url: profile.linkedin_url, color: "text-blue-400", icon: "💼" },
+    { name: "Facebook", url: profile.facebook_url, color: "text-blue-600", icon: "📘" },
+    { name: "TikTok", url: profile.tiktok_url, color: "text-pink-400", icon: "🎵" },
+    { name: "YouTube", url: profile.youtube_url, color: "text-red-500", icon: "📺" },
+  ].filter((link) => link.url && link.url.trim() !== "")
+
   return (
     <div className="w-full min-h-screen text-white bg-background relative">
       <DashboardNavbar hasProfile={hasProfile} />
+
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -102,24 +120,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                         </span>
                       </div>
                     )}
-{/* 
-                    {isOwnProfile && (
-                      <Link
-                        href="/dashboard/profile/edit-avatar"
-                        className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 hover:bg-blue-600 transition-colors"
-                        title="Change profile picture"
-                      >
-                        <Camera size={16} />
-                      </Link>
-                    )} */}
                   </div>
 
                   {/* Profile Info - Left Aligned */}
                   <div className="space-y-3">
                     <div className="text-xl font-bold text-white">{profile.name}</div>
-
-                    <div className="text-white/70 text-sm">@{params.id}</div>
-
+                    <div className="text-white/70 text-sm">@{profile.username || params.id}</div>
                     {!isOwnProfile && (
                       <div>
                         <FollowButton userId={params.id} />
@@ -142,21 +148,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     <Calendar size={14} />
                     <span>Joined {joinedDate}</span>
                   </div>
-
                   {profile.location && (
                     <div className="flex items-center gap-2 text-white/70">
                       <MapPin size={14} />
                       <span>{profile.location}</span>
                     </div>
                   )}
-
                   {profile.occupation && (
                     <div className="flex items-center gap-2 text-white/70">
                       <Briefcase size={14} />
                       <span>{profile.occupation}</span>
                     </div>
                   )}
-
                   {profile.interests && (
                     <div className="flex items-center gap-2 text-white/70">
                       <Heart size={14} />
@@ -164,20 +167,45 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     </div>
                   )}
                 </div>
+
+                {/* Social Media Links */}
+                {socialLinks.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-white/10">
+                    <h3 className="text-sm font-medium text-white/80 mb-3">Social Media</h3>
+                    <div className="space-y-2">
+                      {socialLinks.map((link) => (
+                        <a
+                          key={link.name}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`flex items-center gap-2 text-sm ${link.color} hover:opacity-80 transition-opacity`}
+                        >
+                          <span>{link.icon}</span>
+                          <span>{link.name}</span>
+                          <ExternalLink size={12} />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Right Column - Sites and Additional Content */}
             <div className="lg:col-span-2">
               <div className="shadow-sm">
-                {/* Bio Section (if exists) */}
+                {/* Enhanced Bio Section */}
                 {profile.bio && (
                   <div className="mt-8 pt-6 border-t border-white/10">
                     <h3 className="text-lg font-semibold mb-3">About</h3>
-                    <p className="text-white/80 whitespace-pre-line">{profile.bio}</p>
+                    <div style={getBioStyle()} className="text-white/80 whitespace-pre-line">
+                      {profile.bio}
+                    </div>
                   </div>
                 )}
-                {/* Projects Section (if exists) */}
+
+                {/* Projects Section */}
                 {projects && projects.length > 0 && (
                   <div className="mt-6">
                     <h3 className="text-lg font-semibold mb-3">Public Projects</h3>

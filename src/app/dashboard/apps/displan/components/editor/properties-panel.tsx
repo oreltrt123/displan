@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card_properties"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Maximize2, Save, Check, AlertCircle, Trash2, Loader2 } from "lucide-react"
@@ -472,8 +472,8 @@ export function PropertiesPanel({
     return (
       <div className="w-80 bg-white dark:bg-black h-full overflow-hidden">
         <div className="p-4 h-full flex flex-col">
-          <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Select an element to edit properties</p>
+          <div className="text-center py-8 border border-[#8888881A] rounded-[10px]">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Select an instance on the canvas</p>
           </div>
         </div>
       </div>
@@ -726,24 +726,21 @@ export function PropertiesPanel({
 
       {/* Style Editor Modal */}
       {showStyleEditor && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 border-[#888888A1] flex items-center justify-center z-50">
           <Card className="w-[600px] h-[500px] m-4">
             <CardHeader>
-              <CardTitle>Style Editor</CardTitle>
-              <p className="text-sm text-gray-600">
-                Add custom CSS for{" "}
-                {formData.customClass
-                  ? `.${formData.customClass}`
-                  : formData.customId
-                    ? `#${formData.customId}`
-                    : "this element"}
-              </p>
+              <div className="flex gap-2">
+                <button onClick={handleStyleSave} className="bg_00000__f2" disabled={isSaving}>
+                  {/* {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} */}
+                  Save Styles
+                </button>
+              </div>
             </CardHeader>
             <CardContent className="flex flex-col h-full">
               <div className="flex-1 mb-4">
-                <Label htmlFor="custom-styles">Custom CSS</Label>
-                <Textarea
+                <textarea
                   id="custom-styles"
+                  className="h-[98%] mt-2 font-mono overflow-hidden flex w-full items-center justify-between rounded-md px-3 py-2 text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 r2552esf25_252trewt3er"
                   value={customStyles}
                   onChange={(e) => handleStylesChange(e.target.value)}
                   placeholder={`/* Example CSS for this element */
@@ -774,17 +771,7 @@ export function PropertiesPanel({
   50% { opacity: 0.7; }
   100% { opacity: 1; }
 }`}
-                  className="h-full mt-2 font-mono text-sm"
                 />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={handleStyleSave} className="flex-1 bg_00000__f" disabled={isSaving}>
-                  {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                  Save Styles
-                </button>
-                <button onClick={() => setShowStyleEditor(false)} className="bg_00000__f">
-                  Cancel
-                </button>
               </div>
             </CardContent>
           </Card>

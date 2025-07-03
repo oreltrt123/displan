@@ -17,8 +17,15 @@ export function MenuElementsPanel({ onAddElement, onBack }: MenuElementsPanelPro
     { id: "empty-3", name: "Everything you need DisPlan", preview: "/webbuild/empty-4.png" }, 
     { id: "empty-4", name: "Data to enrich", preview: "/webbuild/empty-5.png" }, 
     { id: "empty-5", name: "Choose your DisPlan", preview: "/webbuild/empty-6.png" }, 
-    { id: "empty-6", name: "Select filter", preview: "/webbuild/empty-699.png" }, 
-    { id: "empty-7", name: "Select filter", preview: "/webbuild/empty-699.png" }, 
+    { id: "empty-6", name: "Select filter", preview: "/webbuild/24.png" }, 
+    // { id: "empty-7", name: "Select filter", preview: "/webbuild/empty-699.png" }, 
+    { id: "empty-8", name: "Social Links Demo", preview: "/webbuild/23.png" }, 
+    { id: "empty-9", name: "Flip Links", preview: "/webbuild/25.png" }, 
+    { id: "empty-11", name: "AI Voice Input", preview: "/webbuild/26.png" }, 
+    { id: "empty-12", name: "Testimonials Columns", preview: "/webbuild/27.png" }, 
+    { id: "empty-13", name: "Text Generate Effect", preview: "/webbuild/28.png" }, 
+    { id: "empty-14", name: "Text Generate Effect", preview: "/webbuild/29.png" }, 
+    { id: "empty-15", name: "Text Generate Effect", preview: "/webbuild/29.png" }, 
   ] 
 
   const handleAddMenu = (templateId: string) => { 

@@ -6,6 +6,7 @@ import { TextElementsPanel } from "./elements/text-elements-panel"
 import { ButtonElementsPanel } from "./elements/button-elements-panel"
 import { MenuElementsPanel } from "./elements/menu-elements-panel"
 import { MenuTemplatesPanel } from "./elements/menu-templates-panel"
+import "@/styles/Button_eeree24de2Eeree2.css"
 
 interface ElementsPanelProps {
   onAddElement?: (elementType: string, x: number, y: number) => void
@@ -21,11 +22,11 @@ export function ElementsPanel({ onAddElement }: ElementsPanelProps) {
   // Main elements view
   if (currentView === "main") {
     return (
-      <div className="space-y-2 h-full">
-        <div className="space-y-2">
+      <div className="space-y-2 h-full sfsfsfsfsfsfwerertwr2421">
+        <div className="space-y">
           <button
             onClick={() => setCurrentView("text")}
-            className="w-full flex items-center p-3 cursor-pointer hover:bg-[#8888881A] text-gray-900 dark:text-white"
+            className="Button_eeree24de2Eeree2"
           >
             <img className="w-5 h-5 mr-2 dark:hidden" src="/components/editor/element/text_light.png" alt="" />
              <img className="w-5 h-5 mr-2 hidden dark:block" src="/components/editor/element/text_dark.png" alt="" />
@@ -34,7 +35,7 @@ export function ElementsPanel({ onAddElement }: ElementsPanelProps) {
 
           <button
             onClick={() => setCurrentView("template")}
-            className="w-full flex items-center p-3 cursor-pointer hover:bg-[#8888881A] text-gray-900 dark:text-white"
+            className="Button_eeree24de2Eeree2"
           >
             <img className="w-5 h-5 mr-2 dark:hidden" src="/components/editor/element/template_light.png" alt="" />
             <img className="w-5 h-5 mr-2 hidden dark:block" src="/components/editor/element/template_dark.png" alt="" />
@@ -43,7 +44,7 @@ export function ElementsPanel({ onAddElement }: ElementsPanelProps) {
 
           <button
             onClick={() => setCurrentView("button")}
-            className="w-full flex items-center p-3 cursor-pointer hover:bg-[#8888881A] text-gray-900 dark:text-white"
+            className="Button_eeree24de2Eeree2"
           >
             <img className="w-5 h-5 mr-2 dark:hidden" src="/components/editor/element/button_light.png" alt="" />
             <img className="w-5 h-5 mr-2 hidden dark:block" src="/components/editor/element/button_dark.png" alt="" />
@@ -52,7 +53,7 @@ export function ElementsPanel({ onAddElement }: ElementsPanelProps) {
 
           <button
             onClick={() => setCurrentView("menu")}
-            className="w-full flex items-center p-3 cursor-pointer hover:bg-[#8888881A] text-gray-900 dark:text-white"
+            className="Button_eeree24de2Eeree2"
           >
             <img className="w-5 h-5 mr-2 dark:hidden" src="/components/editor/element/menu_light.png" alt="" />
             <img className="w-5 h-5 mr-2 hidden dark:block" src="/components/editor/element/menu_dark.png" alt="" />

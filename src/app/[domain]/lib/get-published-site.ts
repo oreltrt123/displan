@@ -1,30 +1,16 @@
-import { createClient } from "../../../../supabase/server"
-
-export interface PublishedSiteData {
-  id: string
-  name: string
-  description: string | null
-  subdomain: string
-  favicon_light_url: string | null
-  favicon_dark_url: string | null
-  social_preview_url: string | null
-  custom_code: string | null
-  elements: any[]
-  is_published: boolean
-  canvas_width?: number
-  canvas_height?: number
-  owner_id: string
-  created_at: string
-  updated_at: string
-}
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+import type { PublishedSiteData } from "../components/published-site-renderer"
 
 export async function getPublishedSiteData(subdomain: string): Promise<PublishedSiteData | null> {
+  console.log("🔍 getPublishedSiteData called with subdomain:", subdomain)
+
   try {
-    console.log("🔍 [FIXED] Fetching published site data for subdomain:", subdomain)
+    const cookieStore = cookies()
+    const supabase = createServerComponentClient({ cookies: () => cookieStore })
 
-    const supabase = createClient()
-
-    // Get the project by subdomain
+    // First, get the project data
+    console.log("📊 Fetching project data...")
     const { data: project, error: projectError } = await supabase
       .from("displan_project_designer_css_projects")
       .select("*")
@@ -32,60 +18,42 @@ export async function getPublishedSiteData(subdomain: string): Promise<Published
       .eq("is_published", true)
       .single()
 
-    console.log("📦 [FIXED] Project query result:", {
-      project: project ? { id: project.id, name: project.name } : null,
-      projectError,
-    })
-
-    if (projectError || !project) {
-      console.error("❌ [FIXED] Project not found:", projectError)
+    if (projectError) {
+      console.error("❌ Project fetch error:", projectError)
       return null
     }
 
-    // FIXED: Get ALL canvas elements for the project (remove page filter)
-    console.log("🔍 [FIXED] Fetching elements for project ID:", project.id)
+    if (!project) {
+      console.log("❌ No project found for subdomain:", subdomain)
+      return null
+    }
 
+    console.log("✅ Project found:", {
+      id: project.id,
+      name: project.name,
+      subdomain: project.subdomain,
+    })
+
+    // Get elements from the CORRECT table: displan_project_designer_css_elements_canvas_csss_style
+    console.log("🎨 Fetching canvas elements from style table...")
     const { data: elements, error: elementsError } = await supabase
-      .from("displan_project_designer_css_canvas_elements")
+      .from("displan_project_designer_css_elements_canvas_csss_style")
       .select("*")
       .eq("project_id", project.id)
       .order("created_at", { ascending: true })
 
-    console.log("🧩 [FIXED] Elements query result:", {
-      elements: elements ? elements.slice(0, 3) : null, // Show first 3 elements
-      elementsError,
-      elementsCount: elements?.length || 0,
-      elementTypes: elements?.map((e) => e.element_type) || [],
-      pageIds: [...new Set(elements?.map((e) => e.page_id) || [])],
+    if (elementsError) {
+      console.error("❌ Elements fetch error:", elementsError)
+      // Don't return null here - we can still show the site without elements
+    }
+
+    console.log("🎨 Elements fetched:", {
+      count: elements?.length || 0,
+      elements: elements || [],
+      sampleElement: elements?.[0] || null,
     })
 
-    // ADDITIONAL DEBUG: Check if elements exist with different filters
-    if (!elements || elements.length === 0) {
-      console.log("🔍 [DEBUG] No elements found, checking with broader query...")
-
-      // Check if ANY elements exist for this project
-      const { data: allElements, error: allError } = await supabase
-        .from("displan_project_designer_css_canvas_elements")
-        .select("id, project_id, page_id, element_type")
-        .eq("project_id", project.id)
-
-      console.log("🔍 [DEBUG] All elements check:", {
-        allElements,
-        allError,
-        count: allElements?.length || 0,
-      })
-
-      // Check if project_id is correct type
-      console.log("🔍 [DEBUG] Project ID type check:", {
-        projectId: project.id,
-        projectIdType: typeof project.id,
-      })
-    }
-
-    if (elementsError) {
-      console.error("❌ [FIXED] Error fetching elements:", elementsError)
-    }
-
+    // Transform the data to match our interface
     const siteData: PublishedSiteData = {
       id: project.id,
       name: project.name,
@@ -95,25 +63,52 @@ export async function getPublishedSiteData(subdomain: string): Promise<Published
       favicon_dark_url: project.favicon_dark_url,
       social_preview_url: project.social_preview_url,
       custom_code: project.custom_code,
-      elements: elements || [],
+      canvas_width: 1200, // Default since your table doesn't have this column
+      canvas_height: 800, // Default since your table doesn't have this column
       is_published: project.is_published,
-      canvas_width: project.canvas_width || 1200,
-      canvas_height: project.canvas_height || 800,
       owner_id: project.owner_id,
       created_at: project.created_at,
       updated_at: project.updated_at,
+      elements: (elements || []).map((element) => ({
+        id: element.id,
+        project_id: element.project_id,
+        page_id: element.page_slug || element.page_id || "home",
+        element_type: element.element_type,
+        content: element.content,
+        x_position: element.x_position || 0,
+        y_position: element.y_position || 0,
+        width: element.width || 200,
+        height: element.height || 50,
+        font_size: element.font_size,
+        font_weight: element.font_weight,
+        text_color: element.text_color,
+        background_color: element.background_color,
+        border_radius: element.border_radius,
+        border_width: element.border_width,
+        border_color: element.border_color,
+        text_align: element.text_align,
+        z_index: element.z_index || 1,
+        src: element.src,
+        link_url: element.link_url,
+        link_page: element.link_page,
+        opacity: element.opacity,
+        visible: element.visible !== false, // Default to true if not specified
+        styles: element.styles,
+        created_at: element.created_at,
+        updated_at: element.updated_at,
+      })),
     }
 
-    console.log("✅ [FIXED] Final site data:", {
-      siteName: siteData.name,
+    console.log("✅ Final site data prepared:", {
+      name: siteData.name,
       elementsCount: siteData.elements.length,
-      hasElements: siteData.elements.length > 0,
-      sampleElement: siteData.elements[0] || null,
+      canvasSize: `${siteData.canvas_width}x${siteData.canvas_height}`,
+      elementTypes: siteData.elements.map((e) => e.element_type),
     })
 
     return siteData
   } catch (error) {
-    console.error("💥 [FIXED] Error getting published site data:", error)
+    console.error("💥 Unexpected error in getPublishedSiteData:", error)
     return null
   }
 }

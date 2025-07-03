@@ -1,47 +1,65 @@
+// Add this interface to your existing types file or create it if it doesn't exist
 export interface DisplanCanvasElement {
   id: string
-  project_id?: string
-  page_id?: string
-  page_slug?: string
   element_type: string
-  content: string
-  x_position: number
-  y_position: number
+  content?: string
+  src?: string
+  x: number
+  y: number
   width: number
   height: number
-  width_type?: "fixed" | "relative" | "fill" | "fit-content"
-  height_type?: "fixed" | "relative" | "fill" | "fit-content"
+  z_index: number
+  opacity: number
+  visible?: boolean
   background_color?: string
   text_color?: string
-  border_radius?: number
-  border_width?: number
-  border_color?: string
   font_size?: number
   font_weight?: string
   font_family?: string
   text_align?: string
-  padding_top?: number
-  padding_right?: number
-  padding_bottom?: number
-  padding_left?: number
-  margin_top?: number
-  margin_right?: number
-  margin_bottom?: number
-  margin_left?: number
-  opacity?: number
-  visible?: boolean
-  cursor?: string
-  animation?: string
-  transform_rotate?: number
-  transform_scale_x?: number
-  transform_scale_y?: number
-  device_type?: "desktop" | "tablet" | "mobile"
-  z_index?: number
+  border_radius?: number
+  border_width?: number
+  border_color?: string
   link_url?: string
   link_page?: string
-  is_template_element?: boolean
-  template_element_id?: string
-  styles?: any
-  created_at?: string
-  updated_at?: string
+  styles?: {
+    backgroundColor?: string
+    textColor?: string
+    fontSize?: number
+    fontWeight?: string
+    fontFamily?: string
+    textAlign?: string
+    borderRadius?: number
+    borderWidth?: number
+    borderColor?: string
+    opacity?: number
+    display?: string
+    justifyContent?: string
+    alignItems?: string
+    flexDirection?: string
+    flexWrap?: string
+    marginTop?: number
+    marginRight?: number
+    marginBottom?: number
+    marginLeft?: number
+    paddingTop?: number
+    paddingRight?: number
+    paddingBottom?: number
+    paddingLeft?: number
+    customClass?: string
+    customId?: string
+    customStyles?: string
+    htmlTag?: string
+    linkUrl?: string
+    linkPage?: string
+    linkTarget?: string
+    elementName?: string
+  }
+  // 🔥🔥🔥 NEW: Store original button style data
+  style_data?: {
+    isMovingBorder?: boolean
+    borderRadius?: string
+    className?: string
+    content?: string
+  }
 }

@@ -1,12 +1,14 @@
 import Link from "next/link"
 import { Twitter, Linkedin, Github, Instagram } from 'lucide-react'
 import "@/styles/footer.css"
+import { AnimatedBeamDemo } from "@/components/ui/demo_Beama"
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
     <footer className="">
+    <AnimatedBeamDemo />
       <div className="container afasfasfawffwf mx-auto px-4 py-12 bg-[#8888881A]">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Product Column */}

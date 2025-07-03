@@ -1,0 +1,35 @@
+.Button_eeree24de2Eeree2 {
+  width: 100%;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: default;
+}
+.Button_eeree24de2Eeree2:hover {
+  background: #8888881A;
+}
+.Button_eeree24de2Eeree2_active {
+  background: rgba(0, 153, 255, 0.055);
+  width: 100%;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  cursor: default;
+}
+.Button_eeree24de2Eeree2_active:hover {
+  background: rgba(0, 153, 255, 0.055);
+}
+.sfsfsfsfsfsfwerertwr242 {
+    position: relative;
+    top: -20px;
+    border-top: 1px solid #8888881A;
+}
+.sfsfsfsfsfsfwerertwr2421 {
+        position: relative;
+    top: -5px;
+    border-top: 1px solid #8888881A;
+}

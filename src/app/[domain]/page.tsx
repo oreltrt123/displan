@@ -6,7 +6,6 @@ import { cookies } from "next/headers"
 import { FitLogDashboard } from "./fitlog/components/fitlog-dashboard"
 import { ThemeProvider } from "./fitlog/components/theme-provider"
 
-
 interface DomainPageProps {
   params: {
     domain: string
@@ -27,7 +26,6 @@ export default async function DomainPage({ params }: DomainPageProps) {
   // Handle FitLog app
   if (domain === "fitlog") {
     console.log("🏋️ Loading FitLog app")
-
     const cookieStore = cookies()
     const supabase = createServerComponentClient({ cookies: () => cookieStore })
 
@@ -72,21 +70,18 @@ export default async function DomainPage({ params }: DomainPageProps) {
         { data: todayCheckin, error: checkinError },
       ] = await Promise.all([
         supabase.from("fitlog_profiles").select("*").eq("user_id", user.id).single(),
-
         supabase
           .from("fitlog_workouts")
           .select("*")
           .eq("user_id", user.id)
           .eq("workout_date", today)
           .order("created_at", { ascending: false }),
-
         supabase
           .from("fitlog_meals")
           .select("*")
           .eq("user_id", user.id)
           .eq("meal_date", today)
           .order("created_at", { ascending: false }),
-
         supabase
           .from("fitlog_goals")
           .select("*")
@@ -94,9 +89,7 @@ export default async function DomainPage({ params }: DomainPageProps) {
           .eq("is_completed", false)
           .order("created_at", { ascending: false })
           .limit(5),
-
         supabase.from("fitlog_daily_logs").select("*").eq("user_id", user.id).eq("log_date", today).single(),
-
         supabase
           .from("fitlog_weekly_tables")
           .select("*")
@@ -104,7 +97,6 @@ export default async function DomainPage({ params }: DomainPageProps) {
           .eq("is_active", true)
           .order("created_at", { ascending: false })
           .limit(3),
-
         supabase.from("fitlog_daily_checkins").select("*").eq("user_id", user.id).eq("checkin_date", today).single(),
       ])
 
@@ -133,6 +125,7 @@ export default async function DomainPage({ params }: DomainPageProps) {
           })
           .select()
           .single()
+
         finalUserProfile = newProfile
       }
 
@@ -152,7 +145,6 @@ export default async function DomainPage({ params }: DomainPageProps) {
       )
     } catch (error) {
       console.error("Error loading FitLog data:", error)
-
       // Return with empty data if there's an error
       return (
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -184,22 +176,47 @@ export default async function DomainPage({ params }: DomainPageProps) {
     )
   }
 
-  // EXISTING: Your original website builder logic
-  const siteData = await getPublishedSiteData(domain)
+  // MAIN WEBSITE BUILDER LOGIC - This is where your published sites are handled
+  console.log("🎯 Processing website builder domain:", domain)
 
-  console.log("📊 Site data received:", {
-    found: !!siteData,
-    elementsCount: siteData?.elements?.length || 0,
-    siteName: siteData?.name,
-  })
+  try {
+    const siteData = await getPublishedSiteData(domain)
 
-  if (!siteData) {
-    console.log("❌ No site data found, returning 404")
-    notFound()
+    console.log("📊 Site data received:", {
+      found: !!siteData,
+      elementsCount: siteData?.elements?.length || 0,
+      siteName: siteData?.name,
+    })
+
+    if (!siteData) {
+      console.log("❌ No site data found, returning 404")
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Site Not Found</h1>
+            <p className="text-gray-600 mb-4">The site "{domain}" could not be found.</p>
+            <p className="text-sm text-gray-500">Make sure the site is published and the subdomain is correct.</p>
+          </div>
+        </div>
+      )
+    }
+            
+    console.log("✅ Rendering PublishedSiteRenderer with data")
+    return <div style={{overflow: "hidden",}}>
+      <PublishedSiteRenderer siteData={siteData} />
+    </div>
+  } catch (error) {
+    console.error("💥 Error in domain page:", error)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-red-600 mb-4">Error</h1>
+          <p className="text-gray-600 mb-4">Something went wrong while loading this site.</p>
+          <p className="text-sm text-gray-500">Please try again later.</p>
+        </div>
+      </div>
+    )
   }
-
-  console.log("✅ Rendering PublishedSiteRenderer with data")
-  return <PublishedSiteRenderer siteData={siteData} />
 }
 
 export async function generateMetadata({ params }: DomainPageProps) {
@@ -232,28 +249,35 @@ export async function generateMetadata({ params }: DomainPageProps) {
     }
   }
 
-  // EXISTING: Your original metadata logic
-  const siteData = await getPublishedSiteData(domain)
+  // WEBSITE BUILDER metadata logic
+  try {
+    const siteData = await getPublishedSiteData(domain)
 
-  if (!siteData) {
-    return {
-      title: "Site Not Found",
-      description: "The requested site could not be found.",
+    if (!siteData) {
+      return {
+        title: "Site Not Found",
+        description: "The requested site could not be found.",
+      }
     }
-  }
 
-  const title = siteData.name || `${domain} - Built with DisPlan`
-
-  return {
-    title: title,
-    description: siteData.description || `A website built with DisPlan`,
-    openGraph: {
+    const title = siteData.name || `${domain} - Built with DisPlan`
+    return {
       title: title,
       description: siteData.description || `A website built with DisPlan`,
-      images: siteData.social_preview_url ? [siteData.social_preview_url] : [],
-    },
-    icons: {
-      icon: siteData.favicon_light_url || "/favicon.ico",
-    },
+      openGraph: {
+        title: title,
+        description: siteData.description || `A website built with DisPlan`,
+        images: siteData.social_preview_url ? [siteData.social_preview_url] : [],
+      },
+      icons: {
+        icon: siteData.favicon_light_url || "/favicon.ico",
+      },
+    }
+  } catch (error) {
+    console.error("Error generating metadata:", error)
+    return {
+      title: "DisPlan Site",
+      description: "A website built with DisPlan",
+    }
   }
 }

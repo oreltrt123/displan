@@ -7,6 +7,8 @@ import type { EditableTemplateElement, TextEditingState } from "../../types/canv
 import { generateElementStyles } from "../../utils/canvas-utils"
 import { TemplateRenderer } from "../../templates/template-renderer"
 import type { DisplanCanvasElement } from "../../lib/types/displan-canvas-types"
+import type { JSX } from "react" // Import JSX to fix the undeclared variable error
+import { getButtonComponent } from "../../shared/button-elements-panel"
 
 interface ElementRendererProps {
   element: DisplanCanvasElement
@@ -63,6 +65,7 @@ export function ElementRenderer({
 }: ElementRendererProps) {
   const router = useRouter()
   const elementRef = useRef<HTMLDivElement>(null)
+
   const isSelected = selectedElement?.id === element.id || selectedElements.includes(element.id)
   const isDraggedElement = draggedElement === element.id
 
@@ -99,39 +102,32 @@ export function ElementRenderer({
     if (styles.customStyles) {
       const styleId = `element-styles-${element.id}`
       let styleElement = document.getElementById(styleId) as HTMLStyleElement
-
       if (!styleElement) {
         styleElement = document.createElement("style")
         styleElement.id = styleId
         document.head.appendChild(styleElement)
       }
-
       styleElement.textContent = styles.customStyles
       console.log("✅✅✅ APPLIED CUSTOM STYLES REAL-TIME:", styles.customStyles)
     }
 
     // 🔥🔥🔥 APPLY LAYOUT STYLES DIRECTLY TO ELEMENT - REAL TIME
     const layoutStyles: any = {}
-
     if (styles.display) {
       layoutStyles.display = styles.display
       console.log("✅✅✅ APPLIED DISPLAY REAL-TIME:", styles.display)
     }
-
     if (styles.justifyContent) {
       layoutStyles.justifyContent = styles.justifyContent
       console.log("✅✅✅ APPLIED JUSTIFY CONTENT REAL-TIME:", styles.justifyContent)
     }
-
     if (styles.alignItems) {
       layoutStyles.alignItems = styles.alignItems
       console.log("✅✅✅ APPLIED ALIGN ITEMS REAL-TIME:", styles.alignItems)
     }
-
     if (styles.flexDirection) {
       layoutStyles.flexDirection = styles.flexDirection
     }
-
     if (styles.flexWrap) {
       layoutStyles.flexWrap = styles.flexWrap
     }
@@ -141,32 +137,25 @@ export function ElementRenderer({
       layoutStyles.marginTop = `${styles.marginTop}px`
       console.log("✅✅✅ APPLIED MARGIN TOP REAL-TIME:", styles.marginTop)
     }
-
     if (styles.marginRight !== undefined) {
       layoutStyles.marginRight = `${styles.marginRight}px`
     }
-
     if (styles.marginBottom !== undefined) {
       layoutStyles.marginBottom = `${styles.marginBottom}px`
     }
-
     if (styles.marginLeft !== undefined) {
       layoutStyles.marginLeft = `${styles.marginLeft}px`
     }
-
     if (styles.paddingTop !== undefined) {
       layoutStyles.paddingTop = `${styles.paddingTop}px`
       console.log("✅✅✅ APPLIED PADDING TOP REAL-TIME:", styles.paddingTop)
     }
-
     if (styles.paddingRight !== undefined) {
       layoutStyles.paddingRight = `${styles.paddingRight}px`
     }
-
     if (styles.paddingBottom !== undefined) {
       layoutStyles.paddingBottom = `${styles.paddingBottom}px`
     }
-
     if (styles.paddingLeft !== undefined) {
       layoutStyles.paddingLeft = `${styles.paddingLeft}px`
     }
@@ -315,8 +304,8 @@ export function ElementRenderer({
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     if (isPreviewMode || !element.element_type.startsWith("text-")) return
-    e.stopPropagation()
 
+    e.stopPropagation()
     setTextEditingState({
       elementId: element.id,
       isActive: true,
@@ -373,23 +362,14 @@ export function ElementRenderer({
       )
     }
 
+    // 🔥🔥🔥 ENHANCED BUTTON RENDERING WITH EXACT SAME COMPONENTS
     if (element.element_type.startsWith("button-")) {
+      const buttonStyle = element.element_type.replace("button-", "")
+
       return (
-        <button
-          className={`displan-${element.element_type} select-none element-content ${isPreviewMode ? "cursor-pointer" : "pointer-events-none"}`}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
-            background: "transparent",
-            color: "inherit",
-            fontSize: "inherit",
-            fontWeight: "inherit",
-            fontFamily: "inherit",
-          }}
-        >
-          {element.content || "Button"}
-        </button>
+        <div className="w-full h-full flex items-center justify-center select-none element-content">
+          {getButtonComponent(buttonStyle, element.content, isPreviewMode)}
+        </div>
       )
     }
 
@@ -428,7 +408,6 @@ export function ElementRenderer({
       onMouseDown={(e) => onElementMouseDown(element, e)}
     >
       {content}
-
       {/* 🔥🔥🔥 RESIZE HANDLES FOR SELECTED ELEMENTS */}
       {!isPreviewMode && isSelected && (
         <>
