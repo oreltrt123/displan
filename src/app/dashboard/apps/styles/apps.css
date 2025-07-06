@@ -72,7 +72,7 @@ body {
 .app-learn-more {
   display: flex;
   align-items: center;
-  color: rgb(6, 108, 231);
+  color: rgb(0, 153, 255);
   font-size: 14px;
   font-weight: 500;
   transition: color 0.2s ease;

@@ -31,6 +31,7 @@
     "@upstash/redis": "^1.35.0",
     "@webstudio-is/design-system": "^0.91.0",
     "autoprefixer": "10.4.20",
+    "basehub": "^9.0.20",
     "cheerio": "^1.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

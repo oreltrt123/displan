@@ -152,6 +152,13 @@ export default function Navbar() {
             >
               Projects
             </Link>
+           <Link
+              href="/contact"
+              className="text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors link_button"
+              data-i18n="contact"
+            >
+              contact
+            </Link>
           </div>
         </div>
 

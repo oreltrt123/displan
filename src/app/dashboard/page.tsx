@@ -4,7 +4,7 @@ import { UserCircle } from "lucide-react"
 import DashboardNavbar from "@/components/dashboard-navbar1"
 import DashboardSidebar from "@/components/dashboard-sidebar"
 import Link from "next/link"
-
+import AppsPage from "@/components/app_dashabord"
 export default async function Dashboard() {
   const supabase = createClient()
 
@@ -45,7 +45,7 @@ export default async function Dashboard() {
   return (
     <div className="flex h-screen bg-white dark:bg-background text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
-      <DashboardSidebar projects={projects || []} userEmail={user.email || ""} profile={profile} userId={user.id} />
+      {/* <DashboardSidebar projects={projects || []} userEmail={user.email || ""} profile={profile} userId={user.id} /> */}
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
@@ -86,6 +86,7 @@ export default async function Dashboard() {
               </div>
             </div>
           </section>
+          <AppsPage />
         </div>
       </main>
     </div>

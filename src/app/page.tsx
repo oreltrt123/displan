@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Navbar from "@/components/navbar"
-import Footer from "@/components/footer"
+import Footer  from "@/components/footer"
 import "../styles/navbar.css"
 import { LearnMore } from "@/components/learn-more"
 import { CARDS } from "@/components/content/cards"
@@ -61,7 +61,12 @@ export default function HomePage() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-white dark:bg-background text-black dark:text-white relative">
+    <div className="w-full min-h-screen bg-white dark:bg-background text-black dark:text-white relative"
+              // className={clsx(
+          //   "w-full mx-auto max-w-[60%] flex flex-col justify-center items-center bg-gray-1/85 pb-0 overflow-hidden rounded-2xl",
+          //   "shadow-[0px_170px_48px_0px_rgba(18,_18,_19,_0.00),_0px_109px_44px_0px_rgba(18,_18,_19,_0.01),_0px_61px_37px_0px_rgba(18,_18,_19,_0.05),_0px_27px_27px_0px_rgba(18,_18,_19,_0.09),_0px_7px_15px_0px_rgba(18,_18,_19,_0.10)]"
+          // )}
+    >
       <Navbar />
 
       <main className="flex flex-col gap-20 items-center pt-32">

@@ -2,13 +2,13 @@ import Link from "next/link"
 import { Twitter, Linkedin, Github, Instagram } from 'lucide-react'
 import "@/styles/footer.css"
 import { AnimatedBeamDemo } from "@/components/ui/demo_Beama"
+import { ThemeSwitcher } from "./theme-switcher"
+import { useEffect, useState } from 'react';
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear()
-
   return (
     <footer className="">
-    <AnimatedBeamDemo />
+    {/* <AnimatedBeamDemo /> */}
       <div className="container afasfasfawffwf mx-auto px-4 py-12 bg-[#8888881A]">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Product Column */}
@@ -122,8 +122,9 @@ export default function Footer() {
 
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-[#8888881A]">
           <div className="text-black dark:text-white/70 mb-4 md:mb-0" data-i18n="copyright">
-            © 2025 DisPlan. All rights reserved.
-          </div>{/* {currentYear} */}
+           © 2025 DisPlan. All rights reserved.
+          </div>
+ 
 
           <div className="flex space-x-6">
             <a href="https://x.com/WrRbybw84381" className="text-black dark:text-white/70 hover:text-[rgb(0,153,255)] dark:hover:text-[rgb(0,153,255)] link_button">
@@ -149,6 +150,12 @@ export default function Footer() {
               <Instagram className="h-6 w-6" />
             </a>
           </div>
+                  <div className="col-start-2 row-start-1 flex items-center gap-3 self-center justify-self-end sm:col-span-1 sm:col-start-3 sm:row-start-1">
+          <p className="hidden text-[--text-tertiary] dark:text-[--dark-text-tertiary] sm:block">
+            Appearance
+          </p>
+          <ThemeSwitcher />
+        </div>
         </div>
       </div>
 </footer>

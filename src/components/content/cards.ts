@@ -1,67 +1,68 @@
 export const CARDS = [
   {
-    title: "Website Builder",
+    title: "AI Website Builder",
     description:
-      "Create and launch beautiful, responsive websites with DisPlan’s easy-to-use builder — no coding required.",
+      "Create fully functional websites using natural language. DisPlan’s AI instantly transforms your ideas into real web apps.",
     href: "/builder",
     linkText: "Start Building",
   },
   {
-    title: "Sell Digital Products",
+    title: "Visual Canvas Editor",
     description:
-      "DisPlan makes it simple to sell digital products with no commissions or premium paywalls.",
-    href: "/sell",
-    linkText: "Learn More",
+      "Drag and drop components, customize your layout, and build without writing code — all in a powerful visual interface.",
+    href: "/editor",
+    linkText: "Launch Editor",
   },
   {
-    title: "Startup Partner Network",
+    title: "Responsive Design Templates",
     description:
-      "Connect with other creators, find co-founders, and grow your startup ideas together.",
-    href: "/partners",
-    linkText: "Join the Network",
+      "Kickstart your project with modern templates built for startups, portfolios, and full-stack apps.",
+    href: "/templates",
+    linkText: "Browse Templates",
   },
 ];
 
+
 export const DASHBOARD_CARDS = [
   {
-    title: "Build Your Website",
+    title: "Start Building",
     description:
-      "Drag, drop, and customize every section of your site with a visual editor built for creators.",
+      "Use AI prompts or design visually to create a complete website in minutes — frontend and backend.",
     href: "https://displan.design/builder",
     linkText: "Open Builder",
   },
   {
-    title: "Sell with Simplicity",
+    title: "Design Your Layout",
     description:
-      "Upload products, set prices, and start selling — DisPlan handles everything with zero fees.",
-    href: "https://displan.design/sell",
-    linkText: "Sell Now",
-  },
-  {
-    title: "Launch a Startup Profile",
-    description:
-      "Showcase your idea, recruit team members, and get discovered by collaborators on DisPlan.",
-    href: "https://displan.design/startups",
-    linkText: "Create Profile",
-  },
-  {
-    title: "Customize Your Design",
-    description:
-      "Tailor fonts, colors, layouts, and more with full design control for your brand.",
+      "Customize fonts, sections, colors, and components in a drag-and-drop editor with full styling control.",
     href: "https://displan.design/customize",
-    linkText: "Design Settings",
+    linkText: "Edit Design",
   },
   {
-    title: "Collaborate with Teams",
+    title: "Use Smart Templates",
     description:
-      "Invite collaborators, assign roles, and build your projects together in real time.",
+      "Choose from modern, responsive templates tailored for portfolios, startups, SaaS, and more.",
+    href: "https://displan.design/templates",
+    linkText: "Browse Templates",
+  },
+  {
+    title: "Live Preview & Export",
+    description:
+      "See your changes in real time and export clean, production-ready code whenever you want.",
+    href: "https://displan.design/preview",
+    linkText: "Preview Site",
+  },
+  {
+    title: "Collaborate in Real Time",
+    description:
+      "Invite team members to co-edit, comment, or build sections live — just like a shared doc.",
     href: "https://displan.design/teams",
     linkText: "Team Workspace",
   },
   {
-    title: "Go Live Instantly",
+    title: "Deploy Instantly",
     description:
-      "Deploy your site to a live URL with a single click. No setup or technical skills needed.",
+      "Launch your website with a single click to a live, shareable URL — no servers or setup needed.",
     href: "https://displan.design/deploy",
     linkText: "Launch Site",
   },

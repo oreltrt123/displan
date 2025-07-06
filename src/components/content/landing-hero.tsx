@@ -26,11 +26,11 @@ export function LandingHero() {
 
         <div className="p-10 border-b border-[#8888881A]">
           <h1 className="text-5xl font-bold tracking-tight text-[#131316] dark:text-white relative">
-            Projects starts here
+            Build websites with AI, instantly
           </h1>
 
           <p className="text-black/70 dark:text-white/70 pt-3 pb-6 max-w-[30rem] text-[1.0625rem] relative">
-            With DisPlan, sell your digital products, find partners for startups, and grow together — with no commissions, no premium walls.
+            DisPlan lets you create complete, responsive websites using natural language and a powerful visual builder — no code, no limits.
           </p>
         </div>
         <div className="flex gap-8 w-full h-[41.25rem] scale-[1.03]">

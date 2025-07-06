@@ -41,7 +41,30 @@ export default function HeroHome() {
             </div>
           </div>
           <VideoPlayer src="/welcome_to_displan .mp4"  poster="/displan_light_banner.png"/>
-        {/* <div className="absolute left-0 right-0 bottom-0 h-[18.75rem] bg-gradient-to-t from-white dark:from-background" /> */}
+        {/* <div className="absolute left-0 right-0 bottom-0 h-[18.75rem] bg-gradient-to-t from-whexport const CARDS = [
+  {
+    title: "AI Website Builder",
+    description:
+      "Create fully functional websites using natural language. DisPlan’s AI instantly transforms your ideas into real web apps.",
+    href: "/builder",
+    linkText: "Start Building",
+  },
+  {
+    title: "Visual Canvas Editor",
+    description:
+      "Drag and drop components, customize your layout, and build without writing code — all in a powerful visual interface.",
+    href: "/editor",
+    linkText: "Launch Editor",
+  },
+  {
+    title: "Responsive Design Templates",
+    description:
+      "Kickstart your project with modern templates built for startups, portfolios, and full-stack apps.",
+    href: "/templates",
+    linkText: "Browse Templates",
+  },
+];
+ite dark:from-background" /> */}
         </div>
       </div>
     </section>

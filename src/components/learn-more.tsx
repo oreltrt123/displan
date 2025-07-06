@@ -9,7 +9,7 @@ export function LearnMore({ cards }: { cards: Card[] }) {
   return (
     <div className="relative bg-background" id="features">
       <div className="grid grid-cols-[1fr_3fr] gap-8 max-w-[75rem] mx-auto w-full pt-16 pb-24">
-        <div>
+        {/* <div>
           <span className="text-[0.8125rem]/5 text-[rgb(0,153,255)] font-medium">
             What's next
           </span>
@@ -65,7 +65,7 @@ export function LearnMore({ cards }: { cards: Card[] }) {
               </div>
             </a>
           ))}
-        </div>
+        </div> */}
       </div>
     </div>
   );
